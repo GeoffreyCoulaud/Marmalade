@@ -1,7 +1,7 @@
 {
     "app-id" : "com.github.geoffreycoulaud.Marmalade",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "44",
+    "runtime-version" : "45beta",
     "sdk" : "org.gnome.Sdk",
     "command" : "marmalade",
     "finish-args" : [
@@ -35,7 +35,7 @@
             ],
             "modules": [
                 "python3-requests.json",
-                "python3-jellyfin-api.json"
+                "python3-jellyfin-api-client.json"
             ]
         }
     ]
