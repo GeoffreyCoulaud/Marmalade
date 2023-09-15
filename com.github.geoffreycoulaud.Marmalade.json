@@ -29,9 +29,13 @@
             "buildsystem" : "meson",
             "sources" : [
                 {
-                    "type" : "git",
-                    "url" : "file:///home/geoffrey/Repositories"
+                    "type" : "dir",
+                    "path" : "src"
                 }
+            ],
+            "modules": [
+                "python3-requests.json",
+                "python3-jellyfin-api.json"
             ]
         }
     ]

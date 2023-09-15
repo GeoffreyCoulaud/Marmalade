@@ -18,10 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
-import gi
-
-gi.require_version("Gtk", "4.0")
-gi.require_version("Adw", "1")
+from typing import Callable
 
 from gi.repository import Gio, Adw
 
@@ -42,18 +39,13 @@ class MarmaladeApplication(Adw.Application):
         self.create_action("preferences", self.on_preferences_action)
 
     def do_activate(self):
-        """Called when the application is activated.
-
-        We raise the application's main window, creating it if
-        necessary.
-        """
         win = self.props.active_window
         if not win:
             win = MarmaladeWindow(application=self)
         win.present()
 
     def on_about_action(self, widget, _):
-        """Callback for the app.about action."""
+        """Callback handling the about action"""
         about = Adw.AboutWindow(
             transient_for=self.props.active_window,
             application_name="Marmalade",
@@ -66,18 +58,11 @@ class MarmaladeApplication(Adw.Application):
         about.present()
 
     def on_preferences_action(self, widget, _):
-        """Callback for the app.preferences action."""
+        """Callback handling the preferences action"""
         print("app.preferences action activated")
 
-    def create_action(self, name, callback, shortcuts=None):
-        """Add an application action.
-
-        Args:
-            name: the name of the action
-            callback: the function to be called when the action is
-              activated
-            shortcuts: an optional list of accelerators
-        """
+    def create_action(self, name: str, callback: Callable, shortcuts=None):
+        """Create an action with a name, handler and optional shortcuts"""
         action = Gio.SimpleAction.new(name, None)
         action.connect("activate", callback)
         self.add_action(action)

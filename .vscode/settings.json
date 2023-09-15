@@ -6,5 +6,6 @@
 		"**/.hg/store/**": true,
 		".flatpak/**": true,
 		"_build/**": true
-	}
+	},
+	"python.linting.enabled": false
 }

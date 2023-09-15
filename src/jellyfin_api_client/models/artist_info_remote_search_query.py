@@ -1,0 +1,79 @@
+from typing import TYPE_CHECKING, Any, Dict, Type, TypeVar, Union
+
+from attrs import define as _attrs_define
+
+from ..types import UNSET, Unset
+
+if TYPE_CHECKING:
+    from ..models.artist_info import ArtistInfo
+
+
+T = TypeVar("T", bound="ArtistInfoRemoteSearchQuery")
+
+
+@_attrs_define
+class ArtistInfoRemoteSearchQuery:
+    """
+    Attributes:
+        search_info (Union[Unset, None, ArtistInfo]):
+        item_id (Union[Unset, str]):
+        search_provider_name (Union[Unset, None, str]): Gets or sets the provider name to search within if set.
+        include_disabled_providers (Union[Unset, bool]): Gets or sets a value indicating whether disabled providers
+            should be included.
+    """
+
+    search_info: Union[Unset, None, "ArtistInfo"] = UNSET
+    item_id: Union[Unset, str] = UNSET
+    search_provider_name: Union[Unset, None, str] = UNSET
+    include_disabled_providers: Union[Unset, bool] = UNSET
+
+    def to_dict(self) -> Dict[str, Any]:
+        search_info: Union[Unset, None, Dict[str, Any]] = UNSET
+        if not isinstance(self.search_info, Unset):
+            search_info = self.search_info.to_dict() if self.search_info else None
+
+        item_id = self.item_id
+        search_provider_name = self.search_provider_name
+        include_disabled_providers = self.include_disabled_providers
+
+        field_dict: Dict[str, Any] = {}
+        field_dict.update({})
+        if search_info is not UNSET:
+            field_dict["SearchInfo"] = search_info
+        if item_id is not UNSET:
+            field_dict["ItemId"] = item_id
+        if search_provider_name is not UNSET:
+            field_dict["SearchProviderName"] = search_provider_name
+        if include_disabled_providers is not UNSET:
+            field_dict["IncludeDisabledProviders"] = include_disabled_providers
+
+        return field_dict
+
+    @classmethod
+    def from_dict(cls: Type[T], src_dict: Dict[str, Any]) -> T:
+        from ..models.artist_info import ArtistInfo
+
+        d = src_dict.copy()
+        _search_info = d.pop("SearchInfo", UNSET)
+        search_info: Union[Unset, None, ArtistInfo]
+        if _search_info is None:
+            search_info = None
+        elif isinstance(_search_info, Unset):
+            search_info = UNSET
+        else:
+            search_info = ArtistInfo.from_dict(_search_info)
+
+        item_id = d.pop("ItemId", UNSET)
+
+        search_provider_name = d.pop("SearchProviderName", UNSET)
+
+        include_disabled_providers = d.pop("IncludeDisabledProviders", UNSET)
+
+        artist_info_remote_search_query = cls(
+            search_info=search_info,
+            item_id=item_id,
+            search_provider_name=search_provider_name,
+            include_disabled_providers=include_disabled_providers,
+        )
+
+        return artist_info_remote_search_query

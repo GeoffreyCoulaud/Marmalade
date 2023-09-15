@@ -38,9 +38,12 @@ gettext.install('marmalade', localedir)
 if __name__ == '__main__':
     import gi
 
+    gi.require_version("Gtk", "4.0")
+    gi.require_version("Adw", "1")
+
     from gi.repository import Gio
     resource = Gio.Resource.load(os.path.join(pkgdatadir, 'marmalade.gresource'))
     resource._register()
 
-    from marmalade import main
+    from src import main
     sys.exit(main.main(VERSION))

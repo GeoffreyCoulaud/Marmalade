@@ -1,3 +1,3 @@
 # Marmalade
 
-A description of this project.
+A GTK client for Jellyfin
