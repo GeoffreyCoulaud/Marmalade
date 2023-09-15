@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="jellyfin-gtk">
-	<schema id="com.github.geoffreycoulaud.JellyfinGTK" path="/com/github/geoffreycoulaud/JellyfinGTK/">
-	</schema>
-</schemalist>

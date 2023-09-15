@@ -1,9 +1,9 @@
 {
-    "app-id" : "com.github.geoffreycoulaud.JellyfinGTK",
+    "app-id" : "com.github.geoffreycoulaud.Marmalade",
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "44",
     "sdk" : "org.gnome.Sdk",
-    "command" : "jellyfin-gtk",
+    "command" : "marmalade",
     "finish-args" : [
         "--share=network",
         "--share=ipc",
@@ -24,7 +24,7 @@
     ],
     "modules" : [
         {
-            "name" : "jellyfin-gtk",
+            "name" : "marmalade",
             "builddir" : true,
             "buildsystem" : "meson",
             "sources" : [

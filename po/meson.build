@@ -1,1 +1,1 @@
-i18n.gettext('jellyfin-gtk', preset: 'glib')
+i18n.gettext('marmalade', preset: 'glib')

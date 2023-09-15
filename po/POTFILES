@@ -1,6 +1,6 @@
-data/com.github.geoffreycoulaud.JellyfinGTK.desktop.in
-data/com.github.geoffreycoulaud.JellyfinGTK.appdata.xml.in
-data/com.github.geoffreycoulaud.JellyfinGTK.gschema.xml
+data/com.github.geoffreycoulaud.Marmalade.desktop.in
+data/com.github.geoffreycoulaud.Marmalade.appdata.xml.in
+data/com.github.geoffreycoulaud.Marmalade.gschema.xml
 src/main.py
 src/window.py
 src/window.ui

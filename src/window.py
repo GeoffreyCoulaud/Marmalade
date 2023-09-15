@@ -20,9 +20,12 @@
 from gi.repository import Adw
 from gi.repository import Gtk
 
-@Gtk.Template(resource_path='/com/github/geoffreycoulaud/JellyfinGTK/gtk/window.ui')
-class JellyfinGtkWindow(Adw.ApplicationWindow):
-    __gtype_name__ = 'JellyfinGtkWindow'
+from src import build_constants
+
+
+@Gtk.Template(resource_path=build_constants.PREFIX + "/gtk/window.ui")
+class MarmaladeWindow(Adw.ApplicationWindow):
+    __gtype_name__ = "MarmaladeWindow"
 
     label = Gtk.Template.Child()
 

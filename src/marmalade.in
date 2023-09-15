@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# jellyfin-gtk.in
+# marmalade.in
 #
 # Copyright 2023 Geoffrey Coulaud
 #
@@ -31,16 +31,16 @@ localedir = '@localedir@'
 
 sys.path.insert(1, pkgdatadir)
 signal.signal(signal.SIGINT, signal.SIG_DFL)
-locale.bindtextdomain('jellyfin-gtk', localedir)
-locale.textdomain('jellyfin-gtk')
-gettext.install('jellyfin-gtk', localedir)
+locale.bindtextdomain('marmalade', localedir)
+locale.textdomain('marmalade')
+gettext.install('marmalade', localedir)
 
 if __name__ == '__main__':
     import gi
 
     from gi.repository import Gio
-    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'jellyfin-gtk.gresource'))
+    resource = Gio.Resource.load(os.path.join(pkgdatadir, 'marmalade.gresource'))
     resource._register()
 
-    from jellyfin_gtk import main
+    from marmalade import main
     sys.exit(main.main(VERSION))

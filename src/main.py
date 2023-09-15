@@ -20,22 +20,26 @@
 import sys
 import gi
 
-gi.require_version('Gtk', '4.0')
-gi.require_version('Adw', '1')
+gi.require_version("Gtk", "4.0")
+gi.require_version("Adw", "1")
 
-from gi.repository import Gtk, Gio, Adw
-from .window import JellyfinGtkWindow
+from gi.repository import Gio, Adw
+
+from src import build_constants
+from src.window import MarmaladeWindow
 
 
-class JellyfinGtkApplication(Adw.Application):
+class MarmaladeApplication(Adw.Application):
     """The main application singleton class."""
 
     def __init__(self):
-        super().__init__(application_id='com.github.geoffreycoulaud.JellyfinGTK',
-                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
-        self.create_action('quit', lambda *_: self.quit(), ['<primary>q'])
-        self.create_action('about', self.on_about_action)
-        self.create_action('preferences', self.on_preferences_action)
+        super().__init__(
+            application_id=build_constants.APP_ID,
+            flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+        )
+        self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
+        self.create_action("about", self.on_about_action)
+        self.create_action("preferences", self.on_preferences_action)
 
     def do_activate(self):
         """Called when the application is activated.
@@ -45,23 +49,25 @@ class JellyfinGtkApplication(Adw.Application):
         """
         win = self.props.active_window
         if not win:
-            win = JellyfinGtkWindow(application=self)
+            win = MarmaladeWindow(application=self)
         win.present()
 
     def on_about_action(self, widget, _):
         """Callback for the app.about action."""
-        about = Adw.AboutWindow(transient_for=self.props.active_window,
-                                application_name='jellyfin-gtk',
-                                application_icon='com.github.geoffreycoulaud.JellyfinGTK',
-                                developer_name='Geoffrey Coulaud',
-                                version='0.1.0',
-                                developers=['Geoffrey Coulaud'],
-                                copyright='© 2023 Geoffrey Coulaud')
+        about = Adw.AboutWindow(
+            transient_for=self.props.active_window,
+            application_name="Marmalade",
+            application_icon=build_constants.APP_ID,
+            developer_name="Geoffrey Coulaud",
+            version="0.1.0",
+            developers=["Geoffrey Coulaud"],
+            copyright="© 2023 Geoffrey Coulaud",
+        )
         about.present()
 
     def on_preferences_action(self, widget, _):
         """Callback for the app.preferences action."""
-        print('app.preferences action activated')
+        print("app.preferences action activated")
 
     def create_action(self, name, callback, shortcuts=None):
         """Add an application action.
@@ -81,5 +87,5 @@ class JellyfinGtkApplication(Adw.Application):
 
 def main(version):
     """The application's entry point."""
-    app = JellyfinGtkApplication()
+    app = MarmaladeApplication()
     return app.run(sys.argv)
