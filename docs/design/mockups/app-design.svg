@@ -20,6 +20,65 @@
    xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs2">
+    <marker
+       style="overflow:visible"
+       id="marker8"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Dot"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 5,0 C 5,2.76 2.76,5 0,5 -2.76,5 -5,2.76 -5,0 c 0,-2.76 2.3,-5 5,-5 2.76,0 5,2.24 5,5 z"
+         sodipodi:nodetypes="sssss"
+         id="path8" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Dot"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Dot"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         d="M 5,0 C 5,2.76 2.76,5 0,5 -2.76,5 -5,2.76 -5,0 c 0,-2.76 2.3,-5 5,-5 2.76,0 5,2.24 5,5 z"
+         sodipodi:nodetypes="sssss"
+         id="path17" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Triangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path135" />
+    </marker>
     <inkscape:path-effect
        effect="fillet_chamfer"
        id="path-effect3565"
@@ -523,17 +582,17 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.47734898"
-     inkscape:cx="1409.87"
-     inkscape:cy="1637.167"
+     inkscape:cx="1202.4746"
+     inkscape:cy="606.47453"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g15"
      showgrid="false"
      units="px"
      inkscape:pagecheckerboard="false"
      inkscape:window-width="1920"
-     inkscape:window-height="1011"
-     inkscape:window-x="0"
-     inkscape:window-y="32"
+     inkscape:window-height="1043"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:snap-page="true"
      inkscape:snap-text-baseline="true"
@@ -2388,7 +2447,7 @@
       <path
          id="path1983-76-4"
          style="display:inline;fill:#fafafa;fill-opacity:1;stroke:none;stroke-width:0.999998;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
-         d="M 80.500061,-3626.1378 H 899.49996 v 414 a 12,12 135 0 1 -12,12 H 92.500061 a 12,12 45 0 1 -12,-12 z"
+         d="M 80.500061,-3626.1378 H 899.49996 l 0,414 a 12,12 135 0 1 -12,12 H 92.500061 a 12,12 45 0 1 -12,-12 z"
          inkscape:original-d="M 80.500061,-3626.1378 H 899.49996 v 426 H 80.500061 Z"
          inkscape:path-effect="#path-effect1985-7-9"
          transform="translate(1039.2918,6244.0535)"
@@ -2582,5 +2641,133 @@
          y="2544.4353"
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;font-family:Cantarell;-inkscape-font-specification:Cantarell;fill:#000000"
          id="tspan33">Log in with quick connect</tspan></text>
+    <g
+       id="g15"
+       inkscape:label="Navigation flow"
+       style="display:inline">
+      <g
+         id="g13"
+         inkscape:label="add server flow">
+        <path
+           style="fill:none;stroke:#1a5fb4;stroke-width:2.6;stroke-dasharray:none;marker-start:url(#Dot);marker-end:url(#Triangle)"
+           d="m 1142.5248,2021.716 c 22.7699,-19.2546 494.7344,-118.925 829.7566,-7.3075"
+           id="path6"
+           sodipodi:nodetypes="cc"
+           inkscape:label="add server flow arrow" />
+        <text
+           xml:space="preserve"
+           style="font-size:18.6667px;font-family:Cantarell;-inkscape-font-specification:Cantarell;text-align:center;text-anchor:middle;white-space:pre;inline-size:175.914;display:inline;fill:#1a5fb4;stroke:none;stroke-width:2.6;stroke-dasharray:none"
+           x="2278.1541"
+           y="1502.2861"
+           id="text11"
+           transform="rotate(5.9754709,-2370.7537,-3481.1528)"
+           inkscape:label="add server flow text"><tspan
+             x="2278.1541"
+             y="1502.2861"
+             id="tspan1">Open modal window</tspan></text>
+      </g>
+      <g
+         id="g21"
+         inkscape:label="edit servers flow">
+        <path
+           style="fill:none;stroke:#1a5fb4;stroke-width:2.6;stroke-dasharray:none;marker-start:url(#marker8);marker-end:url(#Triangle)"
+           d="m 1175.0331,2057.3666 c 1.1784,71.1263 76.2376,179.9463 77.5436,215.0217"
+           id="path7"
+           sodipodi:nodetypes="cc"
+           inkscape:label="arrow" />
+        <text
+           xml:space="preserve"
+           style="font-size:18.6667px;font-family:Cantarell;-inkscape-font-specification:Cantarell;text-align:center;text-anchor:middle;fill:none;stroke:none;stroke-width:2.6;stroke-dasharray:none"
+           x="-2279.2852"
+           y="1039.9791"
+           id="text18"
+           transform="rotate(-90.417851)"
+           inkscape:label="text"><tspan
+             sodipodi:role="line"
+             id="tspan18"
+             x="-2279.2852"
+             y="1039.9791"
+             style="fill:#1a5fb4">Change state</tspan></text>
+      </g>
+      <g
+         id="g18"
+         inkscape:label="end edit servers flow">
+        <path
+           style="fill:none;stroke:#1a5fb4;stroke-width:2.6;stroke-dasharray:none;marker-start:url(#marker8);marker-end:url(#Triangle)"
+           d="m 1122.4952,2315.3459 c -55.2417,-3.2745 -71.9534,-73.3774 -25.3599,-102.2657"
+           id="path13"
+           sodipodi:nodetypes="cc"
+           inkscape:label="arrow" />
+        <text
+           xml:space="preserve"
+           style="font-size:18.6667px;font-family:Cantarell;-inkscape-font-specification:Cantarell;text-align:center;text-anchor:middle;fill:none;stroke:none;stroke-width:2.6;stroke-dasharray:none"
+           x="2432.1169"
+           y="-359.89847"
+           id="text18-3"
+           transform="rotate(68.929166)"
+           inkscape:label="text"><tspan
+             sodipodi:role="line"
+             id="tspan18-6"
+             x="2432.1169"
+             y="-359.89847"
+             style="fill:#1a5fb4">Change state</tspan></text>
+      </g>
+      <path
+         style="fill:none;stroke:#1a5fb4;stroke-width:2.6;stroke-dasharray:none;marker-start:url(#marker8);marker-end:url(#Triangle)"
+         d="m 1124.9768,2594.2817 c -234.46735,-123.0755 284.4038,-238.779 282.7962,-359.0008"
+         id="path21"
+         sodipodi:nodetypes="cc"
+         inkscape:label="cancel connect flow" />
+      <path
+         style="fill:none;stroke:#1a5fb4;stroke-width:2.6;stroke-dasharray:none;marker-start:url(#marker8);marker-end:url(#Triangle)"
+         d="m 1770.09,2122.5447 c 130.233,260.4067 -265.2264,341.4666 -306.0364,432.0878"
+         id="path9"
+         sodipodi:nodetypes="cc"
+         inkscape:label="connect to server flow" />
+      <g
+         id="g33"
+         inkscape:label="login quick connect flow">
+        <text
+           xml:space="preserve"
+           style="font-size:18.6667px;font-family:Cantarell;-inkscape-font-specification:Cantarell;text-align:center;text-anchor:middle;fill:#1a5fb4;stroke:none;stroke-width:2.6;stroke-dasharray:none"
+           x="1021.6474"
+           y="2978.1375"
+           id="text21"
+           transform="rotate(-16.562055,-2.6706375e-5,1.7765559e-5)"
+           inkscape:label="text"><tspan
+             sodipodi:role="line"
+             id="tspan21"
+             x="1021.6474"
+             y="2978.1375">Change tab</tspan></text>
+        <path
+           style="fill:none;stroke:#1a5fb4;stroke-width:2.6;stroke-dasharray:none;marker-start:url(#marker8);marker-end:url(#Triangle)"
+           d="m 1684.1989,2595.9929 c 108.1186,23.2923 204.2117,-79.9631 315.462,-29.0452"
+           id="path10"
+           sodipodi:nodetypes="cc"
+           inkscape:label="arrow" />
+      </g>
+      <g
+         id="g36"
+         inkscape:label="login password flow">
+        <path
+           style="fill:none;stroke:#1a5fb4;stroke-width:2.6;stroke-dasharray:none;marker-start:url(#marker8);marker-end:url(#Triangle)"
+           d="m 2267.0458,2595.3793 c -103.8718,-17.3169 -226.7238,92.0295 -310.3304,48.0324"
+           id="path14"
+           sodipodi:nodetypes="cc"
+           inkscape:label="arrow" />
+        <text
+           xml:space="preserve"
+           style="font-size:18.6667px;font-family:Cantarell;-inkscape-font-specification:Cantarell;text-align:center;text-anchor:middle;fill:#1a5fb4;stroke:none;stroke-width:2.6;stroke-dasharray:none"
+           x="1237.5936"
+           y="3119.7078"
+           id="text22"
+           transform="rotate(-16.995635)"
+           inkscape:label="text"><tspan
+             sodipodi:role="line"
+             id="tspan22"
+             x="1237.5936"
+             y="3119.7078">Change tab</tspan></text>
+      </g>
+    </g>
   </g>
 </svg>
