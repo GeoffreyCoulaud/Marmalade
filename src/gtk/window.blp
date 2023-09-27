@@ -5,16 +5,16 @@ template $MarmaladeWindow : Adw.ApplicationWindow {
   default-width: 600;
   default-height: 300;
   content: Adw.ViewStack views_stack {
-    visible-child-name: "servers-view";
-    Adw.ViewStackPage {
-      name: "servers-view";
+    visible-child-name: "servers_view";
+    Adw.ViewStackPage servers_view{
+      name: "servers_view";
       title: "Servers";
       child: $MarmaladeServersView {};
     }
-    Adw.ViewStackPage {
-      name: "server-home-view";
+    Adw.ViewStackPage server_home_view {
+      name: "server_homeview";
       title: "Home";
-      child: $MarmaladeHomeView {};
+      child: $MarmaladeServerHomeView {};
     }
   };
 }

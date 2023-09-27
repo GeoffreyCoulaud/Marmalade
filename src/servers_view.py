@@ -24,7 +24,7 @@ from src import build_constants
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/gtk/servers_view.ui")
-class ServersView(Adw.ApplicationWindow):
+class ServersView(Gtk.Box):
     __gtype_name__ = "MarmaladeServersView"
 
     def __init__(self, **kwargs):
