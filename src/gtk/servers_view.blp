@@ -1,0 +1,39 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeServersView : Box {
+  orientation: vertical;
+
+  HeaderBar header_bar {
+
+    [start]
+    Box {
+      Button add_server_button {
+        child: Adw.ButtonContent {
+          icon-name: "list-add-symbolic";
+        };
+      }
+      Button edit_servers_button {
+        child: Adw.ButtonContent {
+          icon-name: "document-edit-symbolic";
+        };
+      }
+      Button remove_selected_servers_button {
+        child: Adw.ButtonContent {
+          icon-name: "user-trash-symbolic";
+        };
+      }
+    }
+
+  }
+
+  Label label {
+    label: "Servers view";
+    vexpand: true;
+
+    styles [
+      "title-1",
+    ]
+  }
+
+}

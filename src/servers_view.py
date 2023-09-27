@@ -1,4 +1,4 @@
-# window.py
+# servers_view.py
 #
 # Copyright 2023 Geoffrey Coulaud
 #
@@ -21,15 +21,11 @@ from gi.repository import Adw
 from gi.repository import Gtk
 
 from src import build_constants
-from src.servers_view import ServersView
-from src.server_home_view import ServerHomeView
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/gtk/window.ui")
-class MarmaladeWindow(Adw.ApplicationWindow):
-    __gtype_name__ = "MarmaladeWindow"
-
-    views_stack = Gtk.Template.Child()
+@Gtk.Template(resource_path=build_constants.PREFIX + "/gtk/servers_view.ui")
+class ServersView(Adw.ApplicationWindow):
+    __gtype_name__ = "MarmaladeServersView"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
