@@ -21,8 +21,8 @@ from gi.repository import Adw
 from gi.repository import Gtk
 
 from src import build_constants
-from src.servers_view import ServersView
-from src.server_home_view import ServerHomeView
+from src.components.servers_view import ServersView
+from src.components.server_home_view import ServerHomeView
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/window.ui")

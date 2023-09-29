@@ -30,15 +30,13 @@ configure_file(
   install_mode: 'r-xr--r--'
 )
 
+install_subdir('components', install_dir: moduledir)
 
 install_data(
   [
     '__init__.py',
     'main.py',
-    'window.py',
     'server.py',
-    'servers_view.py',
-    'server_home_view.py',
     configure_file(
       input: 'build_constants.py.in',
       output: 'build_constants.py',

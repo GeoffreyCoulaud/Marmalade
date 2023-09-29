@@ -24,7 +24,7 @@ from gi.repository import Gio, Adw
 
 from src import build_constants
 from src.server import Server
-from src.window import MarmaladeWindow
+from src.components.window import MarmaladeWindow
 
 
 class MarmaladeApplication(Adw.Application):
