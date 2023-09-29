@@ -18,22 +18,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
-from typing import Callable
+from typing import Callable, Collection
 
 from gi.repository import Gio, Adw
 
 from src import build_constants
+from src.server import Server
 from src.window import MarmaladeWindow
 
 
 class MarmaladeApplication(Adw.Application):
     """The main application singleton class."""
 
+    servers: Collection[Server]
+
     def __init__(self):
         super().__init__(
             application_id=build_constants.APP_ID,
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
+        self.servers = list()
         self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
         self.create_action("about", self.on_about_action)
         self.create_action("preferences", self.on_preferences_action)

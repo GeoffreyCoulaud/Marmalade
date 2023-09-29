@@ -25,7 +25,7 @@ from src.servers_view import ServersView
 from src.server_home_view import ServerHomeView
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/gtk/window.ui")
+@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/window.ui")
 class MarmaladeWindow(Adw.ApplicationWindow):
     __gtype_name__ = "MarmaladeWindow"
 

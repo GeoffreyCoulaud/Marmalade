@@ -34,8 +34,7 @@
                 }
             ],
             "modules": [
-                "python3-requests.json",
-                "python3-jellyfin-api-client.json"
+                "python3-requirements.json"
             ]
         }
     ]

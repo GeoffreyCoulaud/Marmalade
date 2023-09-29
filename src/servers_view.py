@@ -23,7 +23,7 @@ from gi.repository import Gtk
 from src import build_constants
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/gtk/servers_view.ui")
+@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_view.ui")
 class ServersView(Gtk.Box):
     __gtype_name__ = "MarmaladeServersView"
 

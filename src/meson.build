@@ -1,9 +1,9 @@
 blueprints = custom_target('blueprints',
   input: files(
-    'gtk/window.blp',
-    'gtk/help-overlay.blp',
-    'gtk/servers_view.blp',
-    'gtk/server_home_view.blp',
+    'templates/window.blp',
+    'templates/help-overlay.blp',
+    'templates/servers_view.blp',
+    'templates/server_home_view.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
@@ -36,6 +36,7 @@ install_data(
     '__init__.py',
     'main.py',
     'window.py',
+    'server.py',
     'servers_view.py',
     'server_home_view.py',
     configure_file(

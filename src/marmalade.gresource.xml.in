@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="@PREFIX@">
-    <file preprocess="xml-stripblanks">gtk/window.ui</file>
-    <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
-    <file preprocess="xml-stripblanks">gtk/servers_view.ui</file>
-    <file preprocess="xml-stripblanks">gtk/server_home_view.ui</file>
+    <file preprocess="xml-stripblanks">templates/window.ui</file>
+    <file preprocess="xml-stripblanks">templates/help-overlay.ui</file>
+    <file preprocess="xml-stripblanks">templates/servers_view.ui</file>
+    <file preprocess="xml-stripblanks">templates/server_home_view.ui</file>
   </gresource>
 </gresources>
