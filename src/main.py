@@ -18,11 +18,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
-from typing import Callable, Collection
+import time
+from typing import Callable
 
 from gi.repository import Gio, Adw
 
 from src import build_constants
+from src.components.server_home_view import ServerHomeView
+from src.components.server_row import ServerRow
+from src.components.servers_view import ServersView
+from src.reactive_set import ReactiveSet
 from src.server import Server
 from src.components.window import MarmaladeWindow
 
@@ -30,22 +35,30 @@ from src.components.window import MarmaladeWindow
 class MarmaladeApplication(Adw.Application):
     """The main application singleton class."""
 
-    servers: Collection[Server]
+    servers: ReactiveSet[Server]
 
     def __init__(self):
         super().__init__(
             application_id=build_constants.APP_ID,
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
-        self.servers = list()
+        self.servers = ReactiveSet()
         self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
         self.create_action("about", self.on_about_action)
-        self.create_action("preferences", self.on_preferences_action)
+
+    def create_window(self) -> MarmaladeWindow:
+        win = MarmaladeWindow(application=self)
+        servers_view = ServersView(self.servers)
+        server_home_view = ServerHomeView()
+        win.add_view(servers_view, "servers")
+        win.add_view(server_home_view, "server_home")
+        win.set_visible_view("servers")
+        return win
 
     def do_activate(self):
         win = self.props.active_window
         if not win:
-            win = MarmaladeWindow(application=self)
+            win = self.create_window()
         win.present()
 
     def on_about_action(self, widget, _):
@@ -60,10 +73,6 @@ class MarmaladeApplication(Adw.Application):
             copyright="© 2023 Geoffrey Coulaud",
         )
         about.present()
-
-    def on_preferences_action(self, widget, _):
-        """Callback handling the preferences action"""
-        print("app.preferences action activated")
 
     def create_action(self, name: str, callback: Callable, shortcuts=None):
         """Create an action with a name, handler and optional shortcuts"""

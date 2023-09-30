@@ -33,3 +33,13 @@ class MarmaladeWindow(Adw.ApplicationWindow):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def add_view(self, view: Gtk.Widget, name: str) -> None:
+        self.views_stack.add_named(view, name)
+
+    def remove_view(self, name: str) -> None:
+        view = self.views_stack.get_child_by_name(name)
+        self.views_stack.remove(view)
+
+    def set_visible_view(self, name: str) -> None:
+        self.views_stack.set_visible_child_name(name)

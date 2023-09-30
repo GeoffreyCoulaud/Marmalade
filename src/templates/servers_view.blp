@@ -5,7 +5,6 @@ template $MarmaladeServersView : Box {
   orientation: vertical;
 
   HeaderBar header_bar {
-
     [start]
     Box {
       Button add_server_button {
@@ -24,16 +23,10 @@ template $MarmaladeServersView : Box {
         };
       }
     }
-
   }
 
-  Label label {
-    label: "Servers view";
-    vexpand: true;
-
-    styles [
-      "title-1",
-    ]
+  Adw.PreferencesGroup servers_rows_group {
+    title: C_("Servers")
   }
 
 }

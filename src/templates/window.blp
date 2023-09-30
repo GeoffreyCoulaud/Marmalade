@@ -8,12 +8,10 @@ template $MarmaladeWindow : Adw.ApplicationWindow {
     visible-child-name: "servers_view";
     Adw.ViewStackPage servers_view{
       name: "servers_view";
-      title: "Servers";
       child: $MarmaladeServersView {};
     }
     Adw.ViewStackPage server_home_view {
       name: "server_homeview";
-      title: "Home";
       child: $MarmaladeServerHomeView {};
     }
   };

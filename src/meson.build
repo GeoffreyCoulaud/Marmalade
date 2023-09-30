@@ -1,4 +1,5 @@
 blueprints = custom_target('blueprints',
+  # TODO find a way to deduplicate this with the gresource
   input: files(
     'templates/window.blp',
     'templates/help-overlay.blp',
@@ -37,6 +38,7 @@ install_data(
     '__init__.py',
     'main.py',
     'server.py',
+    'reactive_set.py',
     configure_file(
       input: 'build_constants.py.in',
       output: 'build_constants.py',
