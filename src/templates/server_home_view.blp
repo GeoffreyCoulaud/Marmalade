@@ -1,48 +1,43 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServerHomeView : Box {
-  orientation: vertical;
-
-  HeaderBar header_bar {
-
-    [start]
-    Box {
-      Button disconnect_button {
-        child: Adw.ButtonContent {
-          icon-name: "system-log-out-symbolic";          
-        };
+template $MarmaladeServerHomeView : Adw.Bin {
+  Adw.ToolbarView {
+    [top]
+    HeaderBar header_bar {
+      [start]
+      Box {
+        Button disconnect_button {
+          child: Adw.ButtonContent {
+            icon-name: "system-log-out-symbolic";          
+          };
+        }
+      }
+      [end]
+      Box {
+        Button search_button {
+          child: Adw.ButtonContent {
+            icon-name: "system-search-symbolic";          
+          };
+        }
+        MenuButton collection_filter_button {
+          icon-name: "view-sort-descending-symbolic";          
+          menu-model: collection_filter_menu;
+        }
+        MenuButton preferences_button {
+          icon-name: "open-menu-symbolic";
+          menu-model: preferences_popover_menu;
+        }
       }
     }
-
-    [end]
-    Box {
-      Button search_button {
-        child: Adw.ButtonContent {
-          icon-name: "system-search-symbolic";          
-        };
-      }
-      MenuButton collection_filter_button {
-        icon-name: "view-sort-descending-symbolic";          
-        menu-model: collection_filter_menu;
-      }
-      MenuButton preferences_button {
-        icon-name: "open-menu-symbolic";
-        menu-model: preferences_popover_menu;
-      }
-    }
-
+    content: Label label {
+      label: "Server home view (with subviews)";
+      vexpand: true;
+      styles [
+        "title-1",
+      ]
+    };
   }
-
-  Label label {
-    label: "Server home view (with subviews)";
-    vexpand: true;
-
-    styles [
-      "title-1",
-    ]
-  }
-
 }
 
 menu collection_filter_menu {

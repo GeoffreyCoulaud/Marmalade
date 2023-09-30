@@ -17,34 +17,69 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Gtk
+import logging
+from typing import Optional
+from gi.repository import Gtk, Adw
 
 from src import build_constants
+from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_row import ServerRow
 from src.reactive_set import ReactiveSet
 from src.server import Server
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_view.ui")
-class ServersView(Gtk.Box):
+class ServersView(Adw.Bin):
     __gtype_name__ = "MarmaladeServersView"
 
+    edit_servers_button = Gtk.Template.Child()
+    add_server_button = Gtk.Template.Child()
+    remove_selected_servers_button = Gtk.Template.Child()
     server_rows_group = Gtk.Template.Child()
+
+    window: Gtk.Window
     servers: ReactiveSet[Server]
     server_rows = dict[Server, ServerRow]
+    server_add_dialog: Optional[ServerAddDialog] = None
 
-    def __init__(self, servers: set[Server], **kwargs):
+    def __init__(self, window: Gtk.Window, servers: ReactiveSet[Server], **kwargs):
         super().__init__(**kwargs)
+        self.server_rows = {}
+        self.window = window
         self.servers = servers
-        self.create_server_rows(*servers)
+        for server in self.servers:
+            self.create_server_row(server)
+        self.servers.emitter.connect("item-added", self.on_server_added)
+        self.servers.emitter.connect("item-removed", self.on_server_removed)
+        self.add_server_button.connect("clicked", self.on_add_server_button_clicked)
 
-    def create_server_rows(self, *servers: Server) -> None:
-        for server in servers:
-            row = ServerRow(server)
-            self.server_rows_group.add(row)
-            self.server_rows[server] = row
+    def create_server_row(self, server: Server) -> None:
+        row = ServerRow(server)
+        self.server_rows[server] = row
+        self.server_rows_group.add(row)
 
-    def remove_server_rows(self, *servers: Server):
-        for server in servers:
-            row = self.server_rows[server]
-            self.server_rows_group.remove(row)
+    def remove_server_row(self, server: Server):
+        row = self.server_rows[server]
+        del self.server_rows[server]
+        self.server_rows_group.remove(row)
+
+    def on_server_added(self, _emitter, server: Server) -> None:
+        print("ServersView.on_server_added triggered")
+        self.create_server_row(server)
+
+    def on_server_removed(self, _emitter, server: Server) -> None:
+        self.remove_server_row(server)
+
+    def on_add_server_button_clicked(self, _button) -> None:
+        dialog = ServerAddDialog()
+        self.server_add_dialog = dialog
+        dialog.connect("server-picked", self.on_add_server_dialog_picked)
+        dialog.set_transient_for(self.window)
+        dialog.present()
+
+    def on_add_server_dialog_hello(self, _dialog, message: str) -> None:
+        print(f"hello signal handled: {message}")
+
+    def on_add_server_dialog_picked(self, _dialog, server: Server) -> None:
+        logging.debug("Server add dialog closed with a picked server")
+        self.servers.add(Server)

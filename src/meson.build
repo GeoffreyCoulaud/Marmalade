@@ -5,6 +5,8 @@ blueprints = custom_target('blueprints',
     'templates/help-overlay.blp',
     'templates/servers_view.blp',
     'templates/server_home_view.blp',
+    'templates/server_add_dialog.blp',
+    'templates/server_row.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
@@ -32,6 +34,7 @@ configure_file(
 )
 
 install_subdir('components', install_dir: moduledir)
+install_subdir('logging', install_dir: moduledir)
 
 install_data(
   [

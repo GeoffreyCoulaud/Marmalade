@@ -1,32 +1,37 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServersView : Box {
-  orientation: vertical;
-
-  HeaderBar header_bar {
-    [start]
-    Box {
-      Button add_server_button {
-        child: Adw.ButtonContent {
-          icon-name: "list-add-symbolic";
-        };
-      }
-      Button edit_servers_button {
-        child: Adw.ButtonContent {
-          icon-name: "document-edit-symbolic";
-        };
-      }
-      Button remove_selected_servers_button {
-        child: Adw.ButtonContent {
-          icon-name: "user-trash-symbolic";
-        };
+template $MarmaladeServersView : Adw.Bin {
+  Adw.ToolbarView {
+    [top]
+    HeaderBar header_bar {
+      [start]
+      Box {
+        Button add_server_button {
+          child: Adw.ButtonContent {
+            icon-name: "list-add-symbolic";
+          };
+        }
+        Button edit_servers_button {
+          child: Adw.ButtonContent {
+            icon-name: "document-edit-symbolic";
+          };
+        }
+        Button remove_selected_servers_button {
+          child: Adw.ButtonContent {
+            icon-name: "user-trash-symbolic";
+          };
+        }
       }
     }
+    content: Adw.Clamp {
+      margin-top: 16;
+      margin-start: 16;
+      margin-end: 16;
+      margin-bottom: 16;
+      Adw.PreferencesGroup server_rows_group {
+        title: C_("servers list", "Servers");
+      }
+    };
   }
-
-  Adw.PreferencesGroup servers_rows_group {
-    title: C_("Servers")
-  }
-
 }
