@@ -2,9 +2,22 @@ using Gtk 4.0;
 using Adw 1;
 
 template $MarmaladeServerRow : Adw.ActionRow {
+	selectable: false;
+	[prefix]
+	Revealer tick_revealer {
+		reveal-child: false;
+		transition-type: slide_left;
+		CheckButton tick {
+			styles ["selection-mode"]
+			valign: center;
+		}
+	}
 	[suffix]
-	Button button {
-		valign: center;
-		Adw.ButtonContent button_content {}
+	Revealer button_revealer {
+		reveal-child: true;
+		transition-type: crossfade;
+		Button button {
+			valign: center;
+		}
 	}
 }

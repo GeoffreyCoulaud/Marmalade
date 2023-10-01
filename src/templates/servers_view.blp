@@ -7,19 +7,24 @@ template $MarmaladeServersView : Adw.Bin {
     HeaderBar header_bar {
       [start]
       Box {
-        Button add_server_button {
-          child: Adw.ButtonContent {
+        Revealer add_button_revealer {
+          reveal-child: true;
+          transition-type: slide_right;
+          child: Button add_button {
             icon-name: "list-add-symbolic";
+            margin-end: 4;
           };
         }
-        Button edit_servers_button {
-          child: Adw.ButtonContent {
-            icon-name: "document-edit-symbolic";
-          };
+        Button edit_button {
+          icon-name: "document-edit-symbolic";
         }
-        Button remove_selected_servers_button {
-          child: Adw.ButtonContent {
+        Revealer remove_selected_button_revealer {
+          reveal-child: false;
+          transition-type: slide_right;
+          child: Button remove_selected_button {
+            styles ["destructive-action"]
             icon-name: "user-trash-symbolic";
+            margin-start: 4;
           };
         }
       }
@@ -29,8 +34,18 @@ template $MarmaladeServersView : Adw.Bin {
       margin-start: 16;
       margin-end: 16;
       margin-bottom: 16;
-      Adw.PreferencesGroup server_rows_group {
-        title: C_("servers list", "Servers");
+      Box {
+        orientation: vertical;
+        Label {
+          styles ["heading"]
+          halign: start;
+          margin-bottom: 8;
+          label: C_("servers list", "Servers");
+        }
+        ListBox server_rows_group {
+          styles ["boxed-list"]
+          selection-mode: none;
+        }
       }
     };
   }
