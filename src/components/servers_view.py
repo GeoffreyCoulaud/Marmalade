@@ -17,7 +17,6 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import logging
 from typing import Optional
 from gi.repository import Gtk, Adw
 
@@ -64,7 +63,6 @@ class ServersView(Adw.Bin):
         self.server_rows_group.remove(row)
 
     def on_server_added(self, _emitter, server: Server) -> None:
-        print("ServersView.on_server_added triggered")
         self.create_server_row(server)
 
     def on_server_removed(self, _emitter, server: Server) -> None:
@@ -77,9 +75,5 @@ class ServersView(Adw.Bin):
         dialog.set_transient_for(self.window)
         dialog.present()
 
-    def on_add_server_dialog_hello(self, _dialog, message: str) -> None:
-        print(f"hello signal handled: {message}")
-
     def on_add_server_dialog_picked(self, _dialog, server: Server) -> None:
-        logging.debug("Server add dialog closed with a picked server")
-        self.servers.add(Server)
+        self.servers.add(server)

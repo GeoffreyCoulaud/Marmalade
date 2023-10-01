@@ -91,10 +91,10 @@ class MarmaladeApplication(Adw.Application):
 
     def save_servers(self) -> None:
         """Save servers to disk"""
-        servers_list = [server.asdict() for server in self.servers]
+        servers_dicts = [server._asdict() for server in self.servers]
         try:
             with open(self.servers_file, "w", encoding="utf-8") as file:
-                json.dump(servers_list, file, indent=4)
+                json.dump(servers_dicts, file, indent=4)
         except OSError as error:
             logging.error("Couldn't save servers to disk", exc_info=error)
 
@@ -102,18 +102,17 @@ class MarmaladeApplication(Adw.Application):
         """Load servers from disk"""
         try:
             with open(self.servers_file, "r", encoding="utf-8") as file:
-                servers_dicts = json.load(file)
+                server_dicts = json.load(file)
         except FileNotFoundError:
             self.servers_file.touch()
             logging.info("Created servers file")
         except (OSError, json.JSONDecodeError) as error:
             logging.error("Couldn't load servers from disk", exc_info=error)
         else:
-            servers = (Server(**server_dict) for server_dict in servers_dicts)
+            servers = (Server(**server_dict) for server_dict in server_dicts)
             self.servers.update(servers)
 
     def on_servers_changed(self, _emitter, _server) -> None:
-        print("MarmaladeApplication.on_servers_changed triggered")
         if self.state == AppState.CREATED:
             return
         self.save_servers()

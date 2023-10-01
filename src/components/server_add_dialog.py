@@ -21,8 +21,8 @@ class ServerAddDialog(Adw.Window):
     def cancelled(self):
         """Signal emitted when the dialog is cancelled"""
 
-    @GObject.Signal(name="server-picked", arg_types=[Server])
-    def server_picked(self, _server_dict: Server):
+    @GObject.Signal(name="server-picked", arg_types=[object])
+    def server_picked(self, _server: Server):
         """Signal emitted when a server is picked"""
         # FIXME cannot emit with GObject.Object descendant in the args it seems ???
 
