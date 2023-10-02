@@ -37,8 +37,12 @@ template $MarmaladeServerAddDialog : Adw.Window {
         Adw.PreferencesGroup detected_server_rows_group {
           title: C_("servers list", "Discovered servers");
           [header-suffix]
-          Spinner detected_servers_spinner {
-            spinning: true;
+          Revealer spinner_revealer {
+            reveal-child: true;
+            transition-type: crossfade;
+            Spinner spinner {
+              spinning: true;
+            }
           }
         }
       }

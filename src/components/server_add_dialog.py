@@ -1,7 +1,7 @@
 import logging
 import time
 import psutil
-from gi.repository import Gtk, Adw, GObject
+from gi.repository import Gtk, Adw, GObject, Gio
 import socket
 from socket import (
     AF_INET,
@@ -33,9 +33,12 @@ class ServerAddDialog(Adw.Window):
     manual_add_button = Gtk.Template.Child()
     manual_add_editable = Gtk.Template.Child()
     detected_server_rows_group = Gtk.Template.Child()
-    detected_servers_spinner = Gtk.Template.Child()
+    spinner = Gtk.Template.Child()
+    spinner_revealer = Gtk.Template.Child()
 
-    detected_servers: ReactiveSet[Server]
+    discovered_servers: ReactiveSet[Server]
+    __n_discovery_tasks: int
+    __n_discovery_tasks_done: int
 
     @GObject.Signal(name="cancelled")
     def cancelled(self):
@@ -50,14 +53,17 @@ class ServerAddDialog(Adw.Window):
         super().__init__(**kwargs)
         self.cancel_button.connect("clicked", self.on_cancel_button_clicked)
         self.manual_add_button.connect("clicked", self.on_manual_button_clicked)
-        self.detected_servers = ReactiveSet()
-        self.detected_servers.emitter.connect(
-            "item-added", self.on_detected_server_added
+        self.__n_discovery_tasks = 0
+        self.__n_discovery_tasks_done = 0
+        self.discovered_servers = ReactiveSet()
+        self.discovered_servers.emitter.connect(
+            "item-added", self.on_discovered_server_added
         )
-        # TODO run async
-        self.detect_servers_thread_func()
+        discover_task = Gio.Task.new(None, None, None, None)
+        discover_task.run_in_thread(lambda *_args: self.discover())
 
-    def detect_servers_thread_func(self) -> None:
+    def discover(self) -> None:
+        logging.debug("Discovering servers")
         for name, address_info_list in psutil.net_if_addrs().items():
             for address_info in address_info_list:
                 if (
@@ -65,10 +71,16 @@ class ServerAddDialog(Adw.Window):
                     or address_info.broadcast is None
                 ):
                     continue
-                # TODO Run async
-                self.discover_servers(name, address_info.family, address_info.broadcast)
+                args = (name, address_info.family, address_info.broadcast)
+                self.__n_discovery_tasks += 1
+                subtask = Gio.Task.new(
+                    None, None, self.on_discovery_subtask_finished, None
+                )
+                subtask.run_in_thread(
+                    lambda *_args, args=args: self.discover_on_interface(*args)
+                )
 
-    def discover_servers(
+    def discover_on_interface(
         self,
         interface_name: str,
         address_family: socket.AddressFamily,
@@ -101,14 +113,19 @@ class ServerAddDialog(Adw.Window):
                 try:
                     (data, address_info) = sock.recvfrom(self.DISCOVERY_BUFSIZE)
                 except TimeoutError:
-                    logging.info("Server discovery receive timed out")
+                    logging.debug("Server discovery receive timed out")
                     return
                 msg = data.decode(encoding=self.DISCOVERY_ENCODING)
                 # TODO handle response properly
                 logging.debug("Response from %s: %s", address_info, msg)
                 elapsed = time.time() - start
 
-    def on_detected_server_added(self, _emitter, server: Server) -> None:
+    def on_discovery_subtask_finished(self, *_args):
+        self.__n_discovery_tasks_done += 1
+        if self.__n_discovery_tasks == self.__n_discovery_tasks_done:
+            self.spinner_revealer.set_reveal_child(False)
+
+    def on_discovered_server_added(self, _emitter, server: Server) -> None:
         row = ServerRow(server, "list-add-symbolic")
         row.connect("button-clicked", self.on_detected_row_button_clicked)
         self.detected_server_rows_group.add(row)
