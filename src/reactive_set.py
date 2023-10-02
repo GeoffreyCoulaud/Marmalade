@@ -8,6 +8,8 @@ class ReactiveSetEmitter(GObject.Object):
     Notifier object that emits signals when its associated set is updated
 
     Signals
+    - changed
+        - Emitted when an item is removed or added
     - item-added
         - Emitted when an item is added
         - Handlers receive the added item
@@ -16,13 +18,19 @@ class ReactiveSetEmitter(GObject.Object):
         - Handlers receive the removed item
     """
 
+    @GObject.Signal(name="changed")
+    def changed(self):
+        """Signal emitted when the set items change (added/removed)"""
+
     @GObject.Signal(name="item-added", arg_types=[object])
     def item_added(self, _item: Any):
         """Signal emitted when an item is added"""
+        self.emit("changed")
 
     @GObject.Signal(name="item-removed", arg_types=[object])
     def item_removed(self, _item: Any):
         """Signal emitted when an item is removed"""
+        self.emit("changed")
 
 
 def with_update_signals(original_method: Callable) -> Callable:

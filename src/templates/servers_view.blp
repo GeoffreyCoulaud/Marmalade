@@ -35,17 +35,35 @@ template $MarmaladeServersView : Adw.Bin {
         margin-start: 16;
         margin-end: 16;
         margin-bottom: 16;
-        Box {
-          orientation: vertical;
-          Label {
-            styles ["heading"]
-            halign: start;
-            margin-bottom: 8;
-            label: C_("servers list", "Servers");
+        Adw.ViewStack servers_view_stack {
+          Adw.ViewStackPage {
+            name: "no-server";
+            child: Adw.StatusPage {
+              title: _("No Servers Found");
+              description: _("Use the + button to discover or add servers");
+              icon-name: "network-server-symbolic";
+              child: Button status_add_button {
+                halign: center;
+                styles ["pill", "suggested-action"]
+                label: _("Add a server");
+              };
+            };
           }
-          ListBox server_rows_group {
-            styles ["boxed-list"]
-            selection-mode: none;
+          Adw.ViewStackPage {
+            name: "servers";
+            child: Box {
+              orientation: vertical;
+              Label {
+                styles ["heading"]
+                halign: start;
+                margin-bottom: 8;
+                label: C_("servers list", "Servers");
+              }
+              ListBox server_rows_group {
+                styles ["boxed-list"]
+                selection-mode: none;
+              }
+            };
           }
         }
       };

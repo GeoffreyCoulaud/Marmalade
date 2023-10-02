@@ -38,6 +38,8 @@ class ServersView(Adw.Bin):
     remove_selected_button_revealer = Gtk.Template.Child()
     server_rows_group = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
+    servers_view_stack = Gtk.Template.Child()
+    status_add_button = Gtk.Template.Child()
 
     window: Gtk.Window
     servers: ReactiveSet[Server]
@@ -56,9 +58,12 @@ class ServersView(Adw.Bin):
         self.servers = servers
         for server in self.servers:
             self.create_server_row(server)
+        self.servers.emitter.connect("changed", self.on_servers_changed)
         self.servers.emitter.connect("item-added", self.on_server_added)
         self.servers.emitter.connect("item-removed", self.on_server_removed)
+        self.on_servers_changed(None)
         self.add_button.connect("clicked", self.on_add_button_clicked)
+        self.status_add_button.connect("clicked", self.on_add_button_clicked)
         self.edit_button.connect("clicked", self.on_edit_button_clicked)
         self.remove_selected_button.connect(
             "clicked", self.on_remove_selected_button_clicked
@@ -73,6 +78,11 @@ class ServersView(Adw.Bin):
         row = self.server_rows_mapping[server]
         del self.server_rows_mapping[server]
         self.server_rows_group.remove(row)
+
+    def on_servers_changed(self, _emitter) -> None:
+        self.servers_view_stack.set_visible_child_name(
+            "no-server" if len(self.servers) == 0 else "servers"
+        )
 
     def on_server_added(self, _emitter, server: Server) -> None:
         self.create_server_row(server)
