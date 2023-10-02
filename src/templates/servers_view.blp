@@ -40,12 +40,12 @@ template $MarmaladeServersView : Adw.Bin {
             name: "no-server";
             child: Adw.StatusPage {
               title: _("No Servers Found");
-              description: _("Use the + button to discover or add servers");
+              description: _("Use the + button to discover or add a Jellyfin server");
               icon-name: "network-server-symbolic";
               child: Button status_add_button {
                 halign: center;
                 styles ["pill", "suggested-action"]
-                label: _("Add a server");
+                label: _("Add Jellyfin Server");
               };
             };
           }

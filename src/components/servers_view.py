@@ -56,12 +56,16 @@ class ServersView(Adw.Bin):
         self.servers_trash = set()
         self.window = window
         self.servers = servers
+
+        # Initial content
         for server in self.servers:
             self.create_server_row(server)
+        self.on_servers_changed(None)
+
+        # React to content change / user inputs
         self.servers.emitter.connect("changed", self.on_servers_changed)
         self.servers.emitter.connect("item-added", self.on_server_added)
         self.servers.emitter.connect("item-removed", self.on_server_removed)
-        self.on_servers_changed(None)
         self.add_button.connect("clicked", self.on_add_button_clicked)
         self.status_add_button.connect("clicked", self.on_add_button_clicked)
         self.edit_button.connect("clicked", self.on_edit_button_clicked)
