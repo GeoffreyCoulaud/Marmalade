@@ -13,6 +13,20 @@ class ServerRow(Adw.ActionRow):
     tick_revealer = Gtk.Template.Child()
     server: Server
 
+    __edit_mode: bool
+
+    @property
+    def edit_mode(self) -> bool:
+        return self.__edit_mode
+
+    @edit_mode.setter
+    def edit_mode(self, edit_mode: bool) -> None:
+        self.__edit_mode = edit_mode
+        if edit_mode:
+            self.tick.set_active(False)
+        self.tick_revealer.set_reveal_child(edit_mode)
+        self.button_revealer.set_reveal_child(not edit_mode)
+
     @property
     def is_selected(self):
         return self.tick.get_active()
@@ -32,6 +46,7 @@ class ServerRow(Adw.ActionRow):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
+        self.__edit_mode = False
         self.server = server
         self.parent_selection_change_connection = None
         self.button.set_icon_name(icon_name)
@@ -45,14 +60,6 @@ class ServerRow(Adw.ActionRow):
     def update_from_server(self) -> None:
         self.set_title(self.server.name)
         self.set_subtitle(self.server.address)
-
-    def toggle_button_visible(self) -> None:
-        is_revealed = self.button_revealer.get_reveal_child()
-        self.button_revealer.set_reveal_child(not is_revealed)
-
-    def toggle_tick_visible(self) -> None:
-        is_revealed = self.tick_revealer.get_reveal_child()
-        self.tick_revealer.set_reveal_child(not is_revealed)
 
     def on_tick_toggled(self, _tick) -> None:
         self.emit("selected-changed", self.is_selected)

@@ -29,24 +29,26 @@ template $MarmaladeServersView : Adw.Bin {
         }
       }
     }
-    content: Adw.Clamp {
-      margin-top: 16;
-      margin-start: 16;
-      margin-end: 16;
-      margin-bottom: 16;
-      Box {
-        orientation: vertical;
-        Label {
-          styles ["heading"]
-          halign: start;
-          margin-bottom: 8;
-          label: C_("servers list", "Servers");
+    content: Adw.ToastOverlay toast_overlay {
+      child: Adw.Clamp {
+        margin-top: 16;
+        margin-start: 16;
+        margin-end: 16;
+        margin-bottom: 16;
+        Box {
+          orientation: vertical;
+          Label {
+            styles ["heading"]
+            halign: start;
+            margin-bottom: 8;
+            label: C_("servers list", "Servers");
+          }
+          ListBox server_rows_group {
+            styles ["boxed-list"]
+            selection-mode: none;
+          }
         }
-        ListBox server_rows_group {
-          styles ["boxed-list"]
-          selection-mode: none;
-        }
-      }
+      };
     };
   }
 }

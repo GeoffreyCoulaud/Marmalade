@@ -37,9 +37,11 @@ class ServersView(Adw.Bin):
     remove_selected_button = Gtk.Template.Child()
     remove_selected_button_revealer = Gtk.Template.Child()
     server_rows_group = Gtk.Template.Child()
+    toast_overlay = Gtk.Template.Child()
 
     window: Gtk.Window
     servers: ReactiveSet[Server]
+    servers_trash: set[Server]
     server_rows_mapping: dict[Server, ServerRow]
     server_add_dialog: Optional[ServerAddDialog] = None
 
@@ -49,6 +51,7 @@ class ServersView(Adw.Bin):
         super().__init__(**kwargs)
         self.edit_mode = False
         self.server_rows_mapping = {}
+        self.servers_trash = set()
         self.window = window
         self.servers = servers
         for server in self.servers:
@@ -93,14 +96,35 @@ class ServersView(Adw.Bin):
         self.remove_selected_button_revealer.set_reveal_child(self.edit_mode)
         self.edit_button.set_css_classes(["raised"] if self.edit_mode else ["flat"])
         for server_row in self.server_rows_mapping.values():
-            server_row.toggle_button_visible()
-            server_row.toggle_tick_visible()
+            server_row.edit_mode = self.edit_mode
 
     def on_edit_button_clicked(self, _button) -> None:
         self.toggle_edit_mode()
 
+    def create_removed_toast(self) -> None:
+        n_removed = len(self.servers_trash)
+        toast = Adw.Toast()
+        toast.set_title(
+            (
+                _("%d server removed")  # Single server removed
+                if n_removed == 1
+                else _("%d servers removed")  # Multiple servers removed
+            )
+            % n_removed,
+        )
+        toast.set_button_label(_("Undo"))
+        toast.connect("button-clicked", self.on_removed_toast_undo)
+        self.toast_overlay.add_toast(toast)
+
     def on_remove_selected_button_clicked(self, _button) -> None:
         rows = self.server_rows_mapping.values()
         servers = [row.server for row in rows if row.is_selected]
+        self.servers_trash.clear()
+        self.servers_trash.update(servers)
         self.servers.difference_update(servers)
         self.toggle_edit_mode()
+        self.create_removed_toast()
+
+    def on_removed_toast_undo(self, _toast) -> None:
+        self.servers.update(self.servers_trash)
+        self.servers_trash.clear()
