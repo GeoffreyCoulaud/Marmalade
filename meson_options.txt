@@ -5,5 +5,5 @@ option(
     'release',
     'development',
   ],
-  value: 'release'
+  value: 'development'
 )

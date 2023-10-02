@@ -1,4 +1,17 @@
+import logging
+import time
+import psutil
 from gi.repository import Gtk, Adw, GObject
+import socket
+from socket import (
+    AF_INET,
+    AF_INET6,
+    SO_BINDTODEVICE,
+    SO_BROADCAST,
+    SOCK_DGRAM,
+    IPPROTO_UDP,
+    SOL_SOCKET,
+)
 from src import build_constants
 from src.components.server_row import ServerRow
 from src.reactive_set import ReactiveSet
@@ -35,16 +48,73 @@ class ServerAddDialog(Adw.Window):
             "item-added", self.on_detected_server_added
         )
         # TODO run async
-        self.detect_servers()
+        self.detect_servers_thread_func()
 
-    def detect_servers(self) -> None:
-        # TODO implement
-        self.detected_servers.update(
-            (
-                Server("An automatically detected server", "http://192.168.1.2:4000"),
-                Server("A local server", "http://192.168.1.3:8096"),
+    def detect_servers_thread_func(self) -> None:
+        for name, address_info_list in psutil.net_if_addrs().items():
+            for address_info in address_info_list:
+                if (
+                    address_info.family not in (AF_INET, AF_INET6)
+                    or address_info.broadcast is None
+                ):
+                    continue
+                # TODO Run async
+                self.detect_servers_on_interface(
+                    name, address_info.family, address_info.broadcast
+                )
+
+    def detect_servers_on_interface(
+        self,
+        interface_name: str,
+        address_family: socket.AddressFamily,
+        broadcast_address: str,
+    ) -> None:
+        MSG_ENCODING = "utf-8"
+        RECV_BUFFER_SIZE = 4096
+        JELLYFIN_DISCOVER_PORT = 7359
+        DISCOVER_SEND_TIMEOUT_SECONDS = 5
+        # TODO use 30 seconds when not testing
+        DISCOVER_RECV_TIMEOUT_SECONDS = 5
+
+        with socket.socket(
+            family=address_family, type=SOCK_DGRAM, proto=IPPROTO_UDP
+        ) as sock:
+            logging.debug(
+                "Discovering servers on %s (%s) %s",
+                interface_name,
+                address_family,
+                broadcast_address,
             )
-        )
+
+            # Prepare sockets
+            interface_name_buffer = bytearray(interface_name, encoding="utf-8")
+            sock.setsockopt(SOL_SOCKET, SO_BINDTODEVICE, interface_name_buffer)
+            sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
+            sock.settimeout(DISCOVER_SEND_TIMEOUT_SECONDS)
+
+            # Broadcast discovery message
+            msg = bytearray("Who is JellyfinServer?", encoding=MSG_ENCODING)
+            try:
+                sock.sendto(msg, (broadcast_address, JELLYFIN_DISCOVER_PORT))
+            except TimeoutError:
+                logging.error("Server discovery broadcast send timed out")
+                return
+
+            # Listen for responses
+            start = time.time()
+            elapsed = 0
+            logging.debug("Listening for server responses")
+            while elapsed < DISCOVER_RECV_TIMEOUT_SECONDS:
+                sock.settimeout(DISCOVER_RECV_TIMEOUT_SECONDS - elapsed)
+                try:
+                    (data, address_info) = sock.recvfrom(RECV_BUFFER_SIZE)
+                except TimeoutError:
+                    logging.info("Server discovery receive timed out")
+                    break
+                msg = data.decode(encoding=MSG_ENCODING)
+                # TODO handle response properly
+                logging.debug("Response from %s: %s", address_info, msg)
+                elapsed = time.time() - start
 
     def on_detected_server_added(self, _emitter, server: Server) -> None:
         row = ServerRow(server, "list-add-symbolic")
