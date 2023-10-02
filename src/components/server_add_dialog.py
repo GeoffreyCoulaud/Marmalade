@@ -22,6 +22,13 @@ from src.server import Server
 class ServerAddDialog(Adw.Window):
     __gtype_name__ = "MarmaladeServerAddDialog"
 
+    DISCOVERY_PORT: int = 7359
+    DISCOVERY_ENCODING: str = "utf-8"
+    DISCOVERY_SEND_TIMEOUT_SECONDS: float = 5.0
+    # TODO use 30 seconds when not testing
+    DISCOVERY_RECEIVE_TIMEOUT_SECONDS: float = 5.0
+    DISCOVERY_BUFSIZE: int = 4096
+
     cancel_button = Gtk.Template.Child()
     manual_add_button = Gtk.Template.Child()
     manual_add_editable = Gtk.Template.Child()
@@ -59,59 +66,44 @@ class ServerAddDialog(Adw.Window):
                 ):
                     continue
                 # TODO Run async
-                self.detect_servers_on_interface(
-                    name, address_info.family, address_info.broadcast
-                )
+                self.discover_servers(name, address_info.family, address_info.broadcast)
 
-    def detect_servers_on_interface(
+    def discover_servers(
         self,
         interface_name: str,
         address_family: socket.AddressFamily,
         broadcast_address: str,
     ) -> None:
-        MSG_ENCODING = "utf-8"
-        RECV_BUFFER_SIZE = 4096
-        JELLYFIN_DISCOVER_PORT = 7359
-        DISCOVER_SEND_TIMEOUT_SECONDS = 5
-        # TODO use 30 seconds when not testing
-        DISCOVER_RECV_TIMEOUT_SECONDS = 5
-
         with socket.socket(
             family=address_family, type=SOCK_DGRAM, proto=IPPROTO_UDP
         ) as sock:
+            # Broadcast
             logging.debug(
-                "Discovering servers on %s (%s) %s",
-                interface_name,
-                address_family,
-                broadcast_address,
+                "Discovering servers on %s %d", broadcast_address, self.DISCOVERY_PORT
             )
-
-            # Prepare sockets
             interface_name_buffer = bytearray(interface_name, encoding="utf-8")
             sock.setsockopt(SOL_SOCKET, SO_BINDTODEVICE, interface_name_buffer)
             sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-            sock.settimeout(DISCOVER_SEND_TIMEOUT_SECONDS)
-
-            # Broadcast discovery message
-            msg = bytearray("Who is JellyfinServer?", encoding=MSG_ENCODING)
+            sock.settimeout(self.DISCOVERY_SEND_TIMEOUT_SECONDS)
+            msg = bytearray("Who is JellyfinServer?", encoding=self.DISCOVERY_ENCODING)
             try:
-                sock.sendto(msg, (broadcast_address, JELLYFIN_DISCOVER_PORT))
+                sock.sendto(msg, (broadcast_address, self.DISCOVERY_PORT))
             except TimeoutError:
                 logging.error("Server discovery broadcast send timed out")
                 return
 
             # Listen for responses
+            logging.debug("Listening for server responses")
             start = time.time()
             elapsed = 0
-            logging.debug("Listening for server responses")
-            while elapsed < DISCOVER_RECV_TIMEOUT_SECONDS:
-                sock.settimeout(DISCOVER_RECV_TIMEOUT_SECONDS - elapsed)
+            while elapsed < self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS:
+                sock.settimeout(self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS - elapsed)
                 try:
-                    (data, address_info) = sock.recvfrom(RECV_BUFFER_SIZE)
+                    (data, address_info) = sock.recvfrom(self.DISCOVERY_BUFSIZE)
                 except TimeoutError:
                     logging.info("Server discovery receive timed out")
-                    break
-                msg = data.decode(encoding=MSG_ENCODING)
+                    return
+                msg = data.decode(encoding=self.DISCOVERY_ENCODING)
                 # TODO handle response properly
                 logging.debug("Response from %s: %s", address_info, msg)
                 elapsed = time.time() - start
