@@ -12,11 +12,11 @@ from socket import (
     SOL_SOCKET,
 )
 
-import jellyfin_api_client.client as jellyfin_client
 import psutil
 from gi.repository import Adw, Gio, GObject, Gtk
 from httpx import InvalidURL, RequestError
 from jellyfin_api_client.api.system import get_public_system_info
+from jellyfin_api_client.client import Client as JfClient
 from jellyfin_api_client.models.public_system_info import PublicSystemInfo
 
 from src import build_constants
@@ -166,7 +166,7 @@ class ServerAddDialog(Adw.Window):
     def query_server_address(self, address: str) -> Server:
         """Query a server address to check its validity and get its name"""
         try:
-            client = jellyfin_client.Client(address)
+            client = JfClient(address)
             info: PublicSystemInfo = get_public_system_info.sync(client=client)
         except (RequestError, InvalidURL) as error:
             raise ValueError(_("Invalid server address")) from error
