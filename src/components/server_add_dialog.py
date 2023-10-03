@@ -30,8 +30,7 @@ class ServerAddDialog(Adw.Window):
     DISCOVERY_PORT: int = 7359
     DISCOVERY_ENCODING: str = "utf-8"
     DISCOVERY_SEND_TIMEOUT_SECONDS: float = 5.0
-    # TODO use 30 seconds when not testing
-    DISCOVERY_RECEIVE_TIMEOUT_SECONDS: float = 5.0
+    DISCOVERY_RECEIVE_TIMEOUT_SECONDS: float = 30.0
     DISCOVERY_BUFSIZE: int = 4096
 
     cancel_button = Gtk.Template.Child()
@@ -54,7 +53,6 @@ class ServerAddDialog(Adw.Window):
     @GObject.Signal(name="server-picked", arg_types=[object])
     def server_picked(self, _server: Server):
         """Signal emitted when a server is picked"""
-        # FIXME cannot emit with GObject.Object descendant in the args it seems ???
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
