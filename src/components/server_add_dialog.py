@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 import jellyfin_api_client.client as jellyfin_client
@@ -42,6 +43,7 @@ class ServerAddDialog(Adw.Window):
     toast_overlay = Gtk.Template.Child()
 
     discovered_servers: ReactiveSet[Server]
+    __tasks_cancellable: Gio.Cancellable
     __n_discovery_tasks: int
     __n_discovery_tasks_done: int
 
@@ -58,14 +60,19 @@ class ServerAddDialog(Adw.Window):
         super().__init__(**kwargs)
         self.cancel_button.connect("clicked", self.on_cancel_button_clicked)
         self.manual_add_button.connect("clicked", self.on_manual_button_clicked)
+        self.__tasks_cancellable = Gio.Cancellable.new()
         self.__n_discovery_tasks = 0
         self.__n_discovery_tasks_done = 0
         self.discovered_servers = ReactiveSet()
         self.discovered_servers.emitter.connect(
             "item-added", self.on_discovered_server_added
         )
-        discover_task = Gio.Task.new(None, None, None, None)
+        discover_task = Gio.Task.new(None, self.__tasks_cancellable, None, None)
         discover_task.run_in_thread(lambda *_args: self.discover())
+
+    def close(self) -> None:
+        self.__tasks_cancellable.cancel()
+        super().close()
 
     def discover(self) -> None:
         logging.debug("Discovering servers")
@@ -79,7 +86,10 @@ class ServerAddDialog(Adw.Window):
                 args = (name, address_info.family, address_info.broadcast)
                 self.__n_discovery_tasks += 1
                 subtask = Gio.Task.new(
-                    None, None, self.on_discovery_subtask_finished, None
+                    None,
+                    self.__tasks_cancellable,
+                    self.on_discovery_subtask_finished,
+                    None,
                 )
                 subtask.run_in_thread(
                     lambda *_args, args=args: self.discover_on_interface(*args)
@@ -91,20 +101,27 @@ class ServerAddDialog(Adw.Window):
         address_family: socket.AddressFamily,
         broadcast_address: str,
     ) -> None:
+        """Discover servers by UDP broadcasting on the given interface information"""
+
         with socket.socket(
             family=address_family, type=SOCK_DGRAM, proto=IPPROTO_UDP
         ) as sock:
             # Broadcast
             logging.debug(
-                "Discovering servers on %s %d", broadcast_address, self.DISCOVERY_PORT
+                "Discovering servers on %s (%s) %d",
+                broadcast_address,
+                address_family.name,
+                self.DISCOVERY_PORT,
             )
             interface_name_buffer = bytearray(interface_name, encoding="utf-8")
             sock.setsockopt(SOL_SOCKET, SO_BINDTODEVICE, interface_name_buffer)
             sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
             sock.settimeout(self.DISCOVERY_SEND_TIMEOUT_SECONDS)
-            msg = bytearray("Who is JellyfinServer?", encoding=self.DISCOVERY_ENCODING)
+            message = bytearray(
+                "Who is JellyfinServer?", encoding=self.DISCOVERY_ENCODING
+            )
             try:
-                sock.sendto(msg, (broadcast_address, self.DISCOVERY_PORT))
+                sock.sendto(message, (broadcast_address, self.DISCOVERY_PORT))
             except TimeoutError:
                 logging.error("Server discovery broadcast send timed out")
                 return
@@ -116,13 +133,20 @@ class ServerAddDialog(Adw.Window):
             while elapsed < self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS:
                 sock.settimeout(self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS - elapsed)
                 try:
-                    (data, address_info) = sock.recvfrom(self.DISCOVERY_BUFSIZE)
+                    (response, _addr_info) = sock.recvfrom(self.DISCOVERY_BUFSIZE)
                 except TimeoutError:
                     logging.debug("Server discovery receive timed out")
                     return
-                msg = data.decode(encoding=self.DISCOVERY_ENCODING)
-                # TODO handle response properly
-                logging.debug("Response from %s: %s", address_info, msg)
+                message = response.decode(encoding=self.DISCOVERY_ENCODING)
+                try:
+                    server_info = json.loads(message)
+                    server = Server(server_info["Name"], server_info["Address"])
+                except (json.JSONDecodeError, KeyError):
+                    # Response isn't JSON or contains invalid data
+                    continue
+                else:
+                    logging.debug("Discovered %s", str(server))
+                    self.discovered_servers.add(server)
                 elapsed = time.time() - start
 
     def on_discovery_subtask_finished(self, *_args):
