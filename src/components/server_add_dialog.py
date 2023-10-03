@@ -1,5 +1,9 @@
 import logging
 import time
+import jellyfin_api_client.client as jellyfin_client
+from jellyfin_api_client.api.system import get_public_system_info
+from jellyfin_api_client.models.public_system_info import PublicSystemInfo
+from httpx import RequestError, InvalidURL
 import psutil
 from gi.repository import Gtk, Adw, GObject, Gio
 import socket
@@ -35,6 +39,7 @@ class ServerAddDialog(Adw.Window):
     detected_server_rows_group = Gtk.Template.Child()
     spinner = Gtk.Template.Child()
     spinner_revealer = Gtk.Template.Child()
+    toast_overlay = Gtk.Template.Child()
 
     discovered_servers: ReactiveSet[Server]
     __n_discovery_tasks: int
@@ -134,14 +139,30 @@ class ServerAddDialog(Adw.Window):
         self.emit("cancelled")
         self.close()
 
+    def query_server_address(self, address: str) -> Server:
+        """Query a server address to check its validity and get its name"""
+        try:
+            client = jellyfin_client.Client(address)
+            info: PublicSystemInfo = get_public_system_info.sync(client=client)
+        except (RequestError, InvalidURL) as error:
+            raise ValueError(_("Invalid server address")) from error
+        if info is None:
+            raise ValueError(_("Server has no public info"))
+        return Server(info.server_name, info.local_address)
+
     def on_manual_button_clicked(self, _button: Gtk.Widget) -> None:
         address = self.manual_add_editable.get_text()
-        # TODO test the address (notify failure visually)
-        # TODO get the server name
-        name = "TODO: Check server address + query its name"
-        server = Server(name, address)
-        self.emit("server-picked", server)
-        self.close()
+        try:
+            server = self.query_server_address(address)
+        except ValueError as error:
+            logging.error('Invalid server address "%s"', address, exc_info=error)
+            toast = Adw.Toast()
+            toast.set_priority(Adw.ToastPriority.HIGH)
+            toast.set_title(error.args[0])
+            self.toast_overlay.add_toast(toast)
+        else:
+            self.emit("server-picked", server)
+            self.close()
 
     def on_detected_row_button_clicked(self, server_row: ServerRow) -> None:
         self.emit("server-picked", server_row.server)
