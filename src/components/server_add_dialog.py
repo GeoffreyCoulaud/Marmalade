@@ -23,6 +23,7 @@ from src import build_constants
 from src.components.server_row import ServerRow
 from src.reactive_set import ReactiveSet
 from src.server import Server
+from src.task import Task
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_add_dialog.ui")
@@ -67,8 +68,11 @@ class ServerAddDialog(Adw.Window):
         self.discovered_servers.emitter.connect(
             "item-added", self.on_discovered_server_added
         )
-        discover_task = Gio.Task.new(None, self.__tasks_cancellable, None, None)
-        discover_task.run_in_thread(lambda *_args: self.discover())
+        discover_task = Task(
+            main=self.discover,
+            cancellable=self.__tasks_cancellable,
+        )
+        discover_task.run()
 
     def close(self) -> None:
         self.__tasks_cancellable.cancel()
@@ -83,17 +87,14 @@ class ServerAddDialog(Adw.Window):
                     or address_info.broadcast is None
                 ):
                     continue
-                args = (name, address_info.family, address_info.broadcast)
                 self.__n_discovery_tasks += 1
-                subtask = Gio.Task.new(
-                    None,
-                    self.__tasks_cancellable,
-                    self.on_discovery_subtask_finished,
-                    None,
+                subtask = Task(
+                    main=self.discover_on_interface,
+                    main_args=(name, address_info.family, address_info.broadcast),
+                    callback=self.on_discovery_subtask_finished,
+                    cancellable=self.__tasks_cancellable,
                 )
-                subtask.run_in_thread(
-                    lambda *_args, args=args: self.discover_on_interface(*args)
-                )
+                subtask.run()
 
     def discover_on_interface(
         self,
@@ -149,7 +150,8 @@ class ServerAddDialog(Adw.Window):
                     self.discovered_servers.add(server)
                 elapsed = time.time() - start
 
-    def on_discovery_subtask_finished(self, *_args):
+    # pylint: disable=unused-argument
+    def on_discovery_subtask_finished(self, *, result):
         self.__n_discovery_tasks_done += 1
         if self.__n_discovery_tasks == self.__n_discovery_tasks_done:
             self.spinner_revealer.set_reveal_child(False)
@@ -163,32 +165,43 @@ class ServerAddDialog(Adw.Window):
         self.emit("cancelled")
         self.close()
 
-    def query_server_address(self, address: str) -> Server:
+    def on_detected_row_button_clicked(self, server_row: ServerRow) -> None:
+        self.emit("server-picked", server_row.server)
+        self.close()
+
+    def query_public_server_info(self, address: str) -> PublicSystemInfo:
         """Query a server address to check its validity and get its name"""
         try:
             client = JfClient(address)
-            # TODO make that async
             info: PublicSystemInfo = get_public_system_info.sync(client=client)
         except (RequestError, InvalidURL) as error:
             raise ValueError(_("Invalid server address")) from error
         if info is None:
             raise ValueError(_("Server has no public info"))
-        return Server(info.server_name, info.local_address)
+        return info
 
     def on_manual_button_clicked(self, _button: Gtk.Widget) -> None:
-        address = self.manual_add_editable.get_text()
-        try:
-            server = self.query_server_address(address)
-        except ValueError as error:
+        """Check server address then react to it"""
+
+        def on_query_error(address: str, *, error: ValueError):
             logging.error('Invalid server address "%s"', address, exc_info=error)
             toast = Adw.Toast()
             toast.set_priority(Adw.ToastPriority.HIGH)
             toast.set_title(error.args[0])
             self.toast_overlay.add_toast(toast)
-        else:
+
+        def on_query_done(*, result: PublicSystemInfo):
+            server = Server(result.server_name, result.local_address)
             self.emit("server-picked", server)
             self.close()
 
-    def on_detected_row_button_clicked(self, server_row: ServerRow) -> None:
-        self.emit("server-picked", server_row.server)
-        self.close()
+        address = self.manual_add_editable.get_text()
+        task = Task(
+            main=self.query_public_server_info,
+            main_args=(address,),
+            callback=on_query_done,
+            error_callback=on_query_error,
+            error_callback_args=(address,),
+            cancellable=self.__tasks_cancellable,
+        )
+        task.run()
