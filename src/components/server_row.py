@@ -16,6 +16,14 @@ class ServerRow(Adw.ActionRow):
 
     __edit_mode: bool
 
+    @GObject.Signal(name="button-clicked")
+    def button_clicked(self):
+        """Signal emitted when the row button is clicked"""
+
+    @GObject.Signal(name="selected-changed", arg_types=[bool])
+    def selected_changed(self, _is_selected: bool):
+        """Signal emitted when the tick is check or unchecked"""
+
     @property
     def edit_mode(self) -> bool:
         return self.__edit_mode
@@ -31,14 +39,6 @@ class ServerRow(Adw.ActionRow):
     @property
     def is_selected(self):
         return self.tick.get_active()
-
-    @GObject.Signal(name="button-clicked")
-    def button_clicked(self):
-        """Signal emitted when the row button is clicked"""
-
-    @GObject.Signal(name="selected-changed", arg_types=[bool])
-    def selected_changed(self, _is_selected: bool):
-        """Signal emitted when the tick is check or unchecked"""
 
     def __init__(
         self,

@@ -19,7 +19,7 @@
 
 from typing import Optional
 
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
 from src.components.server_add_dialog import ServerAddDialog
@@ -50,6 +50,10 @@ class ServersView(Adw.Bin):
 
     edit_mode: bool
 
+    @GObject.Signal(name="server-connect-request", arg_types=[object])
+    def server_connect_request(self, _server: Server):
+        """Signal emitted when a server's connect button is clicked"""
+
     def __init__(self, window: Gtk.Window, servers: ReactiveSet[Server], **kwargs):
         super().__init__(**kwargs)
         self.edit_mode = False
@@ -74,8 +78,12 @@ class ServersView(Adw.Bin):
             "clicked", self.on_remove_selected_button_clicked
         )
 
+    def on_server_row_button_clicked(self, row: ServerRow) -> None:
+        self.emit("server-connect-request", row.server)
+
     def create_server_row(self, server: Server) -> None:
         row = ServerRow(server)
+        row.connect("button-clicked", self.on_server_row_button_clicked)
         self.server_rows_mapping[server] = row
         self.server_rows_group.append(row)
 

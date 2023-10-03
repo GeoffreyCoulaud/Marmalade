@@ -120,11 +120,16 @@ class MarmaladeApplication(Adw.Application):
     def create_window(self) -> MarmaladeWindow:
         window = MarmaladeWindow(application=self)
         servers_view = ServersView(window, self.servers)
+        servers_view.connect("server-connect-request", self.on_server_connect_request)
         server_home_view = ServerHomeView(window)
         window.add_view(servers_view, "servers")
         window.add_view(server_home_view, "server_home")
         window.set_visible_view("servers")
         return window
+
+    def on_server_connect_request(self, _view, server: Server) -> None:
+        logging.info("Requested to connect to %s", server)
+        # TODO open connect window
 
     def do_activate(self):
         win = self.props.active_window
