@@ -167,6 +167,7 @@ class ServerAddDialog(Adw.Window):
         """Query a server address to check its validity and get its name"""
         try:
             client = JfClient(address)
+            # TODO make that async
             info: PublicSystemInfo = get_public_system_info.sync(client=client)
         except (RequestError, InvalidURL) as error:
             raise ValueError(_("Invalid server address")) from error
