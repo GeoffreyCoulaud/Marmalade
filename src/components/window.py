@@ -17,12 +17,9 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Adw
-from gi.repository import Gtk
+from gi.repository import Adw, Gtk
 
 from src import build_constants
-from src.components.servers_view import ServersView
-from src.components.server_home_view import ServerHomeView
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/window.ui")
@@ -30,9 +27,6 @@ class MarmaladeWindow(Adw.ApplicationWindow):
     __gtype_name__ = "MarmaladeWindow"
 
     views_stack = Gtk.Template.Child()
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
 
     def add_view(self, view: Gtk.Widget, name: str) -> None:
         self.views_stack.add_named(view, name)

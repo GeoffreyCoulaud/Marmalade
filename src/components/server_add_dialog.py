@@ -1,22 +1,24 @@
 import json
 import logging
-import time
-import jellyfin_api_client.client as jellyfin_client
-from jellyfin_api_client.api.system import get_public_system_info
-from jellyfin_api_client.models.public_system_info import PublicSystemInfo
-from httpx import RequestError, InvalidURL
-import psutil
-from gi.repository import Gtk, Adw, GObject, Gio
 import socket
+import time
 from socket import (
     AF_INET,
     AF_INET6,
+    IPPROTO_UDP,
     SO_BINDTODEVICE,
     SO_BROADCAST,
     SOCK_DGRAM,
-    IPPROTO_UDP,
     SOL_SOCKET,
 )
+
+import jellyfin_api_client.client as jellyfin_client
+import psutil
+from gi.repository import Adw, Gio, GObject, Gtk
+from httpx import InvalidURL, RequestError
+from jellyfin_api_client.api.system import get_public_system_info
+from jellyfin_api_client.models.public_system_info import PublicSystemInfo
+
 from src import build_constants
 from src.components.server_row import ServerRow
 from src.reactive_set import ReactiveSet
@@ -96,7 +98,7 @@ class ServerAddDialog(Adw.Window):
     def discover_on_interface(
         self,
         interface_name: str,
-        address_family: socket.AddressFamily,
+        address_family: socket.AddressFamily,  # pylint: disable=no-member
         broadcast_address: str,
     ) -> None:
         """Discover servers by UDP broadcasting on the given interface information"""

@@ -1,6 +1,7 @@
-from gi.repository import Adw, Gtk, GObject
-from src.server import Server
+from gi.repository import Adw, GObject, Gtk
+
 from src import build_constants
+from src.server import Server
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_row.ui")

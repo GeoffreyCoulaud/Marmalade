@@ -17,22 +17,22 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
+import logging
+import sys
 from enum import IntEnum, auto
 from pathlib import Path
-import sys
-import json
 from typing import Callable
-import logging
 
-from gi.repository import Gio, Adw, GLib
+from gi.repository import Adw, Gio, GLib
 
-from src import build_constants
+from src import build_constants  # pylint: disable=no-name-in-module
 from src.components.server_home_view import ServerHomeView
 from src.components.servers_view import ServersView
+from src.components.window import MarmaladeWindow
+from src.logging.setup import log_system_info, setup_logging
 from src.reactive_set import ReactiveSet
 from src.server import Server
-from src.components.window import MarmaladeWindow
-from src.logging.setup import setup_logging, log_system_info
 
 
 class AppState(IntEnum):
@@ -132,7 +132,7 @@ class MarmaladeApplication(Adw.Application):
             win = self.create_window()
         win.present()
 
-    def on_about_action(self, widget, _):
+    def on_about_action(self, _widget, _):
         """Callback handling the about action"""
         about = Adw.AboutWindow(
             transient_for=self.props.active_window,
@@ -154,7 +154,7 @@ class MarmaladeApplication(Adw.Application):
             self.set_accels_for_action(f"app.{name}", shortcuts)
 
 
-def main(version):
+def main(_version):
     """The application's entry point."""
     app = MarmaladeApplication()
     return app.run(sys.argv)

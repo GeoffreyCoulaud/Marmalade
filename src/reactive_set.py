@@ -1,5 +1,6 @@
 from functools import wraps
 from typing import Any, Callable, Iterable
+
 from gi.repository import GObject
 
 

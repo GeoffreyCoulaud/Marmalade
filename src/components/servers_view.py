@@ -18,7 +18,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from typing import Optional
-from gi.repository import Gtk, Adw
+
+from gi.repository import Adw, Gtk
 
 from src import build_constants
 from src.components.server_add_dialog import ServerAddDialog
