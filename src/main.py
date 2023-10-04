@@ -131,6 +131,7 @@ class MarmaladeApplication(Adw.Application):
             dialog = ServerAuthDialog(server)
             dialog.connect("authenticated", self.on_server_authenticated)
             dialog.set_transient_for(self.window)
+            dialog.set_modal(True)
             dialog.present()
 
         def on_valid(server: Server, *, result: str) -> None:

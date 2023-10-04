@@ -141,7 +141,11 @@ class ServerAddDialog(Adw.Window):
                 message = response.decode(encoding=self.DISCOVERY_ENCODING)
                 try:
                     server_info = json.loads(message)
-                    server = Server(server_info["Name"], server_info["Address"])
+                    server = Server(
+                        name=server_info["Name"],
+                        address=server_info["Address"],
+                        server_id=server_info["Id"],
+                    )
                 except (json.JSONDecodeError, KeyError):
                     # Response isn't JSON or contains invalid data
                     continue
@@ -191,7 +195,11 @@ class ServerAddDialog(Adw.Window):
             self.toast_overlay.add_toast(toast)
 
         def on_query_done(*, result: PublicSystemInfo):
-            server = Server(result.server_name, result.local_address)
+            server = Server(
+                name=result.server_name,
+                address=result.local_address,
+                server_id=result.id,
+            )
             self.emit("server-picked", server)
             self.close()
 

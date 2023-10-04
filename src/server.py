@@ -6,4 +6,12 @@ class Server(NamedTuple):
 
     name: str
     address: str
-    # TODO add sever_id (use with address for __eq__)
+    server_id: str
+
+    def __eq__(self, other: "Server") -> bool:
+        if not isinstance(other, Server):
+            return False
+        return (self.address == other.address) and (self.server_id == other.server_id)
+
+    def __hash__(self) -> int:
+        return hash((self.address, self.server_id))
