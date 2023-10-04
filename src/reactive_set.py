@@ -1,8 +1,9 @@
 from functools import wraps
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, TypeVar
 
 from gi.repository import GObject
 
+_T = TypeVar("_T")
 
 class ReactiveSetEmitter(GObject.Object):
     """
@@ -49,7 +50,7 @@ def with_update_signals(original_method: Callable) -> Callable:
     return new_method
 
 
-class ReactiveSet(set):
+class ReactiveSet(set[_T]):
     """
     Set that emits signals through its emitter when its contents changes
     """

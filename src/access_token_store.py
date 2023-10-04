@@ -3,7 +3,10 @@ from src.server import Server
 from src.store import FileStore
 
 
-class AccessTokenStore(FileStore, BookmarkedDefaultDict[Server, BookmarkedSet[str]]):
+class AccessTokenStore(
+    FileStore[list[tuple[Server, list[str]]]],
+    BookmarkedDefaultDict[Server, BookmarkedSet[str]],
+):
     """Class in charge of keeping track of the server access tokens"""
 
     def __init__(self, *args, **kwargs) -> None:
@@ -13,10 +16,10 @@ class AccessTokenStore(FileStore, BookmarkedDefaultDict[Server, BookmarkedSet[st
     def add_token(self, server: Server, token: str):
         self[server].add(token)
 
-    def load(self):
-        print("Loading access tokens from disk isn't implemented")
-        # TODO implement loading access tokens
+    def dump_to_json_compatible(self):
+        return [(server, list(tokens_set)) for server, tokens_set in self.items()]
 
-    def save(self):
-        print("Saving acces stokens to disk isn't implemented")
-        # TODO implement saving access tokens
+    def load_from_json_compatible(self, json_compatible_data):
+        for server, tokens_list in json_compatible_data:
+            for token in tokens_list:
+                self.add_token(server, token)

@@ -86,6 +86,7 @@ class MarmaladeApplication(Adw.Application):
         self.init_app_dirs()
         self.init_logging()
         self.servers_store.load()
+        self.access_token_store.load()
         self.state = AppState.LOADED
 
     def init_app_dirs(self) -> None:
