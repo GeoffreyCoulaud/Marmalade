@@ -1,5 +1,5 @@
 blueprints = custom_target('blueprints',
-  # TODO find a way to deduplicate this with the gresource
+  # TODO find a way to deduplicate this and the gresource
   input: files(
     'templates/window.blp',
     'templates/help-overlay.blp',
@@ -7,6 +7,7 @@ blueprints = custom_target('blueprints',
     'templates/server_home_view.blp',
     'templates/server_add_dialog.blp',
     'templates/server_row.blp',
+    'templates/server_auth_dialog.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
@@ -43,6 +44,9 @@ install_data(
     'server.py',
     'reactive_set.py',
     'task.py',
+    'store.py',
+    'server_store.py',
+    'access_token_store.py',
     configure_file(
       input: 'build_constants.py.in',
       output: 'build_constants.py',

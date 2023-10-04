@@ -17,8 +17,6 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
-
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
@@ -43,16 +41,15 @@ class ServersView(Adw.Bin):
     status_add_button = Gtk.Template.Child()
 
     window: Gtk.Window
+    server_rows_mapping: dict[Server, ServerRow]
     servers: ReactiveSet[Server]
     servers_trash: set[Server]
-    server_rows_mapping: dict[Server, ServerRow]
-    server_add_dialog: Optional[ServerAddDialog] = None
 
     edit_mode: bool
 
     @GObject.Signal(name="server-connect-request", arg_types=[object])
     def server_connect_request(self, _server: Server):
-        """Signal emitted when a server's connect button is clicked"""
+        """Signal emitted when a server is connected"""
 
     def __init__(self, window: Gtk.Window, servers: ReactiveSet[Server], **kwargs):
         super().__init__(**kwargs)
@@ -78,12 +75,9 @@ class ServersView(Adw.Bin):
             "clicked", self.on_remove_selected_button_clicked
         )
 
-    def on_server_row_button_clicked(self, row: ServerRow) -> None:
-        self.emit("server-connect-request", row.server)
-
     def create_server_row(self, server: Server) -> None:
         row = ServerRow(server)
-        row.connect("button-clicked", self.on_server_row_button_clicked)
+        row.connect("button-clicked", self.on_server_connect_request)
         self.server_rows_mapping[server] = row
         self.server_rows_group.append(row)
 
@@ -105,7 +99,6 @@ class ServersView(Adw.Bin):
 
     def on_add_button_clicked(self, _button) -> None:
         dialog = ServerAddDialog()
-        self.server_add_dialog = dialog
         dialog.connect("server-picked", self.on_add_server_dialog_picked)
         dialog.set_transient_for(self.window)
         dialog.present()
@@ -151,3 +144,7 @@ class ServersView(Adw.Bin):
     def on_removed_toast_undo(self, _toast) -> None:
         self.servers.update(self.servers_trash)
         self.servers_trash.clear()
+
+    def on_server_connect_request(self, row: ServerRow) -> None:
+        server = row.server
+        self.emit("server-connect-request", server)

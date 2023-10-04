@@ -56,8 +56,8 @@ class ReactiveSet(set):
 
     emitter: ReactiveSetEmitter
 
-    def __init__(self, *items) -> None:
-        super().__init__(*items)
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
         self.emitter = ReactiveSetEmitter()
 
     def add(self, value: Any) -> None:

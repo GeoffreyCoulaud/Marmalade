@@ -6,3 +6,4 @@ class Server(NamedTuple):
 
     name: str
     address: str
+    # TODO add sever_id (use with address for __eq__)

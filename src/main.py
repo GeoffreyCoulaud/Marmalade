@@ -17,22 +17,27 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import json
 import logging
 import sys
 from enum import IntEnum, auto
+from http import HTTPStatus
 from pathlib import Path
 from typing import Callable
 
 from gi.repository import Adw, Gio, GLib
+from jellyfin_api_client.api.user import get_current_user
+from jellyfin_api_client.client import AuthenticatedClient as JfAuthClient
 
-from src import build_constants  # pylint: disable=no-name-in-module
-from src.components.server_home_view import ServerHomeView
+# pylint: disable=no-name-in-module
+from src import build_constants
+from src.access_token_store import AccessTokenStore
+from src.components.server_auth_dialog import ServerAuthDialog
 from src.components.servers_view import ServersView
 from src.components.window import MarmaladeWindow
 from src.logging.setup import log_system_info, setup_logging
-from src.reactive_set import ReactiveSet
 from src.server import Server
+from src.server_store import ServerStore
+from src.task import Task
 
 
 class AppState(IntEnum):
@@ -43,15 +48,17 @@ class AppState(IntEnum):
 class MarmaladeApplication(Adw.Application):
     """The main application singleton class."""
 
-    state: AppState
-
     app_data_dir: Path
     app_cache_dir: Path
     app_config_dir: Path
     servers_file: Path
     log_file: Path
 
-    servers: ReactiveSet[Server]
+    state: AppState
+    servers_store: ServerStore
+    access_token_store: AccessTokenStore
+
+    window: MarmaladeWindow
 
     def __init__(self):
         super().__init__(
@@ -59,24 +66,26 @@ class MarmaladeApplication(Adw.Application):
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
         self.state = AppState.CREATED
+        self.window = None
 
         self.app_data_dir = Path(GLib.get_user_data_dir()) / "marmalade"
         self.app_cache_dir = Path(GLib.get_user_cache_dir()) / "marmalade"
         self.app_config_dir = Path(GLib.get_user_config_dir()) / "marmalade"
-        self.servers_file = self.app_config_dir / "servers.json"
         self.log_file = self.app_cache_dir / "marmalade.log"
 
-        self.servers = ReactiveSet()
-        self.servers.emitter.connect("item-added", self.on_servers_changed)
-        self.servers.emitter.connect("item-removed", self.on_servers_changed)
+        servers_file_path = self.app_config_dir / "servers.json"
+        self.servers_store = ServerStore(file_path=servers_file_path)
+        self.servers_store.emitter.connect("changed", self.on_servers_changed)
+
+        access_token_file = self.app_config_dir / "access_tokens.json"
+        self.access_token_store = AccessTokenStore(file_path=access_token_file)
 
         self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
         self.create_action("about", self.on_about_action)
 
         self.init_app_dirs()
         self.init_logging()
-        self.load_servers()
-
+        self.servers_store.load()
         self.state = AppState.LOADED
 
     def init_app_dirs(self) -> None:
@@ -89,53 +98,70 @@ class MarmaladeApplication(Adw.Application):
         setup_logging(self.log_file)
         log_system_info()
 
-    def save_servers(self) -> None:
-        """Save servers to disk"""
-        servers_dicts = [server._asdict() for server in self.servers]
-        try:
-            with open(self.servers_file, "w", encoding="utf-8") as file:
-                json.dump(servers_dicts, file, indent=4)
-        except OSError as error:
-            logging.error("Couldn't save servers to disk", exc_info=error)
-
-    def load_servers(self) -> None:
-        """Load servers from disk"""
-        try:
-            with open(self.servers_file, "r", encoding="utf-8") as file:
-                server_dicts = json.load(file)
-        except FileNotFoundError:
-            self.servers_file.touch()
-            logging.info("Created servers file")
-        except (OSError, json.JSONDecodeError) as error:
-            logging.error("Couldn't load servers from disk", exc_info=error)
-        else:
-            servers = (Server(**server_dict) for server_dict in server_dicts)
-            self.servers.update(servers)
-
-    def on_servers_changed(self, _emitter, _server) -> None:
+    def on_servers_changed(self, _emitter) -> None:
         if self.state == AppState.CREATED:
             return
-        self.save_servers()
+        self.servers_store.save()
 
-    def create_window(self) -> MarmaladeWindow:
-        window = MarmaladeWindow(application=self)
-        servers_view = ServersView(window, self.servers)
-        servers_view.connect("server-connect-request", self.on_server_connect_request)
-        server_home_view = ServerHomeView(window)
-        window.add_view(servers_view, "servers")
-        window.add_view(server_home_view, "server_home")
-        window.set_visible_view("servers")
-        return window
+    def on_server_connect_request(self, _emitter, server: Server) -> None:
+        """Handle a request to connect to a server"""
 
-    def on_server_connect_request(self, _view, server: Server) -> None:
-        logging.info("Requested to connect to %s", server)
-        # TODO open connect window
+        def query_bookmarked_token(server: Server) -> str:
+            # Get a token from the store (may raise KeyError)
+            tokens_set = self.access_token_store[server]
+            token = tokens_set.get_bookmark()
+            # Test the token with the server
+            client = JfAuthClient(server.address, token)
+            response = get_current_user.sync_detailed(client=client)
+            if response.status_code in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
+                tokens_set.unset_bookmark()
+                tokens_set.discard(token)
+                logging.warning("Removed invalid stored token: %s", token)
+                raise ValueError("Invalid token")
+            return token
+
+        def on_error(server: Server, *, error: Exception) -> None:
+            # Handle bookmarked token errors
+            if isinstance(error, KeyError):
+                logging.debug("No bookmarked token")
+            if isinstance(error, ValueError):
+                logging.debug("Invalid stored token")
+            # Open auth dialog
+            dialog = ServerAuthDialog(server)
+            dialog.connect("authenticated", self.on_server_authenticated)
+            dialog.set_transient_for(self.window)
+            dialog.present()
+
+        def on_valid(server: Server, *, result: str) -> None:
+            self.access_token_store.set_bookmark(server)
+            self.access_token_store[server].set_bookmark(result)
+            self.on_server_authenticated(None, server, result)
+
+        task = Task(
+            main=query_bookmarked_token,
+            main_args=(server,),
+            callback=on_valid,
+            callback_args=(server,),
+            error_callback=on_error,
+            error_callback_args=(server,),
+        )
+        task.run()
+
+    def on_server_authenticated(self, _widget, server: Server, token: str) -> None:
+        # TODO navigate to server home view (add nav page)
+        logging.debug("Authenticated on %s (token: %s)", server.name, token)
 
     def do_activate(self):
-        win = self.props.active_window
-        if not win:
-            win = self.create_window()
-        win.present()
+        if not self.window:
+            win = MarmaladeWindow(application=self)
+            # TODO check if there is a global bookmarked token (bypass login)
+            servers_view = ServersView(win, self.servers_store)
+            servers_view.connect(
+                "server-connect-request", self.on_server_connect_request
+            )
+            win.add_view(servers_view, "servers")
+            self.window = win
+        self.window.present()
 
     def on_about_action(self, _widget, _):
         """Callback handling the about action"""
