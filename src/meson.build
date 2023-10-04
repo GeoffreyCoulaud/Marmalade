@@ -47,6 +47,7 @@ install_data(
     'store.py',
     'server_store.py',
     'access_token_store.py',
+    'bookmarked_collections.py',
     configure_file(
       input: 'build_constants.py.in',
       output: 'build_constants.py',
