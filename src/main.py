@@ -32,6 +32,7 @@ from jellyfin_api_client.client import AuthenticatedClient as JfAuthClient
 from src import build_constants
 from src.access_token_store import AccessTokenStore
 from src.components.server_auth_dialog import ServerAuthDialog
+from src.components.server_home_view import ServerHomeView
 from src.components.servers_view import ServersView
 from src.components.window import MarmaladeWindow
 from src.logging.setup import log_system_info, setup_logging
@@ -72,6 +73,8 @@ class MarmaladeApplication(Adw.Application):
         self.app_cache_dir = Path(GLib.get_user_cache_dir()) / "marmalade"
         self.app_config_dir = Path(GLib.get_user_config_dir()) / "marmalade"
         self.log_file = self.app_cache_dir / "marmalade.log"
+        self.init_app_dirs()
+        self.init_logging()
 
         servers_file_path = self.app_config_dir / "servers.json"
         self.servers_store = ServerStore(file_path=servers_file_path)
@@ -82,11 +85,6 @@ class MarmaladeApplication(Adw.Application):
 
         self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
         self.create_action("about", self.on_about_action)
-
-        self.init_app_dirs()
-        self.init_logging()
-        self.servers_store.load()
-        self.access_token_store.load()
         self.state = AppState.LOADED
 
     def init_app_dirs(self) -> None:
@@ -109,24 +107,27 @@ class MarmaladeApplication(Adw.Application):
 
         def query_bookmarked_token(server: Server) -> str:
             # Get a token from the store (may raise KeyError)
-            tokens_set = self.access_token_store[server]
-            token = tokens_set.get_bookmark()
+            tokens_bidict = self.access_token_store[server]
+            token = tokens_bidict.get_bookmark()
             # Test the token with the server
             client = JfAuthClient(server.address, token)
             response = get_current_user.sync_detailed(client=client)
             if response.status_code in (HTTPStatus.UNAUTHORIZED, HTTPStatus.FORBIDDEN):
-                tokens_set.unset_bookmark()
-                tokens_set.discard(token)
+                tokens_bidict.unset_bookmark()
+                del tokens_bidict[token]
                 logging.warning("Removed invalid stored token: %s", token)
                 raise ValueError("Invalid token")
-            return token
+            user_id = response.parsed.id
+            return (user_id, token)
 
         def on_error(server: Server, *, error: Exception) -> None:
             # Handle bookmarked token errors
             if isinstance(error, KeyError):
                 logging.debug("No bookmarked token")
-            if isinstance(error, ValueError):
+            elif isinstance(error, ValueError):
                 logging.debug("Invalid stored token")
+            else:
+                logging.debug("Error during token retrieval", exc_info=error)
             # Open auth dialog
             dialog = ServerAuthDialog(server)
             dialog.connect("authenticated", self.on_server_authenticated)
@@ -134,10 +135,14 @@ class MarmaladeApplication(Adw.Application):
             dialog.set_modal(True)
             dialog.present()
 
-        def on_valid(server: Server, *, result: str) -> None:
-            self.access_token_store.set_bookmark(server)
-            self.access_token_store[server].set_bookmark(result)
-            self.on_server_authenticated(None, server, result)
+        def on_valid(server: Server, *, result: tuple[str, str]) -> None:
+            user_id, token = result
+            self.on_server_authenticated(
+                None,
+                server=server,
+                user_id=user_id,
+                token=token,
+            )
 
         task = Task(
             main=query_bookmarked_token,
@@ -149,20 +154,62 @@ class MarmaladeApplication(Adw.Application):
         )
         task.run()
 
-    def on_server_authenticated(self, _widget, server: Server, token: str) -> None:
-        # TODO navigate to server home view (add nav page)
+    def on_server_authenticated(
+        self,
+        _widget,
+        server: Server,
+        user_id: str,
+        token: str,
+    ) -> None:
         logging.debug("Authenticated on %s (token: %s)", server.name, token)
+        # Update access token store, bookmark server and user
+        self.access_token_store[server][user_id] = token
+        self.access_token_store.set_bookmark(server)
+        self.access_token_store[server].set_bookmark(user_id)
+        # Create server home view and navigate to it
+        home = ServerHomeView(
+            window=self.window, server=server, user_id=user_id, token=token
+        )
+        home.connect("log-off", self.on_server_log_off)
+        home.connect("log-out", self.on_server_log_out)
+        self.window.views.push(home)
+
+    def on_server_log_out(self, _widget, server: Server, user_id: str) -> None:
+        # Remove the user's token from the server
+        self.access_token_store[server].unset_bookmark()
+        del self.access_token_store[server][user_id]
+
+    def on_server_log_off(self, _widget, _server: Server) -> None:
+        # Unset the server bookmark but keep the token bookmark
+        # (Enables instant login on the server)
+        self.access_token_store.unset_bookmark()
+
+    def create_window(self) -> MarmaladeWindow:
+        window = MarmaladeWindow(application=self)
+        servers = ServersView(window=window, servers=self.servers_store)
+        servers.connect("server-connect-request", self.on_server_connect_request)
+        window.views.add(servers)  # First page, servers, static
+        try:
+            server = self.access_token_store.get_bookmark()
+            token = server.get_bookmark()
+            user_id = server.inverse[token]
+        except KeyError:
+            # Just show the servers view
+            pass
+        else:
+            # Navigate to latest server+user home view
+            logging.debug("Resuming where we left off")
+            self.on_server_authenticated(
+                None,
+                server=server,
+                user_id=user_id,
+                token=token,
+            )
+        return window
 
     def do_activate(self):
         if not self.window:
-            win = MarmaladeWindow(application=self)
-            # TODO check if there is a global bookmarked token (bypass login)
-            servers_view = ServersView(win, self.servers_store)
-            servers_view.connect(
-                "server-connect-request", self.on_server_connect_request
-            )
-            win.add_view(servers_view, "servers")
-            self.window = win
+            self.window = self.create_window()
         self.window.present()
 
     def on_about_action(self, _widget, _):

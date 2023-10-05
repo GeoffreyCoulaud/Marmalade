@@ -17,17 +17,48 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
+from src.server import Server
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
-class ServerHomeView(Adw.Bin):
+class ServerHomeView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeServerHomeView"
 
-    window: Gtk.Window
+    @GObject.Signal(name="log-out", arg_types=[object, str])
+    def log_out(self, _server: Server, _token: str):
+        """Signal emitted when the user logs out of the server (discard the token)"""
 
-    def __init__(self, window: Gtk.Window, **kwargs):
-        super().__init__(**kwargs)
+    @GObject.Signal(name="log-off", arg_types=[object])
+    def log_off(self, _server: Server):
+        """
+        Signal emitted when the user logs off the server.
+        Should also be emitted alongside log-out.
+        """
+
+    label: Gtk.Label = Gtk.Template.Child()
+
+    window: Gtk.Window
+    server: Server
+    token: str
+
+    def __init__(
+        self,
+        *args,
+        window: Gtk.Window,
+        server: Server,
+        token: str,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
         self.window = window
+        self.server = server
+        self.token = token
+
+        # Variable is the server's name
+        self.set_title(_("%s Home").format(self.server.name))
+
+        # TODO implement
+        self.label.set_label(f"Server: {self.server}\nToken: {self.token}")

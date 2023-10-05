@@ -75,6 +75,20 @@
                     "sha256": "5410638e4df39c54d957fc51ce03048acd8e6d60abc0f5107af51e5fb566eb3c"
                 }
             ]
+        },
+        {
+            "name": "python3-bidict",
+            "buildsystem": "simple",
+            "build-commands": [
+                "pip3 install --verbose --exists-action=i --no-index --find-links=\"file://${PWD}\" --prefix=${FLATPAK_DEST} \"bidict\" --no-build-isolation"
+            ],
+            "sources": [
+                {
+                    "type": "file",
+                    "url": "https://files.pythonhosted.org/packages/b5/82/ce0b6380f35f49d3fe687979a324c342cfa3588380232f3801db9dd62f9e/bidict-0.22.1-py3-none-any.whl",
+                    "sha256": "6ef212238eb884b664f28da76f33f1d28b260f665fc737b413b287d5487d1e7b"
+                }
+            ]
         }
     ]
 }

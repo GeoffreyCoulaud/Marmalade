@@ -21,8 +21,7 @@ class ServerStore(
         super().__init__(*args, **kwargs)
         self.migrator = ServerStoreMigrator()
 
-    def dump_to_json_compatible(self):
-        # A change in this format must be accompanied by a migration method
+    def to_simple(self):
         return {
             "meta": {
                 "format_version": 1,
@@ -30,8 +29,8 @@ class ServerStore(
             "content": [server._asdict() for server in self],
         }
 
-    def load_from_json_compatible(self, json_compatible_data):
+    def update_from_simple(self, simple):
         # Ensured to get latest format
-        content = json_compatible_data["content"]
+        content = simple["content"]
         servers = [Server(**server_dict) for server_dict in content]
         self.update(servers)

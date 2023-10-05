@@ -1,10 +1,13 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServersView : Adw.Bin {
-  Adw.ToolbarView {
+template $MarmaladeServersView : Adw.NavigationPage {
+  title: _("Jellyfin Servers"); // Not shown for now
+  tag: "servers-view";
+  can-pop: false;
+  child: Adw.ToolbarView {
     [top]
-    HeaderBar header_bar {
+    Adw.HeaderBar header_bar {
       [start]
       Box {
         Button edit_button {
@@ -26,6 +29,10 @@ template $MarmaladeServersView : Adw.Bin {
           };
         }
       }
+      // Used to override the view page title
+      title-widget: Adw.WindowTitle {
+        title: _("Marmalade");
+      };
     }
     content: Adw.ToastOverlay toast_overlay {
       child: Adw.Clamp {
@@ -49,22 +56,12 @@ template $MarmaladeServersView : Adw.Bin {
           }
           Adw.ViewStackPage {
             name: "servers";
-            child: Box {
-              orientation: vertical;
-              Label {
-                styles ["heading"]
-                halign: start;
-                margin-bottom: 8;
-                label: C_("servers list", "Servers");
-              }
-              ListBox server_rows_group {
-                styles ["boxed-list"]
-                selection-mode: none;
-              }
+            child: Adw.PreferencesGroup server_rows_group {
+              title: C_("servers list", "Servers");
             };
           }
         }
       };
     };
-  }
+  };
 }

@@ -1,8 +1,10 @@
 import json
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Callable, Optional
+
+from src.simple import Simple
 
 
 class Migrator:
@@ -31,7 +33,7 @@ class Migrator:
         return obj
 
 
-class BaseStore(ABC):
+class BaseStore(Simple):
     """
     Base Store class
 
@@ -43,19 +45,11 @@ class BaseStore(ABC):
         return self.__class__.__name__
 
     @abstractmethod
-    def dump_to_json_compatible(self) -> Any:
-        """Get a JSON-compatible representation of the contents"""
-
-    @abstractmethod
-    def load_from_json_compatible(self, json_compatible_data: Any) -> None:
-        """Load contents from a JSON-compatible representation"""
-
-    @abstractmethod
     def save(self) -> None:
         """Save the store items to file"""
 
     @abstractmethod
-    def load(self) -> None:
+    def _load(self) -> None:
         """Load store items from disk"""
 
 
@@ -68,13 +62,14 @@ class FileStore(BaseStore):
     def __init__(self, *args, file_path: Path, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.file_path = file_path
+        self._load()
 
     def save(self) -> None:
         """Save servers to disk"""
         try:
             with open(self.file_path, "w", encoding="utf-8") as file:
-                json_compatible = self.dump_to_json_compatible()
-                json.dump(json_compatible, file, indent=4)
+                simple = self.to_simple()
+                json.dump(simple, file, indent=4)
 
         except OSError as error:
             logging.error(
@@ -83,21 +78,25 @@ class FileStore(BaseStore):
                 exc_info=error,
             )
 
-    def load(self) -> None:
+    def _create_file(self) -> None:
+        self.file_path.touch()
+        self.save()
+        logging.info("Created %s store file", self._class_name)
+
+    def _load(self) -> "FileStore":
         """
         Load servers from disk.
 
         Migrates to the latest json compatible format.
         Data loss may occur if the format are incompatible.
         """
+
         try:
             with open(self.file_path, "r", encoding="utf-8") as file:
                 data = json.load(file)
 
         except FileNotFoundError:
-            self.file_path.touch()
-            self.save()
-            logging.info("Created %s store file", self._class_name)
+            self._create_file()
             return
 
         except (OSError, json.JSONDecodeError) as error:
@@ -113,4 +112,4 @@ class FileStore(BaseStore):
             data = self.migrator.migrate(data)
 
         # Load from json compatibe format
-        self.load_from_json_compatible(data)
+        self.update_from_simple(data)

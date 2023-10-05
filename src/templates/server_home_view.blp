@@ -1,10 +1,10 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServerHomeView : Adw.Bin {
-  Adw.ToolbarView {
+template $MarmaladeServerHomeView : Adw.NavigationPage {
+  child: Adw.ToolbarView {
     [top]
-    HeaderBar header_bar {
+    Adw.HeaderBar header_bar {
       [start]
       Box {
         Button disconnect_button {
@@ -37,7 +37,7 @@ template $MarmaladeServerHomeView : Adw.Bin {
         "title-1",
       ]
     };
-  }
+  };
 }
 
 menu collection_filter_menu {

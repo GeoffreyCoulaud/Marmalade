@@ -27,7 +27,7 @@ from src.server import Server
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_view.ui")
-class ServersView(Adw.Bin):
+class ServersView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeServersView"
 
     edit_button = Gtk.Template.Child()
@@ -51,8 +51,14 @@ class ServersView(Adw.Bin):
     def server_connect_request(self, _server: Server):
         """Signal emitted when a server is connected"""
 
-    def __init__(self, window: Gtk.Window, servers: ReactiveSet[Server], **kwargs):
-        super().__init__(**kwargs)
+    def __init__(
+        self,
+        *args,
+        window: Gtk.Window,
+        servers: ReactiveSet[Server],
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
         self.edit_mode = False
         self.server_rows_mapping = {}
         self.servers_trash = set()
@@ -79,7 +85,7 @@ class ServersView(Adw.Bin):
         row = ServerRow(server)
         row.connect("button-clicked", self.on_server_connect_request)
         self.server_rows_mapping[server] = row
-        self.server_rows_group.append(row)
+        self.server_rows_group.add(row)
 
     def remove_server_row(self, server: Server):
         row = self.server_rows_mapping[server]
