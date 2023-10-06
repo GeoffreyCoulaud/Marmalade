@@ -16,6 +16,7 @@ template $MarmaladeAuthQuickConnectView: Adw.NavigationPage {
       Button connect_button {
         styles ["suggested-action"]
         label: _("Connect");
+        sensitive: false;
       }
     }
     content: Adw.ToastOverlay toast_overlay {
@@ -39,6 +40,13 @@ template $MarmaladeAuthQuickConnectView: Adw.NavigationPage {
                 name: "loading";
                 child: Spinner {
                   spinning: true;
+                };
+              }
+              Adw.ViewStackPage {
+                name: "error";
+                child: Image {
+                  icon-name: "computer-fail-symbolic";
+                  icon-size: large;
                 };
               }
               Adw.ViewStackPage {

@@ -38,7 +38,7 @@ class AuthDialog(Adw.Window):
         self.close()
 
     def on_quick_connect_chosen(self, _widget) -> None:
-        qc_view = AuthQuickConnectView(self.server)
+        qc_view = AuthQuickConnectView(self, self.server)
         qc_view.connect("authenticated", self.on_authenticated)
         self.views.push(qc_view)
 
