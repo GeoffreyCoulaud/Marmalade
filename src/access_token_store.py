@@ -41,9 +41,9 @@ class AccessTokenStore(
 
     def update_from_simple(self, simple):
         content = simple["content"]["content"]
-        for server_dict, simple in content:
+        for server_dict, simple_bidict in content:
             server = Server(**server_dict)
-            userid_tokens_map = BookmarkedBidict.from_simple(simple)
+            userid_tokens_map = BookmarkedBidict.from_simple(simple_bidict)
             self[server].update(userid_tokens_map)
         bookmark = simple["content"]["bookmark"]
         self.set_bookmark(bookmark)
