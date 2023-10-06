@@ -15,7 +15,7 @@ template $MarmaladeServerAddDialog : Adw.Window {
       }
     }
     content: Adw.ToastOverlay toast_overlay {
-      child: Adw.Clamp {
+      child: Adw.ClampScrollable {
         margin-top: 16;
         margin-start: 16;
         margin-end: 16;
@@ -29,9 +29,7 @@ template $MarmaladeServerAddDialog : Adw.Window {
               [suffix]
               Button manual_add_button {
                 valign: center;
-                Adw.ButtonContent {
-                  icon-name: "list-add-symbolic";
-                }
+                icon-name: "list-add-symbolic";
               }
             }
           }

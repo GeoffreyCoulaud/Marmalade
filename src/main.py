@@ -31,7 +31,7 @@ from jellyfin_api_client.client import AuthenticatedClient as JfAuthClient
 # pylint: disable=no-name-in-module
 from src import build_constants
 from src.access_token_store import AccessTokenStore
-from src.components.server_auth_dialog import ServerAuthDialog
+from src.components.auth_dialog import AuthDialog
 from src.components.server_home_view import ServerHomeView
 from src.components.servers_view import ServersView
 from src.components.window import MarmaladeWindow
@@ -129,7 +129,7 @@ class MarmaladeApplication(Adw.Application):
             else:
                 logging.debug("Error during token retrieval", exc_info=error)
             # Open auth dialog
-            dialog = ServerAuthDialog(server)
+            dialog = AuthDialog(server)
             dialog.connect("authenticated", self.on_server_authenticated)
             dialog.set_transient_for(self.window)
             dialog.set_modal(True)

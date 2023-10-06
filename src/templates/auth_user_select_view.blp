@@ -1,0 +1,29 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeAuthUserSelectView: Adw.NavigationPage {
+  title: _("User Selection");
+  tag: "user-selection";
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      decoration-layout: "";
+    }
+    content: Adw.Clamp{
+      margin-top: 16;
+      margin-bottom: 16;
+      margin-start: 16;
+      margin-end: 16;
+      child: Box {
+        orientation: vertical;
+        // TODO implement user picker (caroursel)
+        Adw.Bin user_picker_wrapper {}
+        Button other_user_button {
+          styles ["pill"]
+          halign: center;
+          label: _("Log in as another user");
+        }
+      };
+    };
+  };
+}

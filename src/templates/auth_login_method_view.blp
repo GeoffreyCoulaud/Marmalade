@@ -1,0 +1,59 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeAuthLoginMethodView : Adw.NavigationPage {
+  title: _("Authentication Method");
+  can-pop: false;
+  child: Adw.ToolbarView {
+    [top]
+    Adw.HeaderBar {
+      decoration-layout: "";
+      [start]
+      Button cancel_button {
+        label: _("Cancel");
+      }
+    }
+    content: Adw.Clamp {
+      margin-top: 16;
+      margin-bottom: 16;
+      margin-start: 16;
+      margin-end: 16;
+      child: Adw.PreferencesGroup {
+        Adw.ActionRow {
+          title: _("Username and Password");
+          [prefix]
+          Image {
+            margin-top: 16;
+            margin-bottom: 16;
+            margin-start: 10;
+            margin-end: 16;
+            icon-name: "dialog-password-symbolic";
+            icon-size: large;
+          }
+          [suffix]
+          Button username_password_button {
+            valign: center;
+            icon-name: "go-next-symbolic";
+          }
+        }
+        Adw.ActionRow {
+          title: _("Quick Connect");
+          [prefix]
+          Image {
+            margin-top: 16;
+            margin-bottom: 16;
+            margin-start: 10;
+            margin-end: 16;
+            icon-name: "phonelink-symbolic";
+            icon-size: large;
+          }
+          [suffix]
+          Button quick_connect_button {
+            valign: center;
+            icon-name: "go-next-symbolic";
+          }
+        }
+      };
+    };
+  };
+}
