@@ -37,7 +37,7 @@ class FileStore(BaseStore):
         self._load()
 
     def save(self) -> None:
-        """Save servers to disk"""
+        """Save store items to disk"""
         try:
             with open(self.file_path, "w", encoding="utf-8") as file:
                 simple = self.to_simple()

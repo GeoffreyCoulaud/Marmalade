@@ -52,7 +52,6 @@ class MarmaladeApplication(Adw.Application):
     app_data_dir: Path
     app_cache_dir: Path
     app_config_dir: Path
-    servers_file: Path
     log_file: Path
 
     state: AppState
@@ -155,21 +154,16 @@ class MarmaladeApplication(Adw.Application):
         task.run()
 
     def on_server_authenticated(
-        self,
-        _widget,
-        server: Server,
-        user_id: str,
-        token: str,
+        self, _widget, server: Server, user_id: str, token: str
     ) -> None:
         logging.debug("Authenticated on %s (token: %s)", server.name, token)
         # Update access token store, bookmark server and user
         self.access_token_store[server][user_id] = token
         self.access_token_store.set_bookmark(server)
         self.access_token_store[server].set_bookmark(user_id)
+        self.access_token_store.save()
         # Create server home view and navigate to it
-        home = ServerHomeView(
-            window=self.window, server=server, user_id=user_id, token=token
-        )
+        home = ServerHomeView(window=self.window, server=server, token=token)
         home.connect("log-off", self.on_server_log_off)
         home.connect("log-out", self.on_server_log_out)
         self.window.views.push(home)
@@ -185,14 +179,15 @@ class MarmaladeApplication(Adw.Application):
         self.access_token_store.unset_bookmark()
 
     def create_window(self) -> MarmaladeWindow:
-        window = MarmaladeWindow(application=self)
-        servers = ServersView(window=window, servers=self.servers_store)
+        self.window = MarmaladeWindow(application=self)
+        servers = ServersView(window=self.window, servers=self.servers_store)
         servers.connect("server-connect-request", self.on_server_connect_request)
-        window.views.add(servers)  # First page, servers, static
+        self.window.views.add(servers)  # First page, servers, static
         try:
-            server = self.access_token_store.get_bookmark()
-            token = server.get_bookmark()
-            user_id = server.inverse[token]
+            server = self.access_token_store.get_bookmark_key()
+            tokens = self.access_token_store.get_bookmark()
+            token = tokens.get_bookmark()
+            user_id = tokens.inverse[token]
         except KeyError:
             # Just show the servers view
             pass
@@ -200,16 +195,13 @@ class MarmaladeApplication(Adw.Application):
             # Navigate to latest server+user home view
             logging.debug("Resuming where we left off")
             self.on_server_authenticated(
-                None,
-                server=server,
-                user_id=user_id,
-                token=token,
+                None, server=server, user_id=user_id, token=token
             )
-        return window
+        return self.window
 
     def do_activate(self):
         if not self.window:
-            self.window = self.create_window()
+            self.create_window()
         self.window.present()
 
     def on_about_action(self, _widget, _):

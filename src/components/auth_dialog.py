@@ -52,5 +52,8 @@ class AuthDialog(Adw.Window):
         view.connect("authenticated", self.on_authenticated)
         self.views.push(view)
 
-    def on_authenticated(self, _widget, user_id: str, token: str) -> None:
-        self.emit("authenticated", self.server, user_id, token)
+    def on_authenticated(
+        self, _widget, server: Server, user_id: str, token: str
+    ) -> None:
+        self.emit("authenticated", server, user_id, token)
+        self.close()

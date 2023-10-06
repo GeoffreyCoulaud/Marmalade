@@ -1,4 +1,5 @@
 import logging
+import socket
 from http import HTTPStatus
 
 from gi.repository import Adw, Gio, GObject, Gtk
@@ -6,6 +7,7 @@ from jellyfin_api_client.api.quick_connect import initiate as initiate_quick_con
 from jellyfin_api_client.api.user import authenticate_with_quick_connect
 from jellyfin_api_client.client import Client as JfClient
 from jellyfin_api_client.errors import UnexpectedStatus
+from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
 from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import build_constants
@@ -15,6 +17,10 @@ from src.task import Task
 
 class QuickConnectDisabledError(Exception):
     """Exception raised when quick connect is not enabled on the server"""
+
+
+class UnauthorizedQuickConnect(Exception):
+    """Exception raised when a quick connect secret is tried while not yet authorized"""
 
 
 @Gtk.Template(
@@ -53,22 +59,18 @@ class AuthQuickConnectView(Adw.NavigationPage):
         self.refresh()
 
     def refresh(self) -> None:
-        def main(server: Server) -> QuickConnectResult:
-            auth_data = {
+        def main() -> QuickConnectResult:
+            auth = {
                 "Client": "Marmalade",
                 "Version": "1.9.1",
-                # TODO get device name
-                "Device": "Dummy device :)",
-                # TODO generate or get DeviceId
-                "DeviceId": "me-dummy",
+                "Device": socket.gethostname(),
+                "DeviceId": "-y",
             }
-            auth_data_list = [f'{key}="{value}"' for key, value in auth_data.items()]
-            auth_header = "MediaBrowser " + ", ".join(auth_data_list)
+            auth = [f'{key}="{value}"' for key, value in auth.items()]
+            auth = "MediaBrowser " + ", ".join(auth)
             client = JfClient(
-                base_url=server.address,
-                headers={
-                    "X-Emby-Authorization": auth_header,
-                },
+                base_url=self.server.address,
+                headers={"X-Emby-Authorization": auth},
                 raise_on_unexpected_status=True,
             )
             response = initiate_quick_connect.sync_detailed(client=client)
@@ -90,16 +92,12 @@ class AuthQuickConnectView(Adw.NavigationPage):
             if isinstance(error, QuickConnectDisabledError):
                 logging.error("Quick connect is not enabled")
                 toast.set_title(_("Quick Connect is not enabled on this server"))
-            if isinstance(error, UnexpectedStatus):
+            else:
                 logging.error("Unexpected Quick Connect error", exc_info=error)
                 toast.set_title(_("An unexpected error occured"))
                 toast.set_button_label(_("Details"))
-                toast.connect(
-                    "button-clicked",
-                    self.on_error_details_requested,
-                    _("Unexpected Quick Connect Error"),
-                    str(error),
-                )
+                args = (_("Unexpected Quick Connect Error"), str(error))
+                toast.connect("button-clicked", self.on_error_details, *args)
             self.toast_overlay.add_toast(toast)
             self.code_state_stack.set_visible_child_name("error")
             self.connect_button.set_sensitive(False)
@@ -107,17 +105,16 @@ class AuthQuickConnectView(Adw.NavigationPage):
         self.__cancellable.cancel()
         self.__cancellable.reset()
         self.code_state_stack.set_visible_child_name("loading")
-        refresh_task = Task(
+        task = Task(
             main=main,
-            main_args=(self.server,),
             callback=on_success,
             error_callback=on_error,
             cancellable=self.__cancellable,
             return_on_cancel=True,
         )
-        refresh_task.run()
+        task.run()
 
-    def on_error_details_requested(self, _widget, title: str, details: str) -> None:
+    def on_error_details(self, _widget, title: str, details: str) -> None:
         logging.debug("Quick Connect error details requested")
         msg = Adw.MessageDialog()
         msg.add_response("close", _("Close"))
@@ -127,5 +124,44 @@ class AuthQuickConnectView(Adw.NavigationPage):
         msg.present()
 
     def on_connect_requested(self, _widget) -> None:
-        # TODO implement trying to connect with a quick connect code
-        print(self.__secret)
+        def main() -> tuple[str, str]:
+            client = JfClient(base_url=self.server.address)
+            response = authenticate_with_quick_connect.sync_detailed(
+                client=client,
+                json_body=QuickConnectDto(secret=self.__secret),
+            )
+            if response.status_code == HTTPStatus.OK:
+                return (response.parsed.user.id, response.parsed.access_token)
+            if response.status_code == HTTPStatus.NOT_FOUND:
+                raise UnauthorizedQuickConnect()
+            else:
+                raise UnexpectedStatus(response.status_code)
+
+        def on_success(*, result: tuple[str, str]) -> None:
+            user_id, token = result
+            logging.debug("Authenticated via quick connect")
+            self.emit("authenticated", self.server, user_id, token)
+
+        def on_error(*, error: Exception) -> None:
+            toast = Adw.Toast()
+            if isinstance(error, UnauthorizedQuickConnect):
+                logging.error("Quick connect not authorized yet")
+                toast.set_title(_("Code hasn't been verified yet"))
+            else:
+                toast.set_timeout(0)
+                logging.error("Unexpected Quick Connect error", exc_info=error)
+                toast.set_title(_("An unexpected error occured"))
+                toast.set_button_label(_("Details"))
+                args = (_("Unexpected Quick Connect Error"), str(error))
+                toast.connect("button-clicked", self.on_error_details, *args)
+                self.code_state_stack.set_visible_child_name("error")
+                self.connect_button.set_sensitive(False)
+            self.toast_overlay.add_toast(toast)
+
+        task = Task(
+            main=main,
+            callback=on_success,
+            error_callback=on_error,
+            return_on_cancel=True,
+        )
+        task.run()

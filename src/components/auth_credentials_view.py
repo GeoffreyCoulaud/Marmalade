@@ -18,7 +18,7 @@ class AuthCredentialsView(Adw.NavigationPage):
     server: Server
 
     @GObject.Signal(name="authenticated", arg_types=[object, str, str])
-    def authenticated(self, _user_id: str, _token: str):
+    def authenticated(self, server: Server, _user_id: str, _token: str):
         """Signal emitted when the user is authenticated"""
 
     def __init__(
