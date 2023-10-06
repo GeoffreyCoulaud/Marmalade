@@ -54,7 +54,23 @@ class AuthQuickConnectView(Adw.NavigationPage):
 
     def refresh(self) -> None:
         def main(server: Server) -> QuickConnectResult:
-            client = JfClient(server.address, raise_on_unexpected_status=True)
+            auth_data = {
+                "Client": "Marmalade",
+                "Version": "1.9.1",
+                # TODO get device name
+                "Device": "Dummy device :)",
+                # TODO generate or get DeviceId
+                "DeviceId": "me-dummy",
+            }
+            auth_data_list = [f'{key}="{value}"' for key, value in auth_data.items()]
+            auth_header = "MediaBrowser " + ", ".join(auth_data_list)
+            client = JfClient(
+                base_url=server.address,
+                headers={
+                    "X-Emby-Authorization": auth_header,
+                },
+                raise_on_unexpected_status=True,
+            )
             response = initiate_quick_connect.sync_detailed(client=client)
             if response.status_code == HTTPStatus.OK:
                 return response.parsed

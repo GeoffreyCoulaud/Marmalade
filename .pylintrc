@@ -1,0 +1,23 @@
+[MAIN]
+
+[MESSAGES CONTROL]
+
+
+disable=
+        import-error,
+        no-name-in-module,
+        too-few-public-methods,
+        missing-function-docstring,
+        missing-class-docstring,
+        missing-module-docstring,
+        relative-beyond-top-level
+
+
+[TYPECHECK]
+
+ignored-classes=Child
+
+
+[VARIABLES]
+
+additional-builtins=_
