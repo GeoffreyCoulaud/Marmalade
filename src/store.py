@@ -2,35 +2,8 @@ import json
 import logging
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Callable, Optional
 
 from src.simple import Simple
-
-
-class Migrator:
-    """
-    Class in charge of dict format migration.
-
-    The migrators property is a (source_version -> migration_method) mapping.
-    Migration methods return a migrated object with an updated format version.
-    Migration methods must not create lower versions, else an infinite loop will happen.
-    """
-
-    migrators: dict[int, Callable] = {}
-
-    def migrate(self, start_obj: dict[str, Any]) -> dict[str, Any]:
-        obj = start_obj
-        while True:
-            try:
-                version = obj["meta"]["format_version"]
-            except (TypeError, KeyError) as error:
-                raise ValueError("Can't migrate object without a version") from error
-            if version not in self.migrators:
-                # No more migration to do
-                break
-            # Migrate
-            obj = self.migrators[version](obj)
-        return obj
 
 
 class BaseStore(Simple):
@@ -57,7 +30,6 @@ class FileStore(BaseStore):
     """Base store class saving its data to a file"""
 
     file_path: Path
-    migrator: Optional[Migrator] = None
 
     def __init__(self, *args, file_path: Path, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -106,10 +78,6 @@ class FileStore(BaseStore):
                 exc_info=error,
             )
             return
-
-        # Migrate data
-        if self.migrator is not None:
-            data = self.migrator.migrate(data)
 
         # Load from json compatibe format
         self.update_from_simple(data)
