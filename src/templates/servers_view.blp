@@ -35,31 +35,31 @@ template $MarmaladeServersView : Adw.NavigationPage {
       };
     }
     content: Adw.ToastOverlay toast_overlay {
-      child: Adw.ClampScrollable {
+      child: Adw.ViewStack servers_view_stack {
         margin-top: 16;
         margin-start: 16;
         margin-end: 16;
         margin-bottom: 16;
-        Adw.ViewStack servers_view_stack {
-          Adw.ViewStackPage {
-            name: "no-server";
-            child: Adw.StatusPage {
-              title: _("No Servers Found");
-              description: _("Use the + button to discover or add a Jellyfin server");
-              icon-name: "network-server-symbolic";
-              child: Button status_add_button {
-                halign: center;
-                styles ["pill", "suggested-action"]
-                label: _("Add Jellyfin Server");
-              };
+        Adw.ViewStackPage {
+          name: "no-server";
+          child: Adw.StatusPage {
+            title: _("No Servers Found");
+            description: _("Use the + button to discover or add a Jellyfin server");
+            icon-name: "network-server-symbolic";
+            child: Button status_add_button {
+              halign: center;
+              styles ["pill", "suggested-action"]
+              label: _("Add Jellyfin Server");
             };
-          }
-          Adw.ViewStackPage {
-            name: "servers";
+          };
+        }
+        Adw.ViewStackPage {
+          name: "servers";
+          child: Adw.ClampScrollable {
             child: Adw.PreferencesGroup server_rows_group {
               title: C_("servers list", "Servers");
             };
-          }
+          };
         }
       };
     };
