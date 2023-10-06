@@ -27,30 +27,30 @@ class AuthDialog(Adw.Window):
     def __init__(self, server: Server, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.server = server
-        method_view = AuthLoginMethodView()
-        method_view.connect("chose-username-password", self.on_username_password_chosen)
-        method_view.connect("chose-quick-connect", self.on_quick_connect_chosen)
-        method_view.connect("cancelled", self.on_cancelled)
-        self.views.add(method_view)
+        view = AuthLoginMethodView(dialog=self)
+        view.connect("chose-username-password", self.on_username_password_chosen)
+        view.connect("chose-quick-connect", self.on_quick_connect_chosen)
+        view.connect("cancelled", self.on_cancelled)
+        self.views.add(view)
 
     def on_cancelled(self, _widget) -> None:
         self.emit("cancelled")
         self.close()
 
     def on_quick_connect_chosen(self, _widget) -> None:
-        qc_view = AuthQuickConnectView(self, self.server)
-        qc_view.connect("authenticated", self.on_authenticated)
-        self.views.push(qc_view)
+        view = AuthQuickConnectView(dialog=self, server=self.server)
+        view.connect("authenticated", self.on_authenticated)
+        self.views.push(view)
 
     def on_username_password_chosen(self, _widget) -> None:
-        up_view = AuthUserSelectView(self.server)
-        up_view.connect("user-picked", self.on_user_picked)
-        self.views.push(up_view)
+        view = AuthUserSelectView(dialog=self, server=self.server)
+        view.connect("user-picked", self.on_user_picked)
+        self.views.push(view)
 
     def on_user_picked(self, _widget, username: str):
-        credentials_view = AuthCredentialsView(self.server, username)
-        credentials_view.connect("authenticated", self.on_authenticated)
-        self.views.push(credentials_view)
+        view = AuthCredentialsView(dialog=self, server=self.server, username=username)
+        view.connect("authenticated", self.on_authenticated)
+        self.views.push(view)
 
     def on_authenticated(self, _widget, user_id: str, token: str) -> None:
         self.emit("authenticated", self.server, user_id, token)

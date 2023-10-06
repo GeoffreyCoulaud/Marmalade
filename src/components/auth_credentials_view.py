@@ -14,15 +14,19 @@ class AuthCredentialsView(Adw.NavigationPage):
     username_editable = Gtk.Template.Child()
     password_editable = Gtk.Template.Child()
 
+    dialog: Adw.Window
     server: Server
 
     @GObject.Signal(name="authenticated", arg_types=[object, str, str])
     def authenticated(self, _user_id: str, _token: str):
         """Signal emitted when the user is authenticated"""
 
-    def __init__(self, server: Server, username: str, *args, **kwargs) -> None:
+    def __init__(
+        self, *args, dialog: Adw.Window, server: Server, username: str, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.server = server
+        self.dialog = dialog
         self.username_editable.set_text(username)
 
     def on_log_in_request(self, _widget) -> None:

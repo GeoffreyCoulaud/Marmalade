@@ -13,14 +13,17 @@ class AuthUserSelectView(Adw.NavigationPage):
 
     other_user_button = Gtk.Template.Child()
     user_picker_wrapper = Gtk.Template.Child()
+
+    dialog: Adw.Window
     server: Server
 
     @GObject.Signal(name="user-picked", arg_types=[str])
     def user_picked(self, _username: str):
         """Signal emitted when a user is picked"""
 
-    def __init__(self, server: Server, *args, **kwargs) -> None:
+    def __init__(self, *args, dialog: Adw.Window, server: Server, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.dialog = dialog
         self.server = server
         self.other_user_button.connect("clicked", self.on_other_user_button_clicked)
         discover_task = Task(main=self.discover)
