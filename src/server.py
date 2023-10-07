@@ -11,7 +11,7 @@ class Server(NamedTuple):
     def __eq__(self, other: "Server") -> bool:
         if not isinstance(other, Server):
             return False
-        return (self.address == other.address) and (self.server_id == other.server_id)
+        return self.address == other.address
 
     def __hash__(self) -> int:
-        return hash((self.address, self.server_id))
+        return hash(self.address)

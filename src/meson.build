@@ -40,6 +40,7 @@ configure_file(
 
 install_subdir('components', install_dir: moduledir)
 install_subdir('logging', install_dir: moduledir)
+install_subdir('database', install_dir: moduledir)
 
 install_data(
   [
