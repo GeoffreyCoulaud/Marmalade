@@ -58,7 +58,14 @@ class ServerHomeView(Adw.NavigationPage):
         self.token = token
 
         # Variable is the server's name
-        self.set_title(_("%s Home").format(self.server.name))
+        self.set_title(_("%s Home") % self.server.name)
 
         # TODO implement
-        self.label.set_label(f"Server: {self.server}\nToken: {self.token}")
+        label = "\n".join(
+            (
+                f"Server: {self.server.name}",
+                f"Address: {self.server.address}",
+                f"Token: {self.token}",
+            )
+        )
+        self.label.set_label(label)

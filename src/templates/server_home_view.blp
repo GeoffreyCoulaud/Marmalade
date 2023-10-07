@@ -5,6 +5,7 @@ template $MarmaladeServerHomeView : Adw.NavigationPage {
   child: Adw.ToolbarView {
     [top]
     Adw.HeaderBar header_bar {
+      show-back-button: false;
       [start]
       Box {
         Button disconnect_button {
@@ -30,12 +31,13 @@ template $MarmaladeServerHomeView : Adw.NavigationPage {
         }
       }
     }
-    content: Label label {
-      label: "Server home view (with subviews)";
-      vexpand: true;
-      styles [
-        "title-1",
-      ]
+    content: Adw.ToastOverlay toast_overlay {
+      child: Adw.Clamp {
+        child: Label label {
+          label: "Server home view (with subviews)";
+          wrap: true;
+        };
+      };
     };
   };
 }
