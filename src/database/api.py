@@ -4,8 +4,6 @@ from pathlib import Path
 from sqlite3 import Connection, OperationalError, connect
 from typing import NamedTuple, Optional, Sequence
 
-from src.reactive_set import ReactiveSet
-
 
 class CorruptedDatabase(Exception):
     """Error raised when trying to read a broken database"""
@@ -37,27 +35,14 @@ class ActiveTokenInfo(NamedTuple):
 class DataHandler(object):
     """
     Settings interface class on top a sqlite database file.
-
-    - Exposes a `server` ReactiveSet that is mirrored in the database
     """
 
-    servers: ReactiveSet[ServerInfo]
-
     __db_file: Path
-    __server_added_handler_id: int
-    __server_removed_handler_id: int
 
     def __init__(self, *args, file: Path, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.__db_file = file
         self.__apply_migrations()
-
-        # fmt: off
-        self.servers = ReactiveSet()
-        self.__server_added_handler_id = self.servers.emitter.connect("item-added", self.__on_server_added)
-        self.__server_removed_handler_id = self.servers.emitter.connect("item-removed", self.__on_server_removed)
-        self.__load_servers()
-        # fmt: on
 
     def connect(self) -> Connection:
         """
@@ -129,20 +114,6 @@ class DataHandler(object):
             for server in cursor:
                 servers.add(server)
         return servers
-
-    def __load_servers(self) -> None:
-        """
-        Load the servers from the database into the servers set.
-        Inhibit server added handler for the time of this method.
-        """
-        with self.servers.emitter.handler_block(self.__server_added_handler_id):
-            self.servers.update(self.get_servers())
-
-    def __on_server_added(self, _emitter, server: ServerInfo) -> None:
-        self.add_server(server=server)
-
-    def __on_server_removed(self, _emitter, server: ServerInfo) -> None:
-        self.remove_server(address=server.address)
 
     def add_server(self, server: ServerInfo) -> None:
         """Add a server to the database"""

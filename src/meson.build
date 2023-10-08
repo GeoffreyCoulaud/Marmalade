@@ -46,7 +46,6 @@ install_data(
   [
     '__init__.py',
     'main.py',
-    'reactive_set.py',
     'task.py',
     configure_file(
       input: 'build_constants.py.in',
