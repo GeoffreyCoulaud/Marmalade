@@ -45,14 +45,9 @@ install_subdir('database', install_dir: moduledir)
 install_data(
   [
     '__init__.py',
-    'access_token_store.py',
-    'bookmarked_collections.py',
     'main.py',
     'reactive_set.py',
-    'server_store.py',
     'server.py',
-    'simple.py',
-    'store.py',
     'task.py',
     configure_file(
       input: 'build_constants.py.in',
