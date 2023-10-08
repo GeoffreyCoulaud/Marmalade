@@ -26,9 +26,9 @@ from src.reactive_set import ReactiveSet
 from src.server import Server
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_view.ui")
-class ServersView(Adw.NavigationPage):
-    __gtype_name__ = "MarmaladeServersView"
+@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_list_view.ui")
+class ServersListView(Adw.NavigationPage):
+    __gtype_name__ = "MarmaladeServersListView"
 
     edit_button = Gtk.Template.Child()
     add_button = Gtk.Template.Child()

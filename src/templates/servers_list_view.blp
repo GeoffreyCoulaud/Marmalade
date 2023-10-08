@@ -1,7 +1,7 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServersView : Adw.NavigationPage {
+template $MarmaladeServersListView : Adw.NavigationPage {
   title: _("Jellyfin Servers"); // Not shown for now
   tag: "servers-view";
   can-pop: false;
@@ -55,7 +55,7 @@ template $MarmaladeServersView : Adw.NavigationPage {
         }
         Adw.ViewStackPage {
           name: "servers";
-          child: Adw.ClampScrollable {
+          child: Adw.Clamp {
             child: Adw.PreferencesGroup server_rows_group {
               title: C_("servers list", "Servers");
             };

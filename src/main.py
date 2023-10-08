@@ -27,8 +27,8 @@ from gi.repository import Adw, Gio, GLib
 # pylint: disable=no-name-in-module
 from src import build_constants
 from src.components.auth_dialog import AuthDialog
-from src.components.server_home_view import ServerHomeView
-from src.components.servers_view import ServersView
+from src.components.server_connected_view import ServerConnectedView
+from src.components.servers_list_view import ServersListView
 from src.components.window import MarmaladeWindow
 from src.database.database import DataHandler
 from src.logging.setup import log_system_info, setup_logging
@@ -97,7 +97,7 @@ class MarmaladeApplication(Adw.Application):
         self.navigate_to_server(server=server, token=token)
 
     def navigate_to_server(self, server: Server, token: str) -> None:
-        home = ServerHomeView(window=self.window, server=server, token=token)
+        home = ServerConnectedView(window=self.window, server=server, token=token)
         home.connect("log-off", self.on_server_log_off)
         home.connect("log-out", self.on_server_log_out)
         self.window.views.push(home)
@@ -112,7 +112,7 @@ class MarmaladeApplication(Adw.Application):
 
     def create_window(self):
         self.window = MarmaladeWindow(application=self)
-        servers = ServersView(window=self.window, servers=self.settings.servers)
+        servers = ServersListView(window=self.window, servers=self.settings.servers)
         servers.connect("server-connect-request", self.on_server_connect_request)
         self.window.views.add(servers)
         # Try to get the active token to resume navigation on the server

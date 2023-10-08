@@ -23,9 +23,11 @@ from src import build_constants
 from src.server import Server
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
-class ServerHomeView(Adw.NavigationPage):
-    __gtype_name__ = "MarmaladeServerHomeView"
+@Gtk.Template(
+    resource_path=build_constants.PREFIX + "/templates/server_connected_view.ui"
+)
+class ServerConnectedView(Adw.NavigationPage):
+    __gtype_name__ = "MarmaladeServerConnectedView"
 
     @GObject.Signal(name="log-out", arg_types=[object, str])
     def log_out(self, _server: Server, _token: str):

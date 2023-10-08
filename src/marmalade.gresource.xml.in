@@ -8,9 +8,9 @@
     <file preprocess="xml-stripblanks">templates/auth_user_select_view.ui</file>
     <file preprocess="xml-stripblanks">templates/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">templates/server_add_dialog.ui</file>
-    <file preprocess="xml-stripblanks">templates/server_home_view.ui</file>
+    <file preprocess="xml-stripblanks">templates/server_connected_view.ui</file>
     <file preprocess="xml-stripblanks">templates/server_row.ui</file>
-    <file preprocess="xml-stripblanks">templates/servers_view.ui</file>
+    <file preprocess="xml-stripblanks">templates/servers_list_view.ui</file>
     <file preprocess="xml-stripblanks">templates/window.ui</file>
   </gresource>
   <gresource prefix="@PREFIX@/icons/scalable/actions/">
