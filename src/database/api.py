@@ -132,7 +132,7 @@ class DataHandler(object):
     def add_active_token(self, address: str, user_id: str, token: str) -> None:
         """Add a token and set it as active"""
         query = """
-            INSERT INTO Tokens (address, user_id, token, active) 
+            INSERT OR REPLACE INTO Tokens (address, user_id, token, active) 
             VALUES (?, ?, ?, 1)
         """
         params = (address, user_id, token)
@@ -166,6 +166,7 @@ class DataHandler(object):
             SELECT s.name, s.address, s.server_id, t.token 
             FROM Servers AS s
             INNER JOIN Tokens AS t
+            ON t.address = s.address
             WHERE t.active = 1
         """
         with self.connect() as db:

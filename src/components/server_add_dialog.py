@@ -207,6 +207,11 @@ class ServerAddDialog(Adw.Window):
     def on_manual_button_clicked(self, _button: Gtk.Widget) -> None:
         """Check server address then react to it"""
 
+        def main(address: str):
+            if address in self.__addresses:
+                raise KnownAddressError()
+            return self.query_public_server_info(address)
+
         def on_error(address: str, error: KnownAddressError | ValueError):
             toast = Adw.Toast()
             toast.set_priority(Adw.ToastPriority.HIGH)
@@ -225,11 +230,6 @@ class ServerAddDialog(Adw.Window):
             )
             self.emit("server-picked", server)
             self.close()
-
-        def main(address: str):
-            if address in self.__addresses:
-                raise KnownAddressError()
-            self.query_public_server_info(address)
 
         address = self.manual_add_editable.get_text()
         task = Task(
