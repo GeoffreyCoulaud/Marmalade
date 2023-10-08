@@ -121,19 +121,22 @@ class DataHandler(object):
                 db.executescript(script)
         logging.debug("Database migration finished")
 
+    def get_servers(self) -> list[ServerInfo]:
+        servers = set()
+        with self.connect() as db:
+            cursor = db.execute("SELECT name, address, server_id FROM Servers")
+            cursor.row_factory = lambda _cursor, row: ServerInfo(*row)
+            for server in cursor:
+                servers.add(server)
+        return servers
+
     def __load_servers(self) -> None:
         """
         Load the servers from the database into the servers set.
         Inhibit server added handler for the time of this method.
         """
-        with (
-            self.servers.emitter.handler_block(self.__server_added_handler_id),
-            self.connect() as db,
-        ):
-            cursor = db.execute("SELECT name, address, server_id FROM Servers")
-            cursor.row_factory = lambda _cursor, row: ServerInfo(*row)
-            for server in cursor:
-                self.servers.add(server)
+        with self.servers.emitter.handler_block(self.__server_added_handler_id):
+            self.servers.update(self.get_servers())
 
     def __on_server_added(self, _emitter, server: ServerInfo) -> None:
         self.add_server(server=server)

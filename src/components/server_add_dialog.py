@@ -13,7 +13,7 @@ from socket import (
 )
 
 import psutil
-from gi.repository import Adw, Gio, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk
 from httpx import InvalidURL, RequestError
 from jellyfin_api_client.api.system import get_public_system_info
 from jellyfin_api_client.client import Client as JfClient
@@ -22,8 +22,11 @@ from jellyfin_api_client.models.public_system_info import PublicSystemInfo
 from src import build_constants
 from src.components.server_row import ServerRow
 from src.database.api import ServerInfo
-from src.reactive_set import ReactiveSet
 from src.task import Task
+
+
+class KnownAddressError(Exception):
+    """Error raised when trying to add a duplicate server address"""
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_add_dialog.ui")
@@ -44,10 +47,11 @@ class ServerAddDialog(Adw.Window):
     spinner_revealer = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
 
-    discovered_servers: ReactiveSet[ServerInfo]
     __tasks_cancellable: Gio.Cancellable
-    __n_discovery_tasks: int
-    __n_discovery_tasks_done: int
+    __discover_subtasks_count: int
+    __discover_subtasks_done_count: int
+    __addresses: set[str]
+    __discovered_addresses: set[str]
 
     @GObject.Signal(name="cancelled")
     def cancelled(self):
@@ -57,17 +61,16 @@ class ServerAddDialog(Adw.Window):
     def server_picked(self, _server: ServerInfo):
         """Signal emitted when a server is picked"""
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, *args, addresses=set[str], **kwargs) -> None:
         super().__init__(**kwargs)
         self.cancel_button.connect("clicked", self.on_cancel_button_clicked)
         self.manual_add_button.connect("clicked", self.on_manual_button_clicked)
         self.__tasks_cancellable = Gio.Cancellable.new()
-        self.__n_discovery_tasks = 0
-        self.__n_discovery_tasks_done = 0
-        self.discovered_servers = ReactiveSet()
-        self.discovered_servers.emitter.connect(
-            "item-added", self.create_discovered_server_row
-        )
+        self.__discover_subtasks_count = 0
+        self.__discover_subtasks_done_count = 0
+        # Prevent from adding servers of known addresses
+        self.__addresses = addresses
+        self.__discovered_addresses = set(addresses)
         discover_task = Task(
             main=self.discover,
             cancellable=self.__tasks_cancellable,
@@ -87,11 +90,11 @@ class ServerAddDialog(Adw.Window):
                     or address_info.broadcast is None
                 ):
                     continue
-                self.__n_discovery_tasks += 1
+                self.__discover_subtasks_count += 1
                 subtask = Task(
                     main=self.discover_on_interface,
                     main_args=(name, address_info.family, address_info.broadcast),
-                    callback=self.on_discovery_subtask_finished,
+                    callback=self.on_discover_subtask_finished,
                     cancellable=self.__tasks_cancellable,
                 )
                 subtask.run()
@@ -107,63 +110,80 @@ class ServerAddDialog(Adw.Window):
         with socket.socket(
             family=address_family, type=SOCK_DGRAM, proto=IPPROTO_UDP
         ) as sock:
-            # Broadcast
-            logging.debug(
-                "Discovering servers on %s (%s) %d",
-                broadcast_address,
-                address_family.name,
-                self.DISCOVERY_PORT,
-            )
+            # Set socket up
             interface_name_buffer = bytearray(interface_name, encoding="utf-8")
             sock.setsockopt(SOL_SOCKET, SO_BINDTODEVICE, interface_name_buffer)
             sock.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
-            sock.settimeout(self.DISCOVERY_SEND_TIMEOUT_SECONDS)
-            message = bytearray(
-                "Who is JellyfinServer?", encoding=self.DISCOVERY_ENCODING
-            )
+
+            # Broadcast
             try:
-                sock.sendto(message, (broadcast_address, self.DISCOVERY_PORT))
+                self.discover_broadcast(sock, broadcast_address)
             except TimeoutError:
                 logging.error("Server discovery broadcast send timed out")
                 return
 
             # Listen for responses
-            logging.debug("Listening for server responses")
-            start = time.time()
-            elapsed = 0
-            while elapsed < self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS:
-                sock.settimeout(self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS - elapsed)
-                try:
-                    (response, _addr_info) = sock.recvfrom(self.DISCOVERY_BUFSIZE)
-                except TimeoutError:
-                    logging.debug("Server discovery receive timed out")
-                    return
-                message = response.decode(encoding=self.DISCOVERY_ENCODING)
-                try:
-                    server_info = json.loads(message)
-                    server = ServerInfo(
-                        name=server_info["Name"],
-                        address=server_info["Address"],
-                        server_id=server_info["Id"],
-                    )
-                except (json.JSONDecodeError, KeyError):
-                    # Response isn't JSON or contains invalid data
-                    continue
-                else:
-                    logging.debug("Discovered %s", str(server))
-                    self.discovered_servers.add(server)
-                elapsed = time.time() - start
+            try:
+                self.discover_listen(sock)
+            except TimeoutError:
+                logging.debug("Server discovery receive timeout")
+                return
 
-    # pylint: disable=unused-argument
-    def on_discovery_subtask_finished(self, *, result):
-        self.__n_discovery_tasks_done += 1
-        if self.__n_discovery_tasks == self.__n_discovery_tasks_done:
-            self.spinner_revealer.set_reveal_child(False)
+    def discover_broadcast(self, sock, address):
+        """
+        Broadcast a discover message on the socket.
+        Changes the socket's timeout value.
+        May raise TimeoutError.
+        """
+        logging.debug("Discovering servers on %s %d", address, self.DISCOVERY_PORT)
+        sock.settimeout(self.DISCOVERY_SEND_TIMEOUT_SECONDS)
+        message = bytearray("Who is JellyfinServer?", encoding=self.DISCOVERY_ENCODING)
+        sock.sendto(message, (address, self.DISCOVERY_PORT))
 
-    def create_discovered_server_row(self, _emitter, server: ServerInfo) -> None:
+    def discover_listen(self, sock):
+        """
+        Receive discover response messages from the socket.
+        Changes the socket timeout value.
+        May raise TimeoutError.
+        """
+        logging.debug("Listening for server responses")
+        start = time.time()
+        elapsed = 0
+        while elapsed < self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS:
+            # Wait for a message
+            sock.settimeout(self.DISCOVERY_RECEIVE_TIMEOUT_SECONDS - elapsed)
+            (response, _address) = sock.recvfrom(self.DISCOVERY_BUFSIZE)
+            # Process the message
+            message = response.decode(encoding=self.DISCOVERY_ENCODING)
+            try:
+                server_info = json.loads(message)
+                server = ServerInfo(
+                    name=server_info["Name"],
+                    address=server_info["Address"],
+                    server_id=server_info["Id"],
+                )
+            except (json.JSONDecodeError, KeyError):
+                # Response isn't JSON or contains invalid data
+                continue
+            # Add a server row in the main thread
+            GLib.idle_add(self.add_discovered_server, server)
+            elapsed = time.time() - start
+
+    def add_discovered_server(self, server: ServerInfo) -> None:
+        # Deduplicate servers
+        if server.address in self.__discovered_addresses:
+            return
+        logging.debug("Discovered %s", str(server))
+        self.__discovered_addresses.add(server.address)
+        # Add the server row
         row = ServerRow(server, "list-add-symbolic")
         row.connect("button-clicked", self.on_detected_row_button_clicked)
         self.detected_server_rows_group.add(row)
+
+    def on_discover_subtask_finished(self, _result):
+        self.__discover_subtasks_done_count += 1
+        if self.__discover_subtasks_count == self.__discover_subtasks_done_count:
+            self.spinner_revealer.set_reveal_child(False)
 
     def on_cancel_button_clicked(self, _button) -> None:
         self.emit("cancelled")
@@ -187,14 +207,17 @@ class ServerAddDialog(Adw.Window):
     def on_manual_button_clicked(self, _button: Gtk.Widget) -> None:
         """Check server address then react to it"""
 
-        def on_query_error(address: str, *, error: ValueError):
-            logging.error('Invalid server address "%s"', address, exc_info=error)
+        def on_error(address: str, error: KnownAddressError | ValueError):
             toast = Adw.Toast()
             toast.set_priority(Adw.ToastPriority.HIGH)
-            toast.set_title(error.args[0])
+            if isinstance(error, KnownAddressError):
+                toast.set_title(_("Server address is already known"))
+            else:
+                toast.set_title(error.args[0])
+                logging.error('Invalid server address "%s"', address, exc_info=error)
             self.toast_overlay.add_toast(toast)
 
-        def on_query_done(*, result: PublicSystemInfo):
+        def on_success(result: PublicSystemInfo):
             server = ServerInfo(
                 name=result.server_name,
                 address=result.local_address,
@@ -203,12 +226,17 @@ class ServerAddDialog(Adw.Window):
             self.emit("server-picked", server)
             self.close()
 
+        def main(address: str):
+            if address in self.__addresses:
+                raise KnownAddressError()
+            self.query_public_server_info(address)
+
         address = self.manual_add_editable.get_text()
         task = Task(
-            main=self.query_public_server_info,
+            main=main,
             main_args=(address,),
-            callback=on_query_done,
-            error_callback=on_query_error,
+            callback=on_success,
+            error_callback=on_error,
             error_callback_args=(address,),
             cancellable=self.__tasks_cancellable,
         )

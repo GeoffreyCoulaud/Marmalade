@@ -12,10 +12,10 @@ class Task:
     """
     Wrapper around async Gio Tasks.
 
-    - `error_callback` must accept `error` as a keyword argument.
-    - `callback` must accept `result` as a keyword argument.
-    - If `main` raises an exception, `error_callback` will receive it in `error`.
-    - Else, `callback` will receive the return value in `result`.
+    - `error_callback` must accept a `error` argument.
+    - `callback` must accept a `result` argument.
+    - If `main` raises an exception, `error_callback` will receive it.
+    - Else, `callback` will receive the return value.
     - If `callback` or `error_callback` are not passed, they will be NOP.
     - The task is assigned a Gio.Cancellable, unless one is passed.
     - By setting `return_on_cancel` to `True`, cancelling will exit `main` immediately.
@@ -75,9 +75,9 @@ class Task:
 
     def __gio_callback(self, _source_object, _result, _data) -> None:
         if self.__error is not None:
-            self.__error_callback(error=self.__error)
+            self.__error_callback(self.__error)
         else:
-            self.__callback(result=self.__result)
+            self.__callback(self.__result)
 
     def __gio_main(self, _task, _source_object, _task_data, _cancellable) -> None:
         try:

@@ -110,7 +110,7 @@ class MarmaladeApplication(Adw.Application):
 
     def create_window(self):
         self.window = MarmaladeWindow(application=self)
-        servers = ServersListView(window=self.window, servers=self.settings.servers)
+        servers = ServersListView(window=self.window, settings=self.settings)
         servers.connect("server-connect-request", self.on_server_connect_request)
         self.window.views.add(servers)
         # Try to get the active token to resume navigation on the server

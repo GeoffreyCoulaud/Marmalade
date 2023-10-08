@@ -137,12 +137,12 @@ class AuthQuickConnectView(Adw.NavigationPage):
             else:
                 raise UnexpectedStatus(response.status_code)
 
-        def on_success(*, result: tuple[str, str]) -> None:
+        def on_success(result: tuple[str, str]) -> None:
             user_id, token = result
             logging.debug("Authenticated via quick connect")
             self.emit("authenticated", self.server, user_id, token)
 
-        def on_error(*, error: Exception) -> None:
+        def on_error(error: Exception) -> None:
             toast = Adw.Toast()
             if isinstance(error, UnauthorizedQuickConnect):
                 logging.error("Quick connect not authorized yet")
