@@ -22,8 +22,8 @@ from gi.repository import Adw, GObject, Gtk
 from src import build_constants
 from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_row import ServerRow
+from src.database.api import ServerInfo
 from src.reactive_set import ReactiveSet
-from src.server import Server
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_list_view.ui")
@@ -41,21 +41,21 @@ class ServersListView(Adw.NavigationPage):
     status_add_button = Gtk.Template.Child()
 
     window: Gtk.Window
-    server_rows_mapping: dict[Server, ServerRow]
-    servers: ReactiveSet[Server]
-    servers_trash: set[Server]
+    server_rows_mapping: dict[ServerInfo, ServerRow]
+    servers: ReactiveSet[ServerInfo]
+    servers_trash: set[ServerInfo]
 
     edit_mode: bool
 
     @GObject.Signal(name="server-connect-request", arg_types=[object])
-    def server_connect_request(self, _server: Server):
+    def server_connect_request(self, _server: ServerInfo):
         """Signal emitted when a server is connected"""
 
     def __init__(
         self,
         *args,
         window: Gtk.Window,
-        servers: ReactiveSet[Server],
+        servers: ReactiveSet[ServerInfo],
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -81,13 +81,13 @@ class ServersListView(Adw.NavigationPage):
             "clicked", self.on_remove_selected_button_clicked
         )
 
-    def create_server_row(self, server: Server) -> None:
+    def create_server_row(self, server: ServerInfo) -> None:
         row = ServerRow(server)
         row.connect("button-clicked", self.on_server_connect_request)
         self.server_rows_mapping[server] = row
         self.server_rows_group.add(row)
 
-    def remove_server_row(self, server: Server):
+    def remove_server_row(self, server: ServerInfo):
         row = self.server_rows_mapping[server]
         del self.server_rows_mapping[server]
         self.server_rows_group.remove(row)
@@ -97,10 +97,10 @@ class ServersListView(Adw.NavigationPage):
             "no-server" if len(self.servers) == 0 else "servers"
         )
 
-    def on_server_added(self, _emitter, server: Server) -> None:
+    def on_server_added(self, _emitter, server: ServerInfo) -> None:
         self.create_server_row(server)
 
-    def on_server_removed(self, _emitter, server: Server) -> None:
+    def on_server_removed(self, _emitter, server: ServerInfo) -> None:
         self.remove_server_row(server)
 
     def on_add_button_clicked(self, _button) -> None:
@@ -110,7 +110,7 @@ class ServersListView(Adw.NavigationPage):
         dialog.set_modal(True)
         dialog.present()
 
-    def on_add_server_dialog_picked(self, _dialog, server: Server) -> None:
+    def on_add_server_dialog_picked(self, _dialog, server: ServerInfo) -> None:
         self.servers.add(server)
 
     def toggle_edit_mode(self) -> None:

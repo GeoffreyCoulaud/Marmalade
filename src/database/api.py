@@ -1,21 +1,36 @@
 import logging
 from contextlib import closing
 from pathlib import Path
-from sqlite3 import Connection, OperationalError, Row, connect
-from typing import Any, MutableMapping, NamedTuple, Optional, Sequence
+from sqlite3 import Connection, OperationalError, connect
+from typing import NamedTuple, Optional, Sequence
 
 from src.reactive_set import ReactiveSet
-from src.server import Server
 
 
 class CorruptedDatabase(Exception):
     """Error raised when trying to read a broken database"""
 
 
+class ServerInfo(NamedTuple):
+    """Class representing a Jellyfin server"""
+
+    name: str
+    address: str
+    server_id: str
+
+    def __eq__(self, other: "ServerInfo") -> bool:
+        if not isinstance(other, ServerInfo):
+            return False
+        return self.address == other.address
+
+    def __hash__(self) -> int:
+        return hash(self.address)
+
+
 class ActiveTokenInfo(NamedTuple):
     """Object describing the active token"""
 
-    server: Server
+    server: ServerInfo
     token: str
 
 
@@ -26,7 +41,7 @@ class DataHandler(object):
     - Exposes a `server` ReactiveSet that is mirrored in the database
     """
 
-    servers: ReactiveSet[Server]
+    servers: ReactiveSet[ServerInfo]
 
     __db_file: Path
     __server_added_handler_id: int
@@ -116,29 +131,29 @@ class DataHandler(object):
             self.connect() as db,
         ):
             cursor = db.execute("SELECT name, address, server_id FROM Servers")
-            cursor.row_factory = lambda _cursor, row: Server(*row)
+            cursor.row_factory = lambda _cursor, row: ServerInfo(*row)
             for server in cursor:
                 self.servers.add(server)
 
-    def __on_server_added(self, _emitter, server: Server) -> None:
-        """
-        React to a server being added.
-        Replicates the change into the database.
-        """
+    def __on_server_added(self, _emitter, server: ServerInfo) -> None:
+        self.add_server(server=server)
+
+    def __on_server_removed(self, _emitter, server: ServerInfo) -> None:
+        self.remove_server(address=server.address)
+
+    def add_server(self, server: ServerInfo) -> None:
+        """Add a server to the database"""
         query = "INSERT INTO Servers (address, name, server_id) VALUES (?, ?, ?)"
         params = (server.address, server.name, server.server_id)
         self.__execute_blind((query, params))
         logging.debug("Saved server to db: %s", server)
 
-    def __on_server_removed(self, _emitter, server: Server) -> None:
-        """
-        React to a server being removed.
-        Replicates the change into the database.
-        """
-        del_tokens_query = ("DELETE FROM Tokens WHERE address = ?", (server.address,))
-        del_server_query = ("DELETE FROM Servers WHERE address = ?", (server.address,))
-        self.__execute_blind(del_tokens_query, del_server_query)
-        logging.debug("Deleted server from db: %s", server)
+    def remove_server(self, address: str) -> None:
+        """Remove a server by address from the database"""
+        query = "DELETE FROM Servers WHERE address = ?"
+        args = (address,)
+        self.__execute_blind((query, args))
+        logging.debug("Deleted server with address %s from db", address)
 
     def add_active_token(self, address: str, user_id: str, token: str) -> None:
         """Add a token and set it as active"""
@@ -185,7 +200,7 @@ class DataHandler(object):
             if row is None:
                 return row
             name, address, server_id, token = row
-            server = Server(name=name, address=address, server_id=server_id)
+            server = ServerInfo(name=name, address=address, server_id=server_id)
             return ActiveTokenInfo(server=server, token=token)
 
     def remove_token(self, address: str, user_id: str):

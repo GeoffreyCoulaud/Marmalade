@@ -5,7 +5,7 @@ from src.components.auth_credentials_view import AuthCredentialsView
 from src.components.auth_login_method_view import AuthLoginMethodView
 from src.components.auth_quick_connect_view import AuthQuickConnectView
 from src.components.auth_user_select_view import AuthUserSelectView
-from src.server import Server
+from src.database.api import ServerInfo
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/auth_dialog.ui")
@@ -14,17 +14,17 @@ class AuthDialog(Adw.Window):
 
     views = Gtk.Template.Child()
 
-    server: Server
+    server: ServerInfo
 
     @GObject.Signal(name="authenticated", arg_types=[object, str, str])
-    def authenticated(self, _server: Server, _user_id: str, _token: str):
+    def authenticated(self, _server: ServerInfo, _user_id: str, _token: str):
         """Signal emitted when the user is authenticated"""
 
     @GObject.Signal(name="cancelled")
     def cancelled(self):
         """Signal emitted when the login process is cancelled"""
 
-    def __init__(self, server: Server, *args, **kwargs) -> None:
+    def __init__(self, server: ServerInfo, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.server = server
         view = AuthLoginMethodView(dialog=self)
@@ -53,7 +53,7 @@ class AuthDialog(Adw.Window):
         self.views.push(view)
 
     def on_authenticated(
-        self, _widget, server: Server, user_id: str, token: str
+        self, _widget, server: ServerInfo, user_id: str, token: str
     ) -> None:
         self.emit("authenticated", server, user_id, token)
         self.close()

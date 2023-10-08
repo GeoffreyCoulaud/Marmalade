@@ -21,8 +21,8 @@ from jellyfin_api_client.models.public_system_info import PublicSystemInfo
 
 from src import build_constants
 from src.components.server_row import ServerRow
+from src.database.api import ServerInfo
 from src.reactive_set import ReactiveSet
-from src.server import Server
 from src.task import Task
 
 
@@ -44,7 +44,7 @@ class ServerAddDialog(Adw.Window):
     spinner_revealer = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
 
-    discovered_servers: ReactiveSet[Server]
+    discovered_servers: ReactiveSet[ServerInfo]
     __tasks_cancellable: Gio.Cancellable
     __n_discovery_tasks: int
     __n_discovery_tasks_done: int
@@ -54,7 +54,7 @@ class ServerAddDialog(Adw.Window):
         """Signal emitted when the dialog is cancelled"""
 
     @GObject.Signal(name="server-picked", arg_types=[object])
-    def server_picked(self, _server: Server):
+    def server_picked(self, _server: ServerInfo):
         """Signal emitted when a server is picked"""
 
     def __init__(self, **kwargs) -> None:
@@ -66,7 +66,7 @@ class ServerAddDialog(Adw.Window):
         self.__n_discovery_tasks_done = 0
         self.discovered_servers = ReactiveSet()
         self.discovered_servers.emitter.connect(
-            "item-added", self.on_discovered_server_added
+            "item-added", self.create_discovered_server_row
         )
         discover_task = Task(
             main=self.discover,
@@ -141,7 +141,7 @@ class ServerAddDialog(Adw.Window):
                 message = response.decode(encoding=self.DISCOVERY_ENCODING)
                 try:
                     server_info = json.loads(message)
-                    server = Server(
+                    server = ServerInfo(
                         name=server_info["Name"],
                         address=server_info["Address"],
                         server_id=server_info["Id"],
@@ -160,7 +160,7 @@ class ServerAddDialog(Adw.Window):
         if self.__n_discovery_tasks == self.__n_discovery_tasks_done:
             self.spinner_revealer.set_reveal_child(False)
 
-    def on_discovered_server_added(self, _emitter, server: Server) -> None:
+    def create_discovered_server_row(self, _emitter, server: ServerInfo) -> None:
         row = ServerRow(server, "list-add-symbolic")
         row.connect("button-clicked", self.on_detected_row_button_clicked)
         self.detected_server_rows_group.add(row)
@@ -195,7 +195,7 @@ class ServerAddDialog(Adw.Window):
             self.toast_overlay.add_toast(toast)
 
         def on_query_done(*, result: PublicSystemInfo):
-            server = Server(
+            server = ServerInfo(
                 name=result.server_name,
                 address=result.local_address,
                 server_id=result.id,

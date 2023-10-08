@@ -20,7 +20,7 @@
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
-from src.server import Server
+from src.database.api import ServerInfo
 
 
 @Gtk.Template(
@@ -30,11 +30,11 @@ class ServerConnectedView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeServerConnectedView"
 
     @GObject.Signal(name="log-out", arg_types=[object, str])
-    def log_out(self, _server: Server, _token: str):
+    def log_out(self, _server: ServerInfo, _token: str):
         """Signal emitted when the user logs out of the server (discard the token)"""
 
     @GObject.Signal(name="log-off", arg_types=[object])
-    def log_off(self, _server: Server):
+    def log_off(self, _server: ServerInfo):
         """
         Signal emitted when the user logs off the server.
         Should also be emitted alongside log-out.
@@ -43,14 +43,14 @@ class ServerConnectedView(Adw.NavigationPage):
     label: Gtk.Label = Gtk.Template.Child()
 
     window: Gtk.Window
-    server: Server
+    server: ServerInfo
     token: str
 
     def __init__(
         self,
         *args,
         window: Gtk.Window,
-        server: Server,
+        server: ServerInfo,
         token: str,
         **kwargs,
     ):

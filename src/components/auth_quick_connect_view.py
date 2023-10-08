@@ -11,7 +11,7 @@ from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
 from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import build_constants
-from src.server import Server
+from src.database.api import ServerInfo
 from src.task import Task
 
 
@@ -36,15 +36,15 @@ class AuthQuickConnectView(Adw.NavigationPage):
     code_label = Gtk.Template.Child()
 
     dialog: Adw.Window
-    server: Server
+    server: ServerInfo
     __secret: str
     __cancellable: Gio.Cancellable
 
     @GObject.Signal(name="authenticated", arg_types=[object, str, str])
-    def authenticated(self, _server: Server, _user_id: str, _token: str):
+    def authenticated(self, _server: ServerInfo, _user_id: str, _token: str):
         """Signal emitted when the user is authenticated"""
 
-    def __init__(self, *args, dialog: Adw.Window, server: Server, **kwargs) -> None:
+    def __init__(self, *args, dialog: Adw.Window, server: ServerInfo, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.dialog = dialog
         self.server = server

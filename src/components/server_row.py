@@ -1,7 +1,7 @@
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
-from src.server import Server
+from src.database.api import ServerInfo
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_row.ui")
@@ -12,7 +12,7 @@ class ServerRow(Adw.ActionRow):
     button_revealer = Gtk.Template.Child()
     tick = Gtk.Template.Child()
     tick_revealer = Gtk.Template.Child()
-    server: Server
+    server: ServerInfo
 
     __edit_mode: bool
 
@@ -42,7 +42,7 @@ class ServerRow(Adw.ActionRow):
 
     def __init__(
         self,
-        server: Server,
+        server: ServerInfo,
         icon_name: str = "go-next-symbolic",
         **kwargs,
     ) -> None:

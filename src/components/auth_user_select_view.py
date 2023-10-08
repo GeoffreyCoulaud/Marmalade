@@ -1,7 +1,7 @@
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
-from src.server import Server
+from src.database.api import ServerInfo
 from src.task import Task
 
 
@@ -15,13 +15,13 @@ class AuthUserSelectView(Adw.NavigationPage):
     user_picker_wrapper = Gtk.Template.Child()
 
     dialog: Adw.Window
-    server: Server
+    server: ServerInfo
 
     @GObject.Signal(name="user-picked", arg_types=[str])
     def user_picked(self, _username: str):
         """Signal emitted when a user is picked"""
 
-    def __init__(self, *args, dialog: Adw.Window, server: Server, **kwargs) -> None:
+    def __init__(self, *args, dialog: Adw.Window, server: ServerInfo, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.dialog = dialog
         self.server = server
