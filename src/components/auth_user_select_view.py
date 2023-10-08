@@ -31,6 +31,7 @@ class AuthUserSelectView(Adw.NavigationPage):
 
     def discover(self) -> None:
         # TODO get public users from the server
+        # TODO differentiate users that have a logged-in token in the database
         # TODO create the user picker
         pass
 
