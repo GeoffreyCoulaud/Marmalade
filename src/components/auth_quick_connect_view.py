@@ -58,26 +58,29 @@ class AuthQuickConnectView(Adw.NavigationPage):
         logging.debug("Requested a new Quick Connect code")
         self.refresh()
 
+    def get_auth_header(self):
+        # TODO implement in a subclass of Jellyfin Client
+        auth = {
+            "Client": "Marmalade",
+            "Version": "1.9.1",
+            "Device": socket.gethostname(),
+            "DeviceId": "-",
+        }
+        auth = [f'{key}="{value}"' for key, value in auth.items()]
+        auth = "MediaBrowser " + ", ".join(auth)
+        return {"X-Emby-Authorization": auth}
+
     def refresh(self) -> None:
         def main() -> QuickConnectResult:
-            auth = {
-                "Client": "Marmalade",
-                "Version": "1.9.1",
-                "Device": socket.gethostname(),
-                "DeviceId": "-y",
-            }
-            auth = [f'{key}="{value}"' for key, value in auth.items()]
-            auth = "MediaBrowser " + ", ".join(auth)
-            client = JfClient(
-                base_url=self.server.address,
-                headers={"X-Emby-Authorization": auth},
-                raise_on_unexpected_status=True,
-            )
+            headers = {}
+            headers.update(self.get_auth_header())
+            client = JfClient(base_url=self.server.address, headers=headers)
             response = initiate_quick_connect.sync_detailed(client=client)
             if response.status_code == HTTPStatus.OK:
                 return response.parsed
             if HTTPStatus.UNAUTHORIZED:
                 raise QuickConnectDisabledError()
+            raise UnexpectedStatus(response.status_code, response.content)
 
         def on_success(result: QuickConnectResult):
             self.__secret = result.secret

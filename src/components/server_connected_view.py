@@ -17,10 +17,14 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import logging
+
 from gi.repository import Adw, GObject, Gtk
+from jellyfin_api_client.models.user_dto import UserDto
 
 from src import build_constants
-from src.database.api import ServerInfo
+from src.components.disconnect_dialog import DisconnectDialog
+from src.database.api import DataHandler, ServerInfo
 
 
 @Gtk.Template(
@@ -29,45 +33,82 @@ from src.database.api import ServerInfo
 class ServerConnectedView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeServerConnectedView"
 
-    @GObject.Signal(name="log-out", arg_types=[object, str])
-    def log_out(self, _server: ServerInfo, _token: str):
+    @GObject.Signal(name="log-out", arg_types=[str, str])
+    def log_out(self, _address: str, _user_id: str):
         """Signal emitted when the user logs out of the server (discard the token)"""
 
-    @GObject.Signal(name="log-off", arg_types=[object])
-    def log_off(self, _server: ServerInfo):
+    @GObject.Signal(name="log-off", arg_types=[str])
+    def log_off(self, _address: str):
         """
         Signal emitted when the user logs off the server.
         Should also be emitted alongside log-out.
         """
 
+    disconnect_button = Gtk.Template.Child()
+    search_button = Gtk.Template.Child()
+    collection_filter_button = Gtk.Template.Child()
+    preferences_button = Gtk.Template.Child()
+    toast_overlay = Gtk.Template.Child()
     label: Gtk.Label = Gtk.Template.Child()
 
-    window: Gtk.Window
-    server: ServerInfo
-    token: str
+    __window: Gtk.Window
+    __settings: DataHandler
+    __server: ServerInfo
+    __user: UserDto
+    __token: str
 
     def __init__(
         self,
         *args,
         window: Gtk.Window,
+        settings: DataHandler,
         server: ServerInfo,
+        user: UserDto,
         token: str,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.window = window
-        self.server = server
-        self.token = token
+        self.__window = window
+        self.__settings = settings
+        self.__server = server
+        self.__user = user
+        self.__token = token
 
         # Variable is the server's name
-        self.set_title(_("%s Home") % self.server.name)
+        self.set_title(_("%s Home") % self.__server.name)
 
-        # TODO implement
+        # React to user input
+        self.disconnect_button.connect("clicked", self.on_disconnect_button_clicked)
+
+        # TODO implement content
         label = "\n".join(
             (
-                f"Server: {self.server.name}",
-                f"Address: {self.server.address}",
-                f"Token: {self.token}",
+                f"Server: {self.__server.name}",
+                f"Address: {self.__server.address}",
+                f"Token: {self.__token}",
             )
         )
         self.label.set_label(label)
+
+    def on_disconnect_button_clicked(self, _button) -> None:
+        dialog = DisconnectDialog()
+        dialog.connect("response", self.on_disconnect_dialog_response)
+        dialog.set_transient_for(self.__window)
+        dialog.set_modal(True)
+        dialog.present()
+
+    def on_disconnect_dialog_response(self, _dialog, response: str) -> None:
+        match response:
+            case "log-off":
+                logging.debug(
+                    "Logging off %s",
+                    self.__server.address,
+                )
+                self.emit("log-off", self.__server.address)
+            case "log-out":
+                logging.debug(
+                    "Logging user id %s out of %s",
+                    self.__user.id,
+                    self.__server.address,
+                )
+                self.emit("log-out", self.__server.address, self.__user.id)

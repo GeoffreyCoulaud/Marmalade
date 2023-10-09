@@ -29,6 +29,7 @@ class ActiveTokenInfo(NamedTuple):
     """Object describing the active token"""
 
     server: ServerInfo
+    user_id: str
     token: str
 
 
@@ -107,6 +108,7 @@ class DataHandler(object):
         logging.debug("Database migration finished")
 
     def get_servers(self) -> list[ServerInfo]:
+        # TODO order by last used
         servers = set()
         with self.connect() as db:
             cursor = db.execute("SELECT name, address, server_id FROM Servers")
@@ -163,7 +165,7 @@ class DataHandler(object):
         - When logging out, the token is removed
         """
         query = """
-            SELECT s.name, s.address, s.server_id, t.token 
+            SELECT s.name, s.address, s.server_id, t.user_id, t.token 
             FROM Servers AS s
             INNER JOIN Tokens AS t
             ON t.address = s.address
@@ -174,9 +176,9 @@ class DataHandler(object):
             row: None | tuple = cursor.fetchone()
             if row is None:
                 return row
-            name, address, server_id, token = row
+            name, address, server_id, user_id, token = row
             server = ServerInfo(name=name, address=address, server_id=server_id)
-            return ActiveTokenInfo(server=server, token=token)
+            return ActiveTokenInfo(server=server, user_id=user_id, token=token)
 
     def remove_token(self, address: str, user_id: str):
         """Remove the server access token for the given user_id"""
