@@ -48,10 +48,10 @@ class ServerConnectedView(Adw.NavigationPage):
     search_button = Gtk.Template.Child()
     collection_filter_button = Gtk.Template.Child()
     preferences_button = Gtk.Template.Child()
-    toast_overlay = Gtk.Template.Child()
     label: Gtk.Label = Gtk.Template.Child()
 
     __window: Gtk.Window
+    __toast_overlay: Adw.ToastOverlay
     __settings: DataHandler
     __server: ServerInfo
     __user: UserDto
@@ -61,6 +61,7 @@ class ServerConnectedView(Adw.NavigationPage):
         self,
         *args,
         window: Gtk.Window,
+        toast_overlay: Adw.ToastOverlay,
         settings: DataHandler,
         server: ServerInfo,
         user: UserDto,
@@ -69,6 +70,7 @@ class ServerConnectedView(Adw.NavigationPage):
     ):
         super().__init__(*args, **kwargs)
         self.__window = window
+        self.__toast_overlay = toast_overlay
         self.__settings = settings
         self.__server = server
         self.__user = user

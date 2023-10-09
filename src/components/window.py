@@ -57,7 +57,11 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         self.__settings = settings
 
         # Add servers list
-        view = ServersListView(window=self, settings=self.__settings)
+        view = ServersListView(
+            window=self,
+            toast_overlay=self.toast_overlay,
+            settings=self.__settings,
+        )
         view.connect("server-connect-request", self.on_server_connect_request)
         self.views.add(view)
 
@@ -157,6 +161,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
             # Navigate to server connected view
             view = ServerConnectedView(
                 window=self,
+                toast_overlay=self.toast_overlay,
                 settings=self.__settings,
                 server=server,
                 user=result,

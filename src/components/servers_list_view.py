@@ -35,11 +35,11 @@ class ServersListView(Adw.NavigationPage):
     remove_selected_button = Gtk.Template.Child()
     remove_selected_button_revealer = Gtk.Template.Child()
     server_rows_group = Gtk.Template.Child()
-    toast_overlay = Gtk.Template.Child()
     servers_view_stack = Gtk.Template.Child()
     status_add_button = Gtk.Template.Child()
 
     __window: Gtk.Window
+    __toast_overlay: Adw.ToastOverlay
     __settings: DataHandler
     __rows: set[ServerRow]
     __servers_trash: set[ServerInfo]
@@ -57,13 +57,21 @@ class ServersListView(Adw.NavigationPage):
     def server_connect_request(self, _server: ServerInfo):
         """Signal emitted when a server is connected"""
 
-    def __init__(self, *args, window: Gtk.Window, settings: DataHandler, **kwargs):
+    def __init__(
+        self,
+        *args,
+        window: Gtk.Window,
+        settings: DataHandler,
+        toast_overlay: Adw.ToastOverlay,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.__window = window
         self.__settings = settings
         self.__rows = set()
         self.__servers_trash = set()
         self.__edit_mode = False
+        self.__toast_overlay = toast_overlay
 
         # Initial content
         servers = self.__settings.get_servers()
@@ -125,7 +133,7 @@ class ServersListView(Adw.NavigationPage):
                 toast.set_title(_("%d servers removed") % n)
         toast.set_button_label(_("Undo"))
         toast.connect("button-clicked", self.on_removed_toast_undo)
-        self.toast_overlay.add_toast(toast)
+        self.__toast_overlay.add_toast(toast)
 
     def on_remove_selected_button_clicked(self, _button) -> None:
         selected = [row for row in self.__rows if row.is_selected]
