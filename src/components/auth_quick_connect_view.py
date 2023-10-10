@@ -5,13 +5,13 @@ from http import HTTPStatus
 from gi.repository import Adw, Gio, GObject, Gtk
 from jellyfin_api_client.api.quick_connect import initiate as initiate_quick_connect
 from jellyfin_api_client.api.user import authenticate_with_quick_connect
-from jellyfin_api_client.client import Client as JfClient
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
 from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import build_constants
 from src.database.api import ServerInfo
+from src.jellyfin import JellyfinClient
 from src.task import Task
 
 
@@ -58,23 +58,9 @@ class AuthQuickConnectView(Adw.NavigationPage):
         logging.debug("Requested a new Quick Connect code")
         self.refresh()
 
-    def get_auth_header(self):
-        # TODO implement in a subclass of Jellyfin Client
-        auth = {
-            "Client": "Marmalade",
-            "Version": "1.9.1",
-            "Device": socket.gethostname(),
-            "DeviceId": "-",
-        }
-        auth = [f'{key}="{value}"' for key, value in auth.items()]
-        auth = "MediaBrowser " + ", ".join(auth)
-        return {"X-Emby-Authorization": auth}
-
     def refresh(self) -> None:
         def main() -> QuickConnectResult:
-            headers = {}
-            headers.update(self.get_auth_header())
-            client = JfClient(base_url=self.server.address, headers=headers)
+            client = JellyfinClient(base_url=self.server.address, device_id="-")
             response = initiate_quick_connect.sync_detailed(client=client)
             if response.status_code == HTTPStatus.OK:
                 return response.parsed
@@ -128,7 +114,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
 
     def on_connect_requested(self, _widget) -> None:
         def main() -> tuple[str, str]:
-            client = JfClient(base_url=self.server.address)
+            client = JellyfinClient(base_url=self.server.address, device_id="-")
             response = authenticate_with_quick_connect.sync_detailed(
                 client=client,
                 json_body=QuickConnectDto(secret=self.__secret),

@@ -23,7 +23,6 @@ from http import HTTPStatus
 
 from gi.repository import Adw, Gtk
 from jellyfin_api_client.api.user import get_user_by_id
-from jellyfin_api_client.client import Client as JfClient
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.user_dto import UserDto
 
@@ -32,6 +31,7 @@ from src.components.auth_dialog import AuthDialog
 from src.components.server_connected_view import ServerConnectedView
 from src.components.servers_list_view import ServersListView
 from src.database.api import DataHandler, ServerInfo
+from src.jellyfin import JellyfinClient
 from src.task import Task
 
 
@@ -72,20 +72,6 @@ class MarmaladeWindow(Adw.ApplicationWindow):
             logging.debug("Resuming where we left off")
             self.navigate_to_server(server=server, user_id=user_id, token=token)
 
-    def get_auth_header(self, token: str):
-        """Get the authentication header for the client"""
-        # TODO implement in a subclass of Jellyfin Client
-        auth = {
-            "Client": "Marmalade",
-            "Version": "1.9.1",
-            "Device": socket.gethostname(),
-            "DeviceId": "-",  # TODO is that necessary? If so, improve it
-            "Token": token,
-        }
-        auth = [f'{key}="{value}"' for key, value in auth.items()]
-        auth = "MediaBrowser " + ", ".join(auth)
-        return {"X-Emby-Authorization": auth}
-
     def on_server_connect_request(self, _emitter, server: ServerInfo) -> None:
         """Handle a request to connect to a server"""
         dialog = AuthDialog(server)
@@ -111,9 +97,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
 
         def main(address: str, user_id: str, token: str) -> UserDto:
             # Get token info to pass it to home view
-            headers = {}
-            headers.update(self.get_auth_header(token=token))
-            client = JfClient(address, headers=headers)
+            client = JellyfinClient(base_url=address, device_id="-", token=token)
             response = get_user_by_id.sync_detailed(user_id, client=client)
             match response.status_code:
                 case HTTPStatus.OK:

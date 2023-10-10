@@ -48,6 +48,7 @@ install_data(
     '__init__.py',
     'main.py',
     'task.py',
+    'jellyfin.py',
     configure_file(
       input: 'build_constants.py.in',
       output: 'build_constants.py',
