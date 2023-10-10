@@ -1,0 +1,19 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeUserBadge : Adw.Bin {
+  content: Button button {
+    has-frame: false;
+    child: Box {
+      orientation: vertical;
+      Adw.Avatar avatar {
+        icon-name: "person-symbolic";
+        margin-bottom: 8;
+      }
+      Label label {
+        styles ["dim-label", "heading"]
+        wrap: true;
+      }
+    };
+  };
+}

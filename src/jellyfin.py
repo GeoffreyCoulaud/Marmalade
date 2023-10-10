@@ -12,7 +12,13 @@ class JellyfinClient(Client):
     - The client can be authenticated or not, with the same constructor
     """
 
-    def __init__(self, *args, device_id: str, token: Optional[str] = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        device_id: str = "-",
+        token: Optional[str] = None,
+        **kwargs,
+    ):
         headers = {}
         headers.update(
             self.__make_emby_header(

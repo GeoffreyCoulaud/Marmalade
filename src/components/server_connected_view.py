@@ -22,9 +22,9 @@ import logging
 from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.models.user_dto import UserDto
 
-from src import build_constants
+from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
-from src.database.api import DataHandler, ServerInfo
+from src.database.api import ServerInfo
 
 
 @Gtk.Template(
@@ -50,9 +50,7 @@ class ServerConnectedView(Adw.NavigationPage):
     preferences_button = Gtk.Template.Child()
     label: Gtk.Label = Gtk.Template.Child()
 
-    __window: Gtk.Window
     __toast_overlay: Adw.ToastOverlay
-    __settings: DataHandler
     __server: ServerInfo
     __user: UserDto
     __token: str
@@ -60,18 +58,14 @@ class ServerConnectedView(Adw.NavigationPage):
     def __init__(
         self,
         *args,
-        window: Gtk.Window,
         toast_overlay: Adw.ToastOverlay,
-        settings: DataHandler,
         server: ServerInfo,
         user: UserDto,
         token: str,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.__window = window
         self.__toast_overlay = toast_overlay
-        self.__settings = settings
         self.__server = server
         self.__user = user
         self.__token = token
@@ -95,7 +89,7 @@ class ServerConnectedView(Adw.NavigationPage):
     def on_disconnect_button_clicked(self, _button) -> None:
         dialog = DisconnectDialog()
         dialog.connect("response", self.on_disconnect_dialog_response)
-        dialog.set_transient_for(self.__window)
+        dialog.set_transient_for(shared.window)
         dialog.set_modal(True)
         dialog.present()
 

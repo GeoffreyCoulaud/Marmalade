@@ -18,7 +18,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-import socket
 from http import HTTPStatus
 
 from gi.repository import Adw, Gtk
@@ -26,11 +25,11 @@ from jellyfin_api_client.api.user import get_user_by_id
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.user_dto import UserDto
 
-from src import build_constants
+from src import build_constants, shared
 from src.components.auth_dialog import AuthDialog
 from src.components.server_connected_view import ServerConnectedView
 from src.components.servers_list_view import ServersListView
-from src.database.api import DataHandler, ServerInfo
+from src.database.api import ServerInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
 
@@ -50,19 +49,13 @@ class MarmaladeWindow(Adw.ApplicationWindow):
     views = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
 
-    __settings: DataHandler
     __servers_view: ServersListView
 
-    def __init__(self, *args, settings: DataHandler, **kwargs) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.__settings = settings
 
         # Add servers list
-        self.__servers_view = ServersListView(
-            window=self,
-            toast_overlay=self.toast_overlay,
-            settings=self.__settings,
-        )
+        self.__servers_view = ServersListView(toast_overlay=self.toast_overlay)
         self.__servers_view.connect(
             "server-connect-request",
             self.on_server_connect_request,
@@ -70,7 +63,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         self.views.add(self.__servers_view)
 
         # Try to get the active token to resume navigation on the server
-        active_token_info = self.__settings.get_active_token()
+        active_token_info = shared.settings.get_active_token()
         if active_token_info is not None:
             server, user_id, token = active_token_info
             logging.debug("Resuming where we left off")
@@ -89,7 +82,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
     ) -> None:
         logging.debug("Authenticated on %s", server.name)
         # Update access token store, bookmark server and user
-        self.__settings.add_active_token(
+        shared.settings.add_active_token(
             address=server.address,
             user_id=user_id,
             token=token,
@@ -147,11 +140,9 @@ class MarmaladeWindow(Adw.ApplicationWindow):
 
         def on_success(result: UserDto) -> None:
             # Navigate to server connected view
-            self.__settings.update_connected_timestamp(server.address)
+            shared.settings.update_connected_timestamp(server.address)
             view = ServerConnectedView(
-                window=self,
                 toast_overlay=self.toast_overlay,
-                settings=self.__settings,
                 server=server,
                 user=result,
                 token=token,
@@ -170,11 +161,11 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         task.run()
 
     def on_server_log_out(self, _widget, address: str, user_id: str) -> None:
-        self.__settings.remove_token(address=address, user_id=user_id)
+        shared.settings.remove_token(address=address, user_id=user_id)
         self.__servers_view.refresh_servers()
         self.views.pop()
 
     def on_server_log_off(self, _widget, _address: str) -> None:
-        self.__settings.unset_active_token()
+        shared.settings.unset_active_token()
         self.__servers_view.refresh_servers()
         self.views.pop()

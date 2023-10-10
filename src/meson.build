@@ -12,6 +12,9 @@ blueprints = custom_target('blueprints',
     'templates/server_connected_view.blp',
     'templates/server_row.blp',
     'templates/servers_list_view.blp',
+    'templates/user_badge.blp',
+    'templates/user_picker.blp',
+    'templates/user_picker_page.blp',
     'templates/window.blp',
   ),
   output: '.',
@@ -46,9 +49,10 @@ install_subdir('database', install_dir: moduledir)
 install_data(
   [
     '__init__.py',
-    'main.py',
-    'task.py',
     'jellyfin.py',
+    'main.py',
+    'shared.py',
+    'task.py',
     configure_file(
       input: 'build_constants.py.in',
       output: 'build_constants.py',

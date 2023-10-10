@@ -60,7 +60,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
 
     def refresh(self) -> None:
         def main() -> QuickConnectResult:
-            client = JellyfinClient(base_url=self.server.address, device_id="-")
+            client = JellyfinClient(base_url=self.server.address)
             response = initiate_quick_connect.sync_detailed(client=client)
             if response.status_code == HTTPStatus.OK:
                 return response.parsed
@@ -114,7 +114,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
 
     def on_connect_requested(self, _widget) -> None:
         def main() -> tuple[str, str]:
-            client = JellyfinClient(base_url=self.server.address, device_id="-")
+            client = JellyfinClient(base_url=self.server.address)
             response = authenticate_with_quick_connect.sync_detailed(
                 client=client,
                 json_body=QuickConnectDto(secret=self.__secret),

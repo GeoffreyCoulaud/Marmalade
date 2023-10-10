@@ -12,9 +12,13 @@
     <file preprocess="xml-stripblanks">templates/server_connected_view.ui</file>
     <file preprocess="xml-stripblanks">templates/server_row.ui</file>
     <file preprocess="xml-stripblanks">templates/servers_list_view.ui</file>
+    <file preprocess="xml-stripblanks">templates/user_badge.ui</file>
+    <file preprocess="xml-stripblanks">templates/user_picker.ui</file>
+    <file preprocess="xml-stripblanks">templates/user_picker_page.ui</file>
     <file preprocess="xml-stripblanks">templates/window.ui</file>
   </gresource>
   <gresource prefix="@PREFIX@/icons/scalable/actions/">
     <file alias="phonelink-symbolic.svg">../data/icons/external/phonelink-symbolic.svg</file>
+    <file alias="person-symbolic.svg">../data/icons/external/person-symbolic.svg</file>
   </gresource>
 </gresources>

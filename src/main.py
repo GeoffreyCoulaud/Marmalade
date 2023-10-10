@@ -18,13 +18,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
-from pathlib import Path
 from typing import Callable
 
-from gi.repository import Adw, Gio, GLib
+from gi.repository import Adw, Gio
 
 # pylint: disable=no-name-in-module
-from src import build_constants
+from src import build_constants, shared
 from src.components.window import MarmaladeWindow
 from src.database.api import DataHandler
 from src.logging.setup import log_system_info, setup_logging
@@ -32,10 +31,6 @@ from src.logging.setup import log_system_info, setup_logging
 
 class MarmaladeApplication(Adw.Application):
     """The main application singleton class."""
-
-    app_data_dir: Path
-    app_cache_dir: Path
-    app_config_dir: Path
 
     settings: DataHandler
     window: MarmaladeWindow
@@ -45,40 +40,33 @@ class MarmaladeApplication(Adw.Application):
             application_id=build_constants.APP_ID,
             flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
         )
-        self.window = None
         self.init_app_dirs()
         self.init_logging()
-        database_file = self.app_data_dir / "marmalade.db"
-        self.settings = DataHandler(file=database_file)
+        database_file = shared.app_data_dir / "marmalade.db"
+        shared.settings = DataHandler(file=database_file)
         self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
         self.create_action("about", self.on_about_action)
 
     def init_app_dirs(self) -> None:
-        self.app_data_dir = Path(GLib.get_user_data_dir()) / "marmalade"
-        self.app_cache_dir = Path(GLib.get_user_cache_dir()) / "marmalade"
-        self.app_config_dir = Path(GLib.get_user_config_dir()) / "marmalade"
-        self.app_data_dir.mkdir(parents=True, exist_ok=True)
-        self.app_cache_dir.mkdir(parents=True, exist_ok=True)
-        self.app_config_dir.mkdir(parents=True, exist_ok=True)
+        shared.app_data_dir.mkdir(parents=True, exist_ok=True)
+        shared.app_cache_dir.mkdir(parents=True, exist_ok=True)
+        shared.app_config_dir.mkdir(parents=True, exist_ok=True)
 
     def init_logging(self) -> None:
         """Set the logging system up"""
-        log_file = self.app_cache_dir / "marmalade.log"
+        log_file = shared.app_cache_dir / "marmalade.log"
         setup_logging(log_file)
         log_system_info()
 
     def do_activate(self):
-        if not self.window:
-            self.window = MarmaladeWindow(
-                application=self,
-                settings=self.settings,
-            )
-        self.window.present()
+        if not shared.window:
+            shared.window = MarmaladeWindow(application=self)
+        shared.window.present()
 
     def on_about_action(self, _widget, _):
         """Callback handling the about action"""
         about = Adw.AboutWindow(
-            transient_for=self.props.active_window,
+            transient_for=shared.window,
             application_name="Marmalade",
             application_icon=build_constants.APP_ID,
             developer_name="Geoffrey Coulaud",

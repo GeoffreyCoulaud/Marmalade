@@ -19,7 +19,7 @@
 
 from gi.repository import Adw, GObject, Gtk
 
-from src import build_constants
+from src import build_constants, shared
 from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_row import ServerRow
 from src.database.api import DataHandler, ServerInfo
@@ -38,9 +38,7 @@ class ServersListView(Adw.NavigationPage):
     servers_view_stack = Gtk.Template.Child()
     status_add_button = Gtk.Template.Child()
 
-    __window: Gtk.Window
     __toast_overlay: Adw.ToastOverlay
-    __settings: DataHandler
     __rows: set[ServerRow]
     __servers_trash: set[ServerInfo]
     __edit_mode: bool
@@ -60,14 +58,10 @@ class ServersListView(Adw.NavigationPage):
     def __init__(
         self,
         *args,
-        window: Gtk.Window,
-        settings: DataHandler,
         toast_overlay: Adw.ToastOverlay,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.__window = window
-        self.__settings = settings
         self.__rows = set()
         self.__servers_trash = set()
         self.__edit_mode = False
@@ -91,14 +85,14 @@ class ServersListView(Adw.NavigationPage):
             self.__rows.remove(row)
             self.server_rows_group.remove(row)
         # Refill it
-        servers = self.__settings.get_servers()
+        servers = shared.settings.get_servers()
         for server in servers:
             self.add_server(server, False)
 
     def add_server(self, server: ServerInfo, add_to_settings: bool = True) -> None:
         # Add to the settings database
         if add_to_settings:
-            self.__settings.add_server(server)
+            shared.settings.add_server(server)
         # Create visible row
         row = ServerRow(server)
         row.connect("button-clicked", self.on_server_connect_request)
@@ -110,7 +104,7 @@ class ServersListView(Adw.NavigationPage):
         addresses = {row.server.address for row in self.__rows}
         dialog = ServerAddDialog(addresses=addresses)
         dialog.connect("server-picked", self.on_add_dialog_picked)
-        dialog.set_transient_for(self.__window)
+        dialog.set_transient_for(shared.window)
         dialog.set_modal(True)
         dialog.present()
 
@@ -151,7 +145,7 @@ class ServersListView(Adw.NavigationPage):
             self.server_rows_group.remove(row)
             self.__rows.remove(row)
             self.__servers_trash.add(row.server)
-            self.__settings.remove_server(row.server.address)
+            shared.settings.remove_server(row.server.address)
         if len(self.__rows) == 0:
             self.servers_view_stack.set_visible_child_name("no-server")
         self.toggle_edit_mode()
