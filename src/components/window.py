@@ -51,19 +51,23 @@ class MarmaladeWindow(Adw.ApplicationWindow):
     toast_overlay = Gtk.Template.Child()
 
     __settings: DataHandler
+    __servers_view: ServersListView
 
     def __init__(self, *args, settings: DataHandler, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.__settings = settings
 
         # Add servers list
-        view = ServersListView(
+        self.__servers_view = ServersListView(
             window=self,
             toast_overlay=self.toast_overlay,
             settings=self.__settings,
         )
-        view.connect("server-connect-request", self.on_server_connect_request)
-        self.views.add(view)
+        self.__servers_view.connect(
+            "server-connect-request",
+            self.on_server_connect_request,
+        )
+        self.views.add(self.__servers_view)
 
         # Try to get the active token to resume navigation on the server
         active_token_info = self.__settings.get_active_token()
@@ -143,6 +147,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
 
         def on_success(result: UserDto) -> None:
             # Navigate to server connected view
+            self.__settings.update_connected_timestamp(server.address)
             view = ServerConnectedView(
                 window=self,
                 toast_overlay=self.toast_overlay,
@@ -166,8 +171,10 @@ class MarmaladeWindow(Adw.ApplicationWindow):
 
     def on_server_log_out(self, _widget, address: str, user_id: str) -> None:
         self.__settings.remove_token(address=address, user_id=user_id)
+        self.__servers_view.refresh_servers()
         self.views.pop()
 
     def on_server_log_off(self, _widget, _address: str) -> None:
         self.__settings.unset_active_token()
+        self.__servers_view.refresh_servers()
         self.views.pop()

@@ -108,13 +108,17 @@ class DataHandler(object):
         logging.debug("Database migration finished")
 
     def get_servers(self) -> list[ServerInfo]:
-        # TODO order by last used
-        servers = set()
+        query = """
+            SELECT name, address, server_id 
+            FROM Servers
+            ORDER BY connected_timestamp DESC, created_timestamp DESC
+        """
+        servers = []
         with self.connect() as db:
-            cursor = db.execute("SELECT name, address, server_id FROM Servers")
+            cursor = db.execute(query)
             cursor.row_factory = lambda _cursor, row: ServerInfo(*row)
             for server in cursor:
-                servers.add(server)
+                servers.append(server)
         return servers
 
     def add_server(self, server: ServerInfo) -> None:
@@ -130,6 +134,17 @@ class DataHandler(object):
         args = (address,)
         self.__execute_blind((query, args))
         logging.debug("Deleted server with address %s from db", address)
+
+    def update_connected_timestamp(self, address: str) -> None:
+        """Update a server's connected timestamp"""
+        query = """
+            UPDATE Servers 
+            SET connected_timestamp = CURRENT_TIMESTAMP 
+            WHERE address = ?;
+        """
+        args = (address,)
+        self.__execute_blind((query, args))
+        logging.debug("Updated %s connected timestamp", address)
 
     def add_active_token(self, address: str, user_id: str, token: str) -> None:
         """Add a token and set it as active"""

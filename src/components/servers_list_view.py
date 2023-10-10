@@ -74,9 +74,7 @@ class ServersListView(Adw.NavigationPage):
         self.__toast_overlay = toast_overlay
 
         # Initial content
-        servers = self.__settings.get_servers()
-        for server in servers:
-            self.add_server(server, False)
+        self.refresh_servers()
 
         # React to user inputs
         self.add_button.connect("clicked", self.on_add_button_clicked)
@@ -85,6 +83,17 @@ class ServersListView(Adw.NavigationPage):
         self.remove_selected_button.connect(
             "clicked", self.on_remove_selected_button_clicked
         )
+
+    def refresh_servers(self) -> None:
+        """Refresh the server list from the database"""
+        # Empty the view
+        for row in set(self.__rows):
+            self.__rows.remove(row)
+            self.server_rows_group.remove(row)
+        # Refill it
+        servers = self.__settings.get_servers()
+        for server in servers:
+            self.add_server(server, False)
 
     def add_server(self, server: ServerInfo, add_to_settings: bool = True) -> None:
         # Add to the settings database
