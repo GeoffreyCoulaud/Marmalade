@@ -45,9 +45,11 @@ class AuthDialog(Adw.Window):
     def on_username_password_chosen(self, _widget) -> None:
         view = AuthUserSelectView(dialog=self, server=self.server)
         view.connect("user-picked", self.on_user_picked)
+        view.connect("skipped", self.on_user_picked)
         self.views.push(view)
 
-    def on_user_picked(self, _widget, username: str):
+    def on_user_picked(self, _widget, username: str = "", user_id: str = ""):
+        # TODO check if we have a token for that user
         view = AuthCredentialsView(dialog=self, server=self.server, username=username)
         view.connect("authenticated", self.on_authenticated)
         self.views.push(view)

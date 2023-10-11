@@ -16,13 +16,48 @@ template $MarmaladeAuthUserSelectView: Adw.NavigationPage {
       margin-end: 16;
       child: Box {
         orientation: vertical;
-        // TODO implement user picker (caroursel)
-        Adw.Bin user_picker_wrapper {}
+        spacing: 8;
+
+        Adw.ViewStack user_picker_view_stack {
+          Adw.ViewStackPage {
+            name: "loading";
+            // TODO improve the loading status
+            child: Spinner {
+              spinning: true;
+            };
+          }
+          Adw.ViewStackPage {
+            name: "error";
+            child: Adw.StatusPage user_picker_error_status {
+              styles ["compact"]
+              icon-name: "user-info-symbolic";
+              title: _("Couldn't Obtain Users");
+              description: _("An error occured when getting the public users from the server");
+            };
+          }
+          Adw.ViewStackPage {
+            name: "users";
+            child: Box {
+              orientation: vertical;
+              spacing: 8;
+              Label {
+                styles ["heading"]
+                label: _("Public users");
+                halign: start;
+              }
+              Adw.Bin user_picker_bin {
+                // Insert user picker here
+              }
+            };
+          }
+        }
+
         Button other_user_button {
           styles ["pill"]
           halign: center;
-          label: _("Log in as another user");
+          label: _("Log in with username");
         }
+
       };
     };
   };

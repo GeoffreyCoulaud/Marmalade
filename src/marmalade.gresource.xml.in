@@ -19,6 +19,5 @@
   </gresource>
   <gresource prefix="@PREFIX@/icons/scalable/actions/">
     <file alias="phonelink-symbolic.svg">../data/icons/external/phonelink-symbolic.svg</file>
-    <file alias="person-symbolic.svg">../data/icons/external/person-symbolic.svg</file>
   </gresource>
 </gresources>
