@@ -55,6 +55,7 @@ class UserBadge(Adw.Bin):
         self.image_path = self.image_dir / "profile.png"
         self.label.set_label(user.name)
         self.avatar.set_text(user.name)
+        self.avatar.set_size(self.image_size[0])
         self.button.connect("clicked", self.on_button_clicked)
         self.load_image()
 
