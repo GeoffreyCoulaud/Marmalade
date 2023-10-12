@@ -218,3 +218,13 @@ class DataHandler(object):
         for (user_id,) in rows:
             user_ids.add(user_id)
         return user_ids
+
+    def get_token(self, address: str, user_id: str) -> Optional[str]:
+        """Get the saved authentication token for a user id on a server"""
+        query = """SELECT token FROM Tokens WHERE address = ? AND user_id = ?"""
+        params = (address, user_id)
+        with self.connect() as db:
+            row: None | tuple[str] = db.execute(query, params).fetchone()
+        if row is None:
+            return None
+        return row[0]

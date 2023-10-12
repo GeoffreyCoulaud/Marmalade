@@ -1,6 +1,6 @@
 from gi.repository import Adw, GObject, Gtk
 
-from src import build_constants
+from src import build_constants, shared
 from src.components.auth_credentials_view import AuthCredentialsView
 from src.components.auth_login_method_view import AuthLoginMethodView
 from src.components.auth_quick_connect_view import AuthQuickConnectView
@@ -49,7 +49,12 @@ class AuthDialog(Adw.Window):
         self.views.push(view)
 
     def on_user_picked(self, _widget, username: str = "", user_id: str = ""):
-        # TODO check if we have a token for that user
+        # Check if we have a token for that user
+        token = shared.settings.get_token(address=self.server.address, user_id=user_id)
+        if token is not None:
+            self.on_authenticated(None, self.server, user_id, token)
+            return
+        # If not, display the credentials view
         view = AuthCredentialsView(dialog=self, server=self.server, username=username)
         view.connect("authenticated", self.on_authenticated)
         self.views.push(view)
