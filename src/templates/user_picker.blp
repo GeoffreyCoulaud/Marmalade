@@ -4,7 +4,9 @@ using Adw 1;
 template $MarmaladeUserPicker : Gtk.Box {
   orientation: vertical;
   valign: start;
+  spacing: 8;
   Adw.Carousel carousel {
+    styles ["card"]
     halign: center;
   }
   Adw.CarouselIndicatorDots {

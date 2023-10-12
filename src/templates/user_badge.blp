@@ -3,16 +3,21 @@ using Adw 1;
 
 template $MarmaladeUserBadge : Adw.Bin {
   child: Button button {
-    has-frame: false;
+    styles ["flat"]
     child: Box {
       orientation: vertical;
+      valign: center;
       Adw.Avatar avatar {
         icon-name: "avatar-default-symbolic";
         margin-bottom: 8;
+        size: 128;
+        valign: center;
       }
       Label label {
         styles ["dim-label", "heading"]
+        justify: center;
         wrap: true;
+        valign: center;
       }
     };
   };

@@ -36,8 +36,9 @@ class UserPicker(Gtk.Box):
         for i in range(0, len(users), max_users_per_page):
             page_users = users[i : i + max_users_per_page]
             page = UserPickerPage()
-            page.set_max_children_per_line(columns)
-            page.set_min_children_per_line(columns)
+            page_columns = min(columns, len(page_users))
+            page.set_max_children_per_line(page_columns)
+            page.set_min_children_per_line(page_columns)
             for user in page_users:
                 badge = UserBadge(server=self.__server, user=user)
                 badge.connect("clicked", self.on_user_clicked, user.name, user.id)

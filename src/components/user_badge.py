@@ -31,7 +31,7 @@ class UserBadge(Adw.Bin):
 
     image_dir: Path
     image_path: Path
-    image_size: tuple[int, int] = (128, 128)
+    image_size: int
 
     server: ServerInfo
     user: UserDto
@@ -53,9 +53,9 @@ class UserBadge(Adw.Bin):
             / "images"
         )
         self.image_path = self.image_dir / "profile.png"
+        self.image_size = self.avatar.get_size()
         self.label.set_label(user.name)
         self.avatar.set_text(user.name)
-        self.avatar.set_size(self.image_size[0])
         self.button.connect("clicked", self.on_button_clicked)
         self.load_image()
 
@@ -76,8 +76,8 @@ class UserBadge(Adw.Bin):
             params = {
                 "tag": self.user.primary_image_tag,
                 "format": "Png",
-                "width": self.image_size[0],
-                "height": self.image_size[1],
+                "width": self.image_size,
+                "height": self.image_size,
             }
             response = client.get(url, params=params)
             if response.status_code == HTTPStatus.NOT_FOUND:
