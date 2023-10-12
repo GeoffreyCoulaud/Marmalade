@@ -4,6 +4,7 @@ from http.client import HTTPException
 from pathlib import Path
 
 from gi.repository import Adw, GObject, Gtk
+from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.user_dto import UserDto
 
 from src import build_constants, shared
@@ -12,19 +13,12 @@ from src.jellyfin import JellyfinClient
 from src.task import Task
 
 
-class ImageDownloadError(HTTPException):
+class ImageDownloadError(UnexpectedStatus):
     """Error raised when a user image cannot be downloaded"""
 
-    status: HTTPStatus
-    message: str
 
-    def __init__(self, *args: object, status: HTTPStatus, message: str) -> None:
-        super().__init__(*args)
-        self.status = status
-        self.message = message
-
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__} {self.status}\n{self.message}"
+class NoUserImageError(ImageDownloadError):
+    """Error raised when a user has no image"""
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/user_badge.ui")
@@ -65,7 +59,7 @@ class UserBadge(Adw.Bin):
         self.load_image()
 
     def on_button_clicked(self, _button):
-        self.emit("clicked", self.user.name, self.user.id)
+        self.emit("clicked")
 
     def load_image(self) -> None:
         """
@@ -85,25 +79,36 @@ class UserBadge(Adw.Bin):
                 "height": self.image_size[1],
             }
             response = client.get(url, params=params)
-            if response.status_code != HTTPStatus.OK:
+            if response.status_code == HTTPStatus.NOT_FOUND:
+                raise NoUserImageError(
+                    status_code=response.status_code,
+                    content=response.content,
+                )
+            elif response.status_code != HTTPStatus.OK:
                 raise ImageDownloadError(
-                    status=response.status_code,
-                    message=str(response.content),
+                    status_code=response.status_code,
+                    content=response.content,
                 )
             self.image_dir.mkdir(parents=True, exist_ok=True)
             with self.image_path.open("wb") as file:
                 file.write(response.content)
+            return
 
         def on_error(error: Exception):
-            logging.debug(
-                "Couldn't download %s's profile image",
-                self.user.name,
-                exc_info=error,
-            )
+            match error:
+                case NoUserImageError():
+                    logging.debug("%s has no user image", self.user.name)
+                case _:
+                    logging.debug(
+                        "Couldn't download %s's profile image",
+                        self.user.name,
+                        exc_info=error,
+                    )
 
         def on_success():
             picture = Gtk.Picture.new_for_filename(str(self.image_path))
-            self.avatar.set_custom_image(picture)
+            paintable = picture.get_paintable()
+            self.avatar.set_custom_image(paintable)
 
         # Use the local image if present
         if self.image_path.is_file():

@@ -1,12 +1,17 @@
 import logging
 import time
+from http import HTTPStatus
 
 from gi.repository import Adw, GObject, Gtk
+from httpx import TimeoutException
+from jellyfin_api_client.api.user import get_public_users
+from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.user_dto import UserDto
 
 from src import build_constants
 from src.components.user_picker import UserPicker
 from src.database.api import ServerInfo
+from src.jellyfin import JellyfinClient
 from src.task import Task
 
 
@@ -29,8 +34,8 @@ class AuthUserSelectView(Adw.NavigationPage):
     dialog: Adw.Window
     server: ServerInfo
 
-    @GObject.Signal(name="user-picked", arg_types=[str])
-    def user_picked(self, _username: str):
+    @GObject.Signal(name="user-picked", arg_types=[str, str])
+    def user_picked(self, _username: str, _user_id: str):
         """Signal emitted when a user is picked"""
 
     @GObject.Signal(name="skipped")
@@ -48,10 +53,12 @@ class AuthUserSelectView(Adw.NavigationPage):
         """Discover users from the server asynchronously"""
 
         def main() -> list[UserDto]:
-            # TODO get authenticated users
+            client = JellyfinClient(self.server.address)
+            response = get_public_users.sync_detailed(client=client)
+            if response.status_code != HTTPStatus.OK:
+                raise UnexpectedStatus(response.status_code, response.content)
             # TODO get public users from the server
-            time.sleep(2)
-            raise NotImplementedError()
+            return response.parsed
 
         def on_success(users: list[UserDto]) -> None:
             picker = UserPicker(server=self.server, users=users)
@@ -61,9 +68,15 @@ class AuthUserSelectView(Adw.NavigationPage):
 
         def on_error(error: Exception) -> None:
             logging.error("Couldn't discover users", exc_info=error)
-            if isinstance(error, NoPublicUsers):
-                message = _("Server doesn't provide a list of public users")
-                self.user_picker_error_status.set_description(message)
+            match error:
+                case UnexpectedStatus():
+                    pass
+                case NoPublicUsers():
+                    message = _("Server doesn't provide a list of public users")
+                    self.user_picker_error_status.set_description(message)
+                case TimeoutException():
+                    message = _("Server timed out")
+                    self.user_picker_error_status.set_description(message)
             self.user_picker_view_stack.set_visible_child_name("error")
 
         task = Task(
