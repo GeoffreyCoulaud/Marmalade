@@ -57,7 +57,6 @@ class AuthUserSelectView(Adw.NavigationPage):
             response = get_public_users.sync_detailed(client=client)
             if response.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(response.status_code, response.content)
-            # TODO get public users from the server
             return response.parsed
 
         def on_success(users: list[UserDto]) -> None:
