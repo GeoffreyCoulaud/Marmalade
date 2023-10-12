@@ -1,3 +1,5 @@
+import logging
+
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
@@ -28,6 +30,7 @@ class AuthCredentialsView(Adw.NavigationPage):
         self.server = server
         self.dialog = dialog
         self.username_editable.set_text(username)
+        # TODO select the password row if username was passed
 
     def on_log_in_request(self, _widget) -> None:
         # TODO implement logging in with username and password
