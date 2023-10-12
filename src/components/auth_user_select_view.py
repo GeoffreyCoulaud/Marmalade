@@ -8,7 +8,7 @@ from jellyfin_api_client.api.user import get_public_users
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.user_dto import UserDto
 
-from src import build_constants
+from src import build_constants, shared
 from src.components.user_picker import UserPicker
 from src.database.api import ServerInfo
 from src.jellyfin import JellyfinClient
@@ -53,11 +53,20 @@ class AuthUserSelectView(Adw.NavigationPage):
         """Discover users from the server asynchronously"""
 
         def main() -> list[UserDto]:
+            # Get a list of public users
             client = JellyfinClient(self.server.address)
             response = get_public_users.sync_detailed(client=client)
             if response.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(response.status_code, response.content)
-            return response.parsed
+            public_users = response.parsed
+            # Order the authenticated users first
+            auth_ids = shared.settings.get_authenticated_users(self.server.address)
+            authenticated, others = [], []
+            for user in public_users:
+                dest = authenticated if user.id in auth_ids else others
+                dest.append(user)
+            authenticated.extend(others)
+            return authenticated
 
         def on_success(users: list[UserDto]) -> None:
             picker = UserPicker(server=self.server, users=users)

@@ -200,3 +200,21 @@ class DataHandler(object):
         query = "DELETE FROM Tokens WHERE address = ? AND user_id = ?"
         params = (address, user_id)
         self.__execute_blind((query, params))
+
+    def get_authenticated_users(self, address: str) -> set[str]:
+        """Get a set of authenticated user_id for a server address"""
+        query = """
+            SELECT t.user_id 
+            FROM Servers AS s
+            INNER JOIN Tokens AS t
+            ON t.address = s.address
+            WHERE t.address = ?
+        """
+        params = (address,)
+        with self.connect() as db:
+            cursor = db.execute(query, params)
+            rows: list[tuple[str]] = cursor.fetchall()
+        user_ids = set()
+        for (user_id,) in rows:
+            user_ids.add(user_id)
+        return user_ids

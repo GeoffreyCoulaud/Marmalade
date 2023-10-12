@@ -6,9 +6,23 @@ template $MarmaladeUserPicker : Gtk.Box {
   valign: start;
   spacing: 8;
   // TODO add left and right page buttons
-  Adw.Carousel carousel {
-    styles ["card"]
-    halign: center;
+  Gtk.Box {
+    orientation: horizontal;
+    spacing: 8;
+    Button previous_page_button {
+      styles ["flat"]
+      icon-name: "go-previous-symbolic";
+      valign: center;
+    }
+    Adw.Carousel carousel {
+      styles ["card"]
+      halign: center;
+    }
+    Button next_page_button {
+      styles ["flat"]
+      icon-name: "go-next-symbolic";
+      valign: center;
+    }
   }
   Adw.CarouselIndicatorDots {
     carousel: carousel;

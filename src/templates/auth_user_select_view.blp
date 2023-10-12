@@ -37,17 +37,8 @@ template $MarmaladeAuthUserSelectView: Adw.NavigationPage {
           }
           Adw.ViewStackPage {
             name: "users";
-            child: Box {
-              orientation: vertical;
-              spacing: 8;
-              Label {
-                styles ["heading"]
-                label: _("Public users");
-                halign: start;
-              }
-              Adw.Bin user_picker_bin {
-                // Insert user picker here
-              }
+            child: Adw.Bin user_picker_bin {
+              // Insert user picker here
             };
           }
         }
