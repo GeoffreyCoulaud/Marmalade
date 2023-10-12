@@ -73,7 +73,7 @@ class ServersListView(Adw.NavigationPage):
         # React to user inputs
         self.add_button.connect("clicked", self.on_add_button_clicked)
         self.status_add_button.connect("clicked", self.on_add_button_clicked)
-        self.edit_button.connect("clicked", self.on_edit_button_clicked)
+        self.edit_button.connect("toggled", self.on_edit_button_toggled)
         self.remove_selected_button.connect(
             "clicked", self.on_remove_selected_button_clicked
         )
@@ -115,11 +115,10 @@ class ServersListView(Adw.NavigationPage):
         self.__edit_mode = not self.__edit_mode
         self.add_button_revealer.set_reveal_child(not self.__edit_mode)
         self.remove_selected_button_revealer.set_reveal_child(self.__edit_mode)
-        self.edit_button.set_css_classes(["raised"] if self.__edit_mode else ["flat"])
         for server_row in self.__rows:
             server_row.edit_mode = self.__edit_mode
 
-    def on_edit_button_clicked(self, _button) -> None:
+    def on_edit_button_toggled(self, _button) -> None:
         self.toggle_edit_mode()
 
     def create_removed_toast(self) -> None:
