@@ -1,5 +1,3 @@
-import logging
-
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants
@@ -19,8 +17,8 @@ class AuthCredentialsView(Adw.NavigationPage):
     dialog: Adw.Window
     server: ServerInfo
 
-    @GObject.Signal(name="authenticated", arg_types=[object, str, str])
-    def authenticated(self, server: ServerInfo, _user_id: str, _token: str):
+    @GObject.Signal(name="authenticated", arg_types=[str])
+    def authenticated(self, _user_id: str):
         """Signal emitted when the user is authenticated"""
 
     def __init__(
@@ -34,4 +32,6 @@ class AuthCredentialsView(Adw.NavigationPage):
 
     def on_log_in_request(self, _widget) -> None:
         # TODO implement logging in with username and password
+        # TODO add the user to the database if succeeds
+        # TODO add the token to the database if succeeds
         pass

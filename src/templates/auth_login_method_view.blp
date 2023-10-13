@@ -2,7 +2,7 @@ using Gtk 4.0;
 using Adw 1;
 
 template $MarmaladeAuthLoginMethodView : Adw.NavigationPage {
-  title: _("Authentication Method");
+  title: _("Login Method");
   can-pop: false;
   child: Adw.ToolbarView {
     [top]
@@ -18,41 +18,60 @@ template $MarmaladeAuthLoginMethodView : Adw.NavigationPage {
       margin-bottom: 16;
       margin-start: 16;
       margin-end: 16;
-      child: Adw.PreferencesGroup {
-        Adw.ActionRow {
-          title: _("Username &amp; Password");
-          [prefix]
-          Image {
-            margin-top: 16;
-            margin-bottom: 16;
-            margin-start: 10;
-            margin-end: 16;
-            icon-name: "dialog-password-symbolic";
-            icon-size: large;
+      child: Box {
+        orientation: vertical;
+        spacing: 16;
+
+        // Quick resume
+        Box quick_resume_box {
+          // User picker added here from python
+        }
+
+        // Auth method
+        Adw.PreferencesGroup auth_method_group {
+          title: _("Authenticate");
+          
+          // Leave gaps the same size as carousel 
+          // previous and next buttons
+          margin-start: 48;
+          margin-end: 48;
+
+          Adw.ActionRow {
+            title: _("Username &amp; Password");
+            [prefix]
+            Image {
+              margin-top: 16;
+              margin-bottom: 16;
+              margin-start: 10;
+              margin-end: 16;
+              icon-name: "dialog-password-symbolic";
+              icon-size: large;
+            }
+            [suffix]
+            Button username_password_button {
+              valign: center;
+              icon-name: "go-next-symbolic";
+            }
           }
-          [suffix]
-          Button username_password_button {
-            valign: center;
-            icon-name: "go-next-symbolic";
+          Adw.ActionRow {
+            title: _("Quick Connect");
+            [prefix]
+            Image {
+              margin-top: 16;
+              margin-bottom: 16;
+              margin-start: 10;
+              margin-end: 16;
+              icon-name: "phonelink-symbolic";
+              icon-size: large;
+            }
+            [suffix]
+            Button quick_connect_button {
+              valign: center;
+              icon-name: "go-next-symbolic";
+            }
           }
         }
-        Adw.ActionRow {
-          title: _("Quick Connect");
-          [prefix]
-          Image {
-            margin-top: 16;
-            margin-bottom: 16;
-            margin-start: 10;
-            margin-end: 16;
-            icon-name: "phonelink-symbolic";
-            icon-size: large;
-          }
-          [suffix]
-          Button quick_connect_button {
-            valign: center;
-            icon-name: "go-next-symbolic";
-          }
-        }
+
       };
     };
   };

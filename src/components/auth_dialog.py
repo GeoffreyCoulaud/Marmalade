@@ -16,8 +16,8 @@ class AuthDialog(Adw.Window):
 
     server: ServerInfo
 
-    @GObject.Signal(name="authenticated", arg_types=[object, str, str])
-    def authenticated(self, _server: ServerInfo, _user_id: str, _token: str):
+    @GObject.Signal(name="authenticated", arg_types=[object, str])
+    def authenticated(self, _server: ServerInfo, _user_id: str):
         """Signal emitted when the user is authenticated"""
 
     @GObject.Signal(name="cancelled")
@@ -26,10 +26,14 @@ class AuthDialog(Adw.Window):
 
     def __init__(self, server: ServerInfo, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
         self.server = server
-        view = AuthLoginMethodView(dialog=self)
+
+        # Create the login method / quick resume view
+        view = AuthLoginMethodView(dialog=self, server=server)
         view.connect("chose-username-password", self.on_username_password_chosen)
         view.connect("chose-quick-connect", self.on_quick_connect_chosen)
+        view.connect("authenticated", self.on_authenticated)
         view.connect("cancelled", self.on_cancelled)
         self.views.add(view)
 
@@ -48,19 +52,19 @@ class AuthDialog(Adw.Window):
         view.connect("skipped", self.on_user_picked)
         self.views.push(view)
 
-    def on_user_picked(self, _widget, username: str = "", user_id: str = ""):
+    def on_user_picked(self, _widget, user_id: str = ""):
         # Check if we have a token for that user
         token = shared.settings.get_token(address=self.server.address, user_id=user_id)
         if token is not None:
-            self.on_authenticated(None, self.server, user_id, token)
+            self.on_authenticated(None, user_id)
             return
         # If not, display the credentials view
+        user = shared.settings.get_user(address=self.server.address, user_id=user_id)
+        username = "" if user is None else user.name
         view = AuthCredentialsView(dialog=self, server=self.server, username=username)
         view.connect("authenticated", self.on_authenticated)
         self.views.push(view)
 
-    def on_authenticated(
-        self, _widget, server: ServerInfo, user_id: str, token: str
-    ) -> None:
-        self.emit("authenticated", server, user_id, token)
+    def on_authenticated(self, _widget, user_id: str) -> None:
+        self.emit("authenticated", self.server, user_id)
         self.close()

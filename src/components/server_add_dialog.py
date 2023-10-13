@@ -222,10 +222,10 @@ class ServerAddDialog(Adw.Window):
                 logging.error('Invalid server address "%s"', address, exc_info=error)
             self.toast_overlay.add_toast(toast)
 
-        def on_success(result: PublicSystemInfo):
+        def on_success(address: str, result: PublicSystemInfo):
             server = ServerInfo(
                 name=result.server_name,
-                address=result.local_address,
+                address=address,
                 server_id=result.id,
             )
             self.emit("server-picked", server)
@@ -236,6 +236,7 @@ class ServerAddDialog(Adw.Window):
             main=main,
             main_args=(address,),
             callback=on_success,
+            callback_args=(address,),
             error_callback=on_error,
             error_callback_args=(address,),
             cancellable=self.__tasks_cancellable,

@@ -5,26 +5,46 @@ template $MarmaladeUserPicker : Gtk.Box {
   orientation: vertical;
   valign: start;
   spacing: 8;
-  Gtk.Box {
+  Gtk.Box horizontal_box {
     orientation: horizontal;
     spacing: 8;
-    Button previous_page_button {
+
+    Button previous_button {
       styles ["flat"]
       icon-name: "go-previous-symbolic";
       valign: center;
+      visible: false;
+      margin-start: 8;
     }
-    Adw.Carousel carousel {
-      styles ["card"]
-      halign: center;
+    
+    Box {
+      orientation: vertical;
+      spacing: 14;
+      Revealer title_revealer {
+        reveal-child: false;
+        Label title {
+          styles ["heading"]
+          halign: start;
+        }
+      }
+      Adw.Carousel carousel {
+        styles ["card"]
+        hexpand: true;
+      }
     }
-    Button next_page_button {
+    
+    Button next_button {
       styles ["flat"]
       icon-name: "go-next-symbolic";
+      visible: false;
       valign: center;
+      margin-end: 8;
     }
   }
-  Adw.CarouselIndicatorDots {
+
+  Adw.CarouselIndicatorDots dots {
     carousel: carousel;
+    visible: false;
     halign: center;
   }
 }

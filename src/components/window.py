@@ -77,16 +77,10 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         dialog.set_modal(True)
         dialog.present()
 
-    def on_authenticated(
-        self, _widget, server: ServerInfo, user_id: str, token: str
-    ) -> None:
+    def on_authenticated(self, _widget, server: ServerInfo, user_id: str) -> None:
         logging.debug("Authenticated on %s", server.name)
-        # Update access token store, bookmark server and user
-        shared.settings.add_active_token(
-            address=server.address,
-            user_id=user_id,
-            token=token,
-        )
+        shared.settings.set_active_token(address=server.address, user_id=user_id)
+        token = shared.settings.get_token(address=server.address, user_id=user_id)
         self.navigate_to_server(server=server, user_id=user_id, token=token)
 
     def navigate_to_server(self, server: ServerInfo, user_id: str, token: str) -> None:

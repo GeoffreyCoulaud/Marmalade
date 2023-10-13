@@ -1,5 +1,4 @@
 import logging
-import socket
 from http import HTTPStatus
 
 from gi.repository import Adw, Gio, GObject, Gtk
@@ -9,7 +8,7 @@ from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
 from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
-from src import build_constants
+from src import build_constants, shared
 from src.database.api import ServerInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -40,8 +39,8 @@ class AuthQuickConnectView(Adw.NavigationPage):
     __secret: str
     __cancellable: Gio.Cancellable
 
-    @GObject.Signal(name="authenticated", arg_types=[object, str, str])
-    def authenticated(self, _server: ServerInfo, _user_id: str, _token: str):
+    @GObject.Signal(name="authenticated", arg_types=[str])
+    def authenticated(self, _user_id: str):
         """Signal emitted when the user is authenticated"""
 
     def __init__(self, *args, dialog: Adw.Window, server: ServerInfo, **kwargs) -> None:
@@ -127,9 +126,14 @@ class AuthQuickConnectView(Adw.NavigationPage):
                 raise UnexpectedStatus(response.status_code)
 
         def on_success(result: tuple[str, str]) -> None:
-            user_id, token = result
             logging.debug("Authenticated via quick connect")
-            self.emit("authenticated", self.server, user_id, token)
+            user_id, token = result
+            shared.settings.add_active_token(
+                address=self.server.address,
+                user_id=user_id,
+                token=token,
+            )
+            self.emit("authenticated", user_id)
 
         def on_error(error: Exception) -> None:
             toast = Adw.Toast()

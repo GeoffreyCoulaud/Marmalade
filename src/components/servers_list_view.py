@@ -42,6 +42,7 @@ class ServersListView(Adw.NavigationPage):
     __rows: set[ServerRow]
     __servers_trash: set[ServerInfo]
     __edit_mode: bool
+    __edit_toggled_id: int
 
     @GObject.Signal(name="server-added", arg_types=[object])
     def server_added(self, _server: ServerInfo):
@@ -73,9 +74,11 @@ class ServersListView(Adw.NavigationPage):
         # React to user inputs
         self.add_button.connect("clicked", self.on_add_button_clicked)
         self.status_add_button.connect("clicked", self.on_add_button_clicked)
-        self.edit_button.connect("toggled", self.on_edit_button_toggled)
         self.remove_selected_button.connect(
             "clicked", self.on_remove_selected_button_clicked
+        )
+        self.__edit_toggled_id = self.edit_button.connect(
+            "toggled", self.on_edit_button_toggled
         )
 
     def refresh_servers(self) -> None:
@@ -147,7 +150,8 @@ class ServersListView(Adw.NavigationPage):
             shared.settings.remove_server(row.server.address)
         if len(self.__rows) == 0:
             self.servers_view_stack.set_visible_child_name("no-server")
-        self.toggle_edit_mode()
+        with self.edit_button.freeze_notify(self.__edit_toggled_id):
+            self.toggle_edit_mode()
         self.create_removed_toast()
 
     def on_removed_toast_undo(self, _toast) -> None:

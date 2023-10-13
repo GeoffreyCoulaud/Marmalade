@@ -25,6 +25,21 @@ class ServerInfo(NamedTuple):
         return hash(self.address)
 
 
+class UserInfo(NamedTuple):
+    """Object describing a user"""
+
+    user_id: str
+    name: str
+
+    def __eq__(self, other: "UserInfo") -> bool:
+        if not isinstance(other, UserInfo):
+            return False
+        return self.user_id == other.user_id
+
+    def __hash__(self) -> int:
+        return hash(self.user_id)
+
+
 class ActiveTokenInfo(NamedTuple):
     """Object describing the active token"""
 
@@ -201,23 +216,42 @@ class DataHandler(object):
         params = (address, user_id)
         self.__execute_blind((query, params))
 
-    def get_authenticated_users(self, address: str) -> set[str]:
+    def add_users(self, address: str, *users: UserInfo) -> None:
+        query = """
+            INSERT OR REPLACE
+            INTO Users (address, user_id, name)
+            VALUES (?, ?, ?)
+        """
+        row_values = [(address, user.user_id, user.name) for user in users]
+        with self.connect() as db:
+            db.executemany(query, row_values)
+            db.commit()
+
+    def get_user(self, address: str, user_id: str) -> Optional[UserInfo]:
+        """Get user info for an address and user id"""
+        query = """SELECT name FROM Users WHERE address = ? AND user_id = ?"""
+        params = (address, user_id)
+        with self.connect() as db:
+            row = db.execute(query, params).fetchone()
+        if row is None:
+            return None
+        return UserInfo(user_id=user_id, name=row[0])
+
+    def get_authenticated_users(self, address: str) -> list[UserInfo]:
         """Get a set of authenticated user_id for a server address"""
         query = """
-            SELECT t.user_id 
-            FROM Servers AS s
-            INNER JOIN Tokens AS t
-            ON t.address = s.address
-            WHERE t.address = ?
+            SELECT u.user_id, u.name
+            FROM Tokens AS t
+            INNER JOIN Users AS u ON t.address = u.address AND t.user_id = u.user_id
+            INNER JOIN Servers AS s ON s.address = t.address
+            WHERE s.address = ?
         """
         params = (address,)
         with self.connect() as db:
             cursor = db.execute(query, params)
-            rows: list[tuple[str]] = cursor.fetchall()
-        user_ids = set()
-        for (user_id,) in rows:
-            user_ids.add(user_id)
-        return user_ids
+            rows = cursor.fetchall()
+        user_infos = [UserInfo(user_id=uid, name=name) for uid, name in rows]
+        return user_infos
 
     def get_token(self, address: str, user_id: str) -> Optional[str]:
         """Get the saved authentication token for a user id on a server"""

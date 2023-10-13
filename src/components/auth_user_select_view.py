@@ -6,11 +6,10 @@ from gi.repository import Adw, GObject, Gtk
 from httpx import TimeoutException
 from jellyfin_api_client.api.user import get_public_users
 from jellyfin_api_client.errors import UnexpectedStatus
-from jellyfin_api_client.models.user_dto import UserDto
 
 from src import build_constants, shared
 from src.components.user_picker import UserPicker
-from src.database.api import ServerInfo
+from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
 
@@ -34,8 +33,8 @@ class AuthUserSelectView(Adw.NavigationPage):
     dialog: Adw.Window
     server: ServerInfo
 
-    @GObject.Signal(name="user-picked", arg_types=[str, str])
-    def user_picked(self, _username: str, _user_id: str):
+    @GObject.Signal(name="user-picked", arg_types=[str])
+    def user_picked(self, _user_id: str):
         """Signal emitted when a user is picked"""
 
     @GObject.Signal(name="skipped")
@@ -52,37 +51,52 @@ class AuthUserSelectView(Adw.NavigationPage):
     def discover_users(self) -> None:
         """Discover users from the server asynchronously"""
 
-        def main() -> list[UserDto]:
+        def main() -> list[UserInfo]:
             # Get a list of public users
             client = JellyfinClient(self.server.address)
             response = get_public_users.sync_detailed(client=client)
             if response.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(response.status_code, response.content)
-            public_users = response.parsed
+            user_dtos = response.parsed
+            if len(user_dtos) == 0:
+                raise NoPublicUsers()
+            public = [UserInfo(user_id=dto.id, name=dto.name) for dto in user_dtos]
+
+            # Add public users to the database
+            shared.settings.add_users(self.server.address, *public)
+
             # Order the authenticated users first
-            auth_ids = shared.settings.get_authenticated_users(self.server.address)
-            authenticated, others = [], []
-            for user in public_users:
-                dest = authenticated if user.id in auth_ids else others
-                dest.append(user)
+            others = []
+            authenticated = shared.settings.get_authenticated_users(self.server.address)
+            authenticated_set = set(authenticated)
+            for user in public:
+                if user in authenticated_set:
+                    continue
+                others.append(user)
             authenticated.extend(others)
             return authenticated
 
-        def on_success(users: list[UserDto]) -> None:
-            picker = UserPicker(server=self.server, users=users)
+        def on_success(users: list[UserInfo]) -> None:
+            picker = UserPicker(server=self.server, users=users, lines=2)
             picker.connect("user-picked", self.on_user_picked)
             self.user_picker_bin.set_child(picker)
             self.user_picker_view_stack.set_visible_child_name("users")
 
         def on_error(error: Exception) -> None:
-            logging.error("Couldn't discover users", exc_info=error)
             match error:
                 case UnexpectedStatus():
+                    logging.error("Couldn't discover users", exc_info=error)
                     pass
                 case NoPublicUsers():
-                    message = _("Server doesn't provide a list of public users")
+                    logging.debug("%s has no public users", self.server.name)
+                    message = _("This server doesn't provide a list of public users")
                     self.user_picker_error_status.set_description(message)
                 case TimeoutException():
+                    logging.error(
+                        "%s (%s) timed out",
+                        self.server.name,
+                        self.server.address,
+                    )
                     message = _("Server timed out")
                     self.user_picker_error_status.set_description(message)
             self.user_picker_view_stack.set_visible_child_name("error")
@@ -94,8 +108,8 @@ class AuthUserSelectView(Adw.NavigationPage):
         )
         task.run()
 
-    def on_user_picked(self, _picker, username: str, user_id: str) -> None:
-        self.emit("user-picked", username, user_id)
+    def on_user_picked(self, _picker, user_id: str) -> None:
+        self.emit("user-picked", user_id)
 
     def on_other_user_button_clicked(self, _widget) -> None:
         self.emit("skipped")

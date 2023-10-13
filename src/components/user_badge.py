@@ -1,14 +1,12 @@
 import logging
 from http import HTTPStatus
-from http.client import HTTPException
 from pathlib import Path
 
 from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.errors import UnexpectedStatus
-from jellyfin_api_client.models.user_dto import UserDto
 
 from src import build_constants, shared
-from src.database.api import ServerInfo
+from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
 
@@ -34,13 +32,13 @@ class UserBadge(Adw.Bin):
     image_size: int
 
     server: ServerInfo
-    user: UserDto
+    user: UserInfo
 
     @GObject.Signal(name="clicked")
     def user_picked(self):
         """Signal emitted when the widget is clicked"""
 
-    def __init__(self, *args, server: ServerInfo, user: UserDto, **kwargs) -> None:
+    def __init__(self, *args, server: ServerInfo, user: UserInfo, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.server = server
         self.user = user
@@ -49,7 +47,7 @@ class UserBadge(Adw.Bin):
             / "servers"
             / self.server.server_id
             / "users"
-            / self.user.id
+            / self.user.user_id
             / "images"
         )
         self.image_path = self.image_dir / "profile.png"
@@ -72,9 +70,8 @@ class UserBadge(Adw.Bin):
 
         def download_image():
             client = JellyfinClient(base_url=self.server.address).get_httpx_client()
-            url = f"/Users/{self.user.id}/Images/Profile"
+            url = f"/Users/{self.user.user_id}/Images/Profile"
             params = {
-                "tag": self.user.primary_image_tag,
                 "format": "Png",
                 "width": self.image_size,
                 "height": self.image_size,
@@ -106,7 +103,7 @@ class UserBadge(Adw.Bin):
                         exc_info=error,
                     )
 
-        def on_success():
+        def on_success(_result=None):
             picture = Gtk.Picture.new_for_filename(str(self.image_path))
             paintable = picture.get_paintable()
             self.avatar.set_custom_image(paintable)
