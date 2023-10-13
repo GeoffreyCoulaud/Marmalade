@@ -26,7 +26,7 @@ class AuthUserSelectView(Adw.NavigationPage):
 
     user_picker_view_stack = Gtk.Template.Child()
     user_picker_error_status = Gtk.Template.Child()
-    user_picker_bin = Gtk.Template.Child()
+    user_picker: UserPicker = Gtk.Template.Child()
 
     other_user_button = Gtk.Template.Child()
 
@@ -45,6 +45,8 @@ class AuthUserSelectView(Adw.NavigationPage):
         super().__init__(*args, **kwargs)
         self.dialog = dialog
         self.server = server
+        self.user_picker.set_server(self.server)
+        self.user_picker.connect("user-picked", self.on_user_picked)
         self.other_user_button.connect("clicked", self.on_other_user_button_clicked)
         self.discover_users()
 
@@ -77,9 +79,8 @@ class AuthUserSelectView(Adw.NavigationPage):
             return authenticated
 
         def on_success(users: list[UserInfo]) -> None:
-            picker = UserPicker(server=self.server, users=users, lines=2)
-            picker.connect("user-picked", self.on_user_picked)
-            self.user_picker_bin.set_child(picker)
+            self.user_picker.clear()
+            self.user_picker.append(*users)
             self.user_picker_view_stack.set_visible_child_name("users")
 
         def on_error(error: Exception) -> None:

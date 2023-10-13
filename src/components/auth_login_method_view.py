@@ -14,8 +14,8 @@ class AuthLoginMethodView(Adw.NavigationPage):
     cancel_button = Gtk.Template.Child()
     username_password_button = Gtk.Template.Child()
     quick_connect_button = Gtk.Template.Child()
-    quick_resume_box = Gtk.Template.Child()
     auth_method_group = Gtk.Template.Child()
+    user_picker: UserPicker = Gtk.Template.Child()
 
     __server: ServerInfo
     __dialog: Adw.Window
@@ -41,30 +41,27 @@ class AuthLoginMethodView(Adw.NavigationPage):
 
         self.__dialog = dialog
         self.__server = server
+        self.user_picker.set_server(self.__server)
 
         self.cancel_button.connect("clicked", self.on_cancel_button_clicked)
         self.username_password_button.connect("clicked", self.on_credentials_clicked)
         self.quick_connect_button.connect("clicked", self.on_quick_connect_clicked)
+        self.user_picker.connect("user-picked", self.on_quick_resume_picked)
 
         self.discover_authenticated_users()
 
     def discover_authenticated_users(self) -> None:
         """Discover the authenticated users and display them"""
-        # TODO add to user picker instead of creating it
         users = shared.settings.get_authenticated_users(self.__server.address)
-        if len(users) == 0:
-            self.quick_resume_box.set_visible(False)
+        has_users = len(users) > 0
+        self.user_picker.set_visible(has_users)
+        if not has_users:
             return
-        picker = UserPicker(
-            server=self.__server,
-            users=users,
-            title=_("Resume Session"),
-        )
-        if picker.n_pages == 1:
+        self.user_picker.clear()
+        self.user_picker.append(*users)
+        if self.user_picker.get_n_pages() == 1:
             self.auth_method_group.set_margin_start(0)
             self.auth_method_group.set_margin_end(0)
-        picker.connect("user-picked", self.on_quick_resume_picked)
-        self.quick_resume_box.append(picker)
 
     def on_cancel_button_clicked(self, _button) -> None:
         self.emit("cancelled")

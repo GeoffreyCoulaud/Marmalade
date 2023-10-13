@@ -23,8 +23,10 @@ template $MarmaladeAuthLoginMethodView : Adw.NavigationPage {
         spacing: 16;
 
         // Quick resume
-        Box quick_resume_box {
-          // User picker added here from python
+        $MarmaladeUserPicker user_picker {
+          title: _("Resume Session");
+          columns: 4;
+          lines: 1;
         }
 
         // Auth method

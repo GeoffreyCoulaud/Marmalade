@@ -37,8 +37,9 @@ template $MarmaladeAuthUserSelectView: Adw.NavigationPage {
           }
           Adw.ViewStackPage {
             name: "users";
-            child: Adw.Bin user_picker_bin {
-              // Insert user picker here
+            child: $MarmaladeUserPicker user_picker {
+              columns: 4;
+              lines: 2;
             };
           }
         }
