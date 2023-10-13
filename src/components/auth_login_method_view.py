@@ -59,9 +59,9 @@ class AuthLoginMethodView(Adw.NavigationPage):
             return
         self.user_picker.clear()
         self.user_picker.append(*users)
-        if self.user_picker.get_n_pages() == 1:
-            self.auth_method_group.set_margin_start(0)
-            self.auth_method_group.set_margin_end(0)
+        if self.user_picker.get_n_pages() > 1:
+            self.auth_method_group.set_margin_start(48)
+            self.auth_method_group.set_margin_end(48)
 
     def on_cancel_button_clicked(self, _button) -> None:
         self.emit("cancelled")
