@@ -12,13 +12,32 @@ from src.database.api import ServerInfo, UserInfo
 class UserPicker(Gtk.Box):
     __gtype_name__ = "MarmaladeUserPicker"
 
+    # fmt: off
+    __carousel        = Gtk.Template.Child("carousel")
+    __dots            = Gtk.Template.Child("dots")
+    __next_button     = Gtk.Template.Child("next_button")
+    __previous_button = Gtk.Template.Child("previous_button")
+    __title_label     = Gtk.Template.Child("title_label")
+    # fmt: on
+
+    __lines: int = 1
+    __columns: int = 4
+    __server: Optional[ServerInfo] = None
+    __users: list[UserInfo]
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.__users = []
+        self.__next_button.connect("clicked", self.__on_next_button_clicked)
+        self.__previous_button.connect("clicked", self.__on_previous_button_clicked)
+        self.__carousel.connect("page-changed", self.__on_page_changed)
+        self.__carousel.connect("notify::n-pages", self.__on_n_pages_changed)
+
     @GObject.Signal(name="user-picked", arg_types=[str])
     def user_picked(self, _user_id: str):
         """Signal emitted when a user is picked"""
 
     # lines property
-
-    __lines: int = 1
 
     @GObject.Property(type=int)
     def lines(self) -> int:
@@ -36,8 +55,6 @@ class UserPicker(Gtk.Box):
         self.set_property("lines", value)
 
     # columns property
-
-    __columns: int = 4
 
     @GObject.Property(type=int)
     def columns(self) -> int:
@@ -58,12 +75,12 @@ class UserPicker(Gtk.Box):
 
     @GObject.Property(type=str, default="")
     def title(self) -> str:
-        return self.title_label.get_label()
+        return self.__title_label.get_label()
 
     @title.setter
     def title(self, text: str) -> None:
-        self.title_label.set_label(text)
-        self.title_revealer.set_reveal_child(len(text) > 0)
+        self.__title_label.set_label(text)
+        self.__title_label.set_visible(len(text) > 0)
 
     def get_title(self) -> str:
         return self.get_property("title")
@@ -73,41 +90,41 @@ class UserPicker(Gtk.Box):
 
     # n_pages property
 
-    @GObject.Property(type=int)
+    @GObject.Property(
+        type=int,
+        flags=GObject.ParamFlags.READABLE | GObject.ParamFlags.EXPLICIT_NOTIFY,
+    )
     def n_pages(self) -> int:
-        return self.carousel.get_n_pages()
+        return self.__carousel.get_n_pages()
 
     def get_n_pages(self) -> int:
         return self.get_property("n_pages")
 
-    # server setter
+    # Callbacks
 
-    __server: Optional[ServerInfo] = None
+    def __on_previous_button_clicked(self, _button) -> None:
+        self.__shift_carousel(-1)
 
-    def set_server(self, server: ServerInfo) -> None:
-        self.__server = server
+    def __on_next_button_clicked(self, _button) -> None:
+        self.__shift_carousel(1)
 
-    title_label = Gtk.Template.Child()
-    title_revealer = Gtk.Template.Child()
-    carousel = Gtk.Template.Child()
-    previous_button = Gtk.Template.Child()
-    next_button = Gtk.Template.Child()
-    dots = Gtk.Template.Child()
+    def __on_page_changed(self, _carousel, index) -> None:
+        self.__next_button.set_sensitive(index < self.__carousel.get_n_pages() - 1)
+        self.__previous_button.set_sensitive(index > 0)
 
-    __users: list[UserInfo]
+    def __on_n_pages_changed(self, _carousel, _value) -> None:
+        self.__update_navigation()
+        self.notify("n_pages")
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self.__users = []
-        self.__server = None
-        self.previous_button.connect("clicked", self.on_previous_clicked)
-        self.next_button.connect("clicked", self.on_next_clicked)
-        self.carousel.connect("page-changed", self.on_page_changed)
+    def __on_user_clicked(self, _emitter, user_id: str) -> None:
+        self.emit("user-picked", user_id)
+
+    # Python-side methods
 
     def __clear_pages(self) -> None:
-        for _i in range(self.carousel.get_n_pages()):
-            page = self.carousel.get_nth_page(0)
-            self.carousel.remove(page)
+        for _i in range(self.__carousel.get_n_pages()):
+            page = self.__carousel.get_nth_page(0)
+            self.__carousel.remove(page)
 
     def __create_pages(self) -> None:
         users_per_page = self.__lines * self.__columns
@@ -119,21 +136,39 @@ class UserPicker(Gtk.Box):
             page.set_min_children_per_line(page_columns)
             for user in page_users:
                 badge = UserBadge(server=self.__server, user=user)
-                badge.connect("clicked", self.on_user_clicked, user.user_id)
+                badge.connect("clicked", self.__on_user_clicked, user.user_id)
                 page.append(badge)
-            self.carousel.append(page)
+            self.__carousel.append(page)
 
     def __update_navigation(self) -> None:
-        has_multiple_pages = self.carousel.get_n_pages() > 1
-        navigation_widgets = [self.dots, self.previous_button, self.next_button]
-        for widget in navigation_widgets:
+        has_multiple_pages = self.get_n_pages() > 1
+        for widget in (
+            self.__previous_button,
+            self.__next_button,
+            self.__dots,
+        ):
             widget.set_visible(has_multiple_pages)
-        self.on_page_changed(self.carousel, 0)
 
     def __recreate_pages(self) -> None:
         self.__clear_pages()
         self.__create_pages()
         self.__update_navigation()
+
+    def __shift_carousel(self, offset: int = 1, animate: bool = True) -> None:
+        """Navigate the carousel relatively"""
+        position = self.__carousel.get_position()
+        destination = max(0, min(self.get_n_pages() - 1, position + offset))
+        destination_page = self.__carousel.get_nth_page(destination)
+        self.__carousel.scroll_to(destination_page, animate=animate)
+
+    def clear(self) -> None:
+        """Remove all users from the user picker"""
+        self.__users.clear()
+        self.__clear_pages()
+        self.__update_navigation()
+
+    def set_server(self, server: ServerInfo) -> None:
+        self.__server = server
 
     def append(self, *users: UserInfo, allow_duplicates: bool = False) -> None:
         """
@@ -166,27 +201,3 @@ class UserPicker(Gtk.Box):
         self.__clear_pages()
         self.__create_pages()
         self.__update_navigation()
-
-    def clear(self) -> None:
-        """Remove all users from the user picker"""
-        self.__users.clear()
-        self.__clear_pages()
-        self.__update_navigation()
-
-    def __shift_carousel(self, offset: int = 1, animate: bool = True) -> None:
-        """Navigate the carousel relatively"""
-        page = self.carousel.get_nth_page(self.carousel.get_position() + offset)
-        self.carousel.scroll_to(page, animate=animate)
-
-    def on_previous_clicked(self, _button) -> None:
-        self.__shift_carousel(-1)
-
-    def on_next_clicked(self, _button) -> None:
-        self.__shift_carousel(1)
-
-    def on_page_changed(self, _carousel, index) -> None:
-        self.next_button.set_sensitive(index < self.carousel.get_n_pages() - 1)
-        self.previous_button.set_sensitive(index > 0)
-
-    def on_user_clicked(self, _emitter, user_id: str) -> None:
-        self.emit("user-picked", user_id)
