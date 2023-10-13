@@ -5,11 +5,12 @@ from gi.repository import Adw, Gio, GObject, Gtk
 from jellyfin_api_client.api.quick_connect import initiate as initiate_quick_connect
 from jellyfin_api_client.api.user import authenticate_with_quick_connect
 from jellyfin_api_client.errors import UnexpectedStatus
+from jellyfin_api_client.models.authentication_result import AuthenticationResult
 from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
 from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import build_constants, shared
-from src.database.api import ServerInfo
+from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
 
@@ -28,14 +29,16 @@ class UnauthorizedQuickConnect(Exception):
 class AuthQuickConnectView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeAuthQuickConnectView"
 
-    refresh_button = Gtk.Template.Child()
-    connect_button = Gtk.Template.Child()
-    toast_overlay = Gtk.Template.Child()
-    code_state_stack = Gtk.Template.Child()
-    code_label = Gtk.Template.Child()
+    # fmt: off
+    __refresh_button   = Gtk.Template.Child("refresh_button")
+    __connect_button   = Gtk.Template.Child("connect_button")
+    __toast_overlay    = Gtk.Template.Child("toast_overlay")
+    __code_state_stack = Gtk.Template.Child("code_state_stack")
+    __code_label       = Gtk.Template.Child("code_label")
+    # fmt: on
 
-    dialog: Adw.Window
-    server: ServerInfo
+    __dialog: Adw.Window
+    __server: ServerInfo
     __secret: str
     __cancellable: Gio.Cancellable
 
@@ -45,12 +48,12 @@ class AuthQuickConnectView(Adw.NavigationPage):
 
     def __init__(self, *args, dialog: Adw.Window, server: ServerInfo, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.dialog = dialog
-        self.server = server
-        self.refresh_button.connect("clicked", self.on_refresh_requested)
-        self.connect_button.connect("clicked", self.on_connect_requested)
+        self.__dialog = dialog
+        self.__server = server
         self.__cancellable = Gio.Cancellable()
         self.__secret = ""
+        self.__refresh_button.connect("clicked", self.on_refresh_requested)
+        self.__connect_button.connect("clicked", self.on_connect_requested)
         self.on_refresh_requested(None)
 
     def on_refresh_requested(self, _button) -> None:
@@ -59,7 +62,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
 
     def refresh(self) -> None:
         def main() -> QuickConnectResult:
-            client = JellyfinClient(base_url=self.server.address)
+            client = JellyfinClient(base_url=self.__server.address)
             response = initiate_quick_connect.sync_detailed(client=client)
             if response.status_code == HTTPStatus.OK:
                 return response.parsed
@@ -70,9 +73,9 @@ class AuthQuickConnectView(Adw.NavigationPage):
         def on_success(result: QuickConnectResult):
             self.__secret = result.secret
             label_markup = f'<span size="xx-large">{result.code}</span>'
-            self.code_label.set_label(label_markup)
-            self.code_state_stack.set_visible_child_name("code")
-            self.connect_button.set_sensitive(True)
+            self.__code_label.set_label(label_markup)
+            self.__code_state_stack.set_visible_child_name("code")
+            self.__connect_button.set_sensitive(True)
 
         def on_error(error: UnexpectedStatus | QuickConnectDisabledError):
             toast = Adw.Toast()
@@ -86,13 +89,13 @@ class AuthQuickConnectView(Adw.NavigationPage):
                 toast.set_button_label(_("Details"))
                 args = (_("Unexpected Quick Connect Error"), str(error))
                 toast.connect("button-clicked", self.on_error_details, *args)
-            self.toast_overlay.add_toast(toast)
-            self.code_state_stack.set_visible_child_name("error")
-            self.connect_button.set_sensitive(False)
+            self.__toast_overlay.add_toast(toast)
+            self.__code_state_stack.set_visible_child_name("error")
+            self.__connect_button.set_sensitive(False)
 
         self.__cancellable.cancel()
         self.__cancellable.reset()
-        self.code_state_stack.set_visible_child_name("loading")
+        self.__code_state_stack.set_visible_child_name("loading")
         task = Task(
             main=main,
             callback=on_success,
@@ -102,38 +105,29 @@ class AuthQuickConnectView(Adw.NavigationPage):
         )
         task.run()
 
-    def on_error_details(self, _widget, title: str, details: str) -> None:
-        logging.debug("Quick Connect error details requested")
-        msg = Adw.MessageDialog()
-        msg.add_response("close", _("Close"))
-        msg.set_heading(title)
-        msg.set_body(details)
-        msg.set_transient_for(self.dialog)
-        msg.present()
-
     def on_connect_requested(self, _widget) -> None:
-        def main() -> tuple[str, str]:
-            client = JellyfinClient(base_url=self.server.address)
+        def main() -> AuthenticationResult:
+            client = JellyfinClient(base_url=self.__server.address)
             response = authenticate_with_quick_connect.sync_detailed(
                 client=client,
                 json_body=QuickConnectDto(secret=self.__secret),
             )
             if response.status_code == HTTPStatus.OK:
-                return (response.parsed.user.id, response.parsed.access_token)
+                return response.parsed
             if response.status_code == HTTPStatus.NOT_FOUND:
                 raise UnauthorizedQuickConnect()
-            else:
-                raise UnexpectedStatus(response.status_code)
+            raise UnexpectedStatus(response.status_code, response.content)
 
-        def on_success(result: tuple[str, str]) -> None:
+        def on_success(result: AuthenticationResult) -> None:
             logging.debug("Authenticated via quick connect")
-            user_id, token = result
+            user_info = UserInfo(user_id=result.user.id, name=result.user.name)
+            shared.settings.add_users(self.__server.address, user_info)
             shared.settings.add_active_token(
-                address=self.server.address,
-                user_id=user_id,
-                token=token,
+                address=self.__server.address,
+                user_id=result.user.id,
+                token=result.access_token,
             )
-            self.emit("authenticated", user_id)
+            self.emit("authenticated", result.user.id)
 
         def on_error(error: Exception) -> None:
             toast = Adw.Toast()
@@ -146,10 +140,19 @@ class AuthQuickConnectView(Adw.NavigationPage):
                 toast.set_title(_("An unexpected error occured"))
                 toast.set_button_label(_("Details"))
                 args = (_("Unexpected Quick Connect Error"), str(error))
-                toast.connect("button-clicked", self.on_error_details, *args)
-                self.code_state_stack.set_visible_child_name("error")
-                self.connect_button.set_sensitive(False)
-            self.toast_overlay.add_toast(toast)
+                toast.connect("button-clicked", on_details, *args)
+                self.__code_state_stack.set_visible_child_name("error")
+                self.__connect_button.set_sensitive(False)
+            self.__toast_overlay.add_toast(toast)
+
+        def on_details(_widget, title: str, details: str) -> None:
+            logging.debug("Quick Connect error details requested")
+            msg = Adw.MessageDialog()
+            msg.add_response("close", _("Close"))
+            msg.set_heading(title)
+            msg.set_body(details)
+            msg.set_transient_for(self.__dialog)
+            msg.present()
 
         task = Task(
             main=main,
