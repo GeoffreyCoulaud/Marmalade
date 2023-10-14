@@ -27,7 +27,6 @@ from src.components.disconnect_dialog import DisconnectDialog
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
 class ServerHomeView(Adw.NavigationPage):
-    # TODO rename to server home view
     __gtype_name__ = "MarmaladeServerHomeView"
 
     @GObject.Signal(name="log-out", arg_types=[str, str])
