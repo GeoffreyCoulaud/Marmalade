@@ -69,12 +69,12 @@ class UserBadge(Adw.Bin):
         """
 
         def download_image():
-            client = JellyfinClient(base_url=self.server.address).get_httpx_client()
+            client = JellyfinClient(base_url=self.server.address, device_id="").get_httpx_client()
             url = f"/Users/{self.user.user_id}/Images/Profile"
             params = {
                 "format": "Png",
                 "width": self.image_size,
-                "height": self.image_size,
+                # "height": self.image_size,
             }
             response = client.get(url, params=params)
             if response.status_code == HTTPStatus.NOT_FOUND:

@@ -11,7 +11,7 @@ from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import build_constants, shared
 from src.database.api import ServerInfo, UserInfo
-from src.jellyfin import JellyfinClient
+from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
 
 
@@ -106,8 +106,11 @@ class AuthQuickConnectView(Adw.NavigationPage):
         task.run()
 
     def on_connect_requested(self, _widget) -> None:
+        """Try to authenticate with the server"""
+
         def main() -> AuthenticationResult:
-            client = JellyfinClient(base_url=self.__server.address)
+            device_id = make_device_id()
+            client = JellyfinClient(base_url=self.__server.address, device_id=device_id)
             response = authenticate_with_quick_connect.sync_detailed(
                 client=client,
                 json_body=QuickConnectDto(secret=self.__secret),
@@ -122,10 +125,11 @@ class AuthQuickConnectView(Adw.NavigationPage):
             logging.debug("Authenticated via quick connect")
             user_info = UserInfo(user_id=result.user.id, name=result.user.name)
             shared.settings.add_users(self.__server.address, user_info)
-            shared.settings.add_active_token(
+            shared.settings.add_token(
                 address=self.__server.address,
                 user_id=result.user.id,
                 token=result.access_token,
+                device_id=result.session_info.device_id,
             )
             self.emit("authenticated", result.user.id)
 

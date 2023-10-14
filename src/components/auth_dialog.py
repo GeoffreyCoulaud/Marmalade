@@ -16,8 +16,8 @@ class AuthDialog(Adw.Window):
 
     server: ServerInfo
 
-    @GObject.Signal(name="authenticated", arg_types=[object, str])
-    def authenticated(self, _server: ServerInfo, _user_id: str):
+    @GObject.Signal(name="authenticated", arg_types=[str, str])
+    def authenticated(self, _address: str, _user_id: str):
         """Signal emitted when the user is authenticated"""
 
     @GObject.Signal(name="cancelled")
@@ -70,5 +70,5 @@ class AuthDialog(Adw.Window):
             view.focus_password()
 
     def on_authenticated(self, _widget, user_id: str) -> None:
-        self.emit("authenticated", self.server, user_id)
+        self.emit("authenticated", self.server.address, user_id)
         self.close()

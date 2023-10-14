@@ -31,6 +31,7 @@ from src.database.api import ServerInfo
     resource_path=build_constants.PREFIX + "/templates/server_connected_view.ui"
 )
 class ServerConnectedView(Adw.NavigationPage):
+    # TODO rename to server home view
     __gtype_name__ = "MarmaladeServerConnectedView"
 
     @GObject.Signal(name="log-out", arg_types=[str, str])
@@ -49,42 +50,46 @@ class ServerConnectedView(Adw.NavigationPage):
     collection_filter_button = Gtk.Template.Child()
     preferences_button = Gtk.Template.Child()
     label: Gtk.Label = Gtk.Template.Child()
+    toast_overlay = Gtk.Template.Child()
 
-    __toast_overlay: Adw.ToastOverlay
-    __server: ServerInfo
-    __user: UserDto
+    __navigation: Adw.NavigationView
+    __address: str
+    __user_id: str
+    __device_id: str
     __token: str
 
     def __init__(
         self,
         *args,
-        toast_overlay: Adw.ToastOverlay,
-        server: ServerInfo,
-        user: UserDto,
+        navigation: Adw.NavigationView,
+        address: str,
+        user_id: str,
+        device_id: str,
         token: str,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.__toast_overlay = toast_overlay
-        self.__server = server
-        self.__user = user
+        self.__navigation = navigation
+        self.__address = address
+        self.__device_id = device_id
+        self.__user_id = user_id
         self.__token = token
-
-        # Variable is the server's name
-        self.set_title(_("%s Home") % self.__server.name)
 
         # React to user input
         self.disconnect_button.connect("clicked", self.on_disconnect_button_clicked)
 
-        # TODO implement content
-        label = "\n".join(
-            (
-                f"Server: {self.__server.name}",
-                f"Address: {self.__server.address}",
-                f"Token: {self.__token}",
+        # TODO server connectivity check (switch to status pages if needed)
+
+        self.set_title(_("Server Home"))
+        self.label.set_label(
+            "\n".join(
+                (
+                    f"Address: {self.__address}",
+                    f"User ID: {self.__user_id}",
+                    f"Token: {self.__token}",
+                )
             )
         )
-        self.label.set_label(label)
 
     def on_disconnect_button_clicked(self, _button) -> None:
         dialog = DisconnectDialog()
@@ -98,13 +103,13 @@ class ServerConnectedView(Adw.NavigationPage):
             case "log-off":
                 logging.debug(
                     "Logging off %s",
-                    self.__server.address,
+                    self.__address,
                 )
-                self.emit("log-off", self.__server.address)
+                self.emit("log-off", self.__address)
             case "log-out":
                 logging.debug(
                     "Logging user id %s out of %s",
-                    self.__user.id,
-                    self.__server.address,
+                    self.__user_id,
+                    self.__address,
                 )
-                self.emit("log-out", self.__server.address, self.__user.id)
+                self.emit("log-out", self.__address, self.__user_id)

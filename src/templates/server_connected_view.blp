@@ -31,10 +31,12 @@ template $MarmaladeServerConnectedView : Adw.NavigationPage {
         }
       }
     }
-    content: Adw.Clamp {
-      child: Label label {
-        label: "Server home view (with subviews)";
-        wrap: true;
+    content: Adw.ToastOverlay toast_overlay {
+      child: Adw.Clamp {
+        child: Label label {
+          label: "Server home view (with subviews)";
+          wrap: true;
+        };
       };
     };
   };

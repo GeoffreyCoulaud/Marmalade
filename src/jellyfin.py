@@ -1,7 +1,19 @@
 import socket
+import time
 from typing import Optional
 
 from jellyfin_api_client.client import Client
+
+
+def make_device_id() -> str:
+    """Generate a device id for use with Jellyfin authentication"""
+    max_len = 255  # Imposed by the database (quite reasonable)
+    timestamp = str(time.time_ns())
+    separator = "-"
+    max_hostname_len = max_len - len(timestamp) - len(separator)
+    hostname = socket.gethostname()[: max_hostname_len - 1]
+    device_id = f"{hostname}{separator}{timestamp}"
+    return device_id
 
 
 class JellyfinClient(Client):
@@ -9,6 +21,7 @@ class JellyfinClient(Client):
     Subclass of the Jellyfin API Client client.
 
     - Supports proper creation of the Jellyfin/Emby authorization header
+    - Supports generating a device_id on the fly
     - The client can be authenticated or not, with the same constructor
     """
 

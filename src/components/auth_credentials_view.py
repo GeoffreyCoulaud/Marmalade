@@ -1,4 +1,5 @@
 import logging
+import socket
 from http import HTTPStatus
 
 from gi.repository import Adw, GObject, Gtk
@@ -9,7 +10,7 @@ from jellyfin_api_client.models.authentication_result import AuthenticationResul
 
 from src import build_constants, shared
 from src.database.api import ServerInfo, UserInfo
-from src.jellyfin import JellyfinClient
+from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
 
 
@@ -50,7 +51,8 @@ class AuthCredentialsView(Adw.NavigationPage):
         """Try to authenticate the user with the given credentials"""
 
         def main(username: str, password: str) -> AuthenticationResult:
-            client = JellyfinClient(self.__server.address)
+            device_id = make_device_id()
+            client = JellyfinClient(base_url=self.__server.address, device_id=device_id)
             response = authenticate_user_by_name.sync_detailed(
                 client=client,
                 json_body=AuthenticateUserByName(username=username, pw=password),
@@ -70,10 +72,11 @@ class AuthCredentialsView(Adw.NavigationPage):
                 self.__server.address,
                 UserInfo(user_id=result.user.id, name=result.user.name),
             )
-            shared.settings.add_active_token(
-                self.__server.address,
-                result.user.id,
-                result.access_token,
+            shared.settings.add_token(
+                address=self.__server.address,
+                user_id=result.user.id,
+                token=result.access_token,
+                device_id=result.session_info.device_id,
             )
             self.emit("authenticated", result.user.id)
 

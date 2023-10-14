@@ -40,12 +40,19 @@ class UserInfo(NamedTuple):
         return hash(self.user_id)
 
 
+class TokenInfo(NamedTuple):
+    """Object describing a token"""
+
+    device_id: str
+    token: str
+
+
 class ActiveTokenInfo(NamedTuple):
     """Object describing the active token"""
 
-    server: ServerInfo
+    address: str
     user_id: str
-    token: str
+    token_info: TokenInfo
 
 
 class DataHandler(object):
@@ -161,15 +168,29 @@ class DataHandler(object):
         self.__execute_blind((query, args))
         logging.debug("Updated %s connected timestamp", address)
 
-    def add_active_token(self, address: str, user_id: str, token: str) -> None:
-        """Add a token and set it as active"""
+    def add_token(self, address: str, user_id: str, token: str, device_id: str) -> None:
+        """Add a token to the database"""
         query = """
-            INSERT OR REPLACE INTO Tokens (address, user_id, token, active) 
-            VALUES (?, ?, ?, 1)
+            INSERT OR REPLACE INTO Tokens (address, user_id, device_id, token) 
+            VALUES (?, ?, ?, ?)
         """
-        params = (address, user_id, token)
+        params = (address, user_id, device_id, token)
         self.__execute_blind((query, params))
-        logging.debug("Logged in user_id %s on %s", user_id, address)
+
+    def get_token(self, address: str, user_id: str) -> Optional[TokenInfo]:
+        """Get the saved authentication token for a user id on a server"""
+        query = """
+            SELECT device_id, token 
+            FROM Tokens 
+            WHERE address = ? AND user_id = ?
+        """
+        params = (address, user_id)
+        with self.connect() as db:
+            row: None | tuple[str, str] = db.execute(query, params).fetchone()
+        if row is None:
+            return None
+        device_id, token = row
+        return TokenInfo(device_id=device_id, token=token)
 
     def set_active_token(self, address: str, user_id: str) -> None:
         """Set the app's active token"""
@@ -188,14 +209,13 @@ class DataHandler(object):
         Get the token that is currently logged on.
 
         If there is no active token, returns None
-        Else, returns (server, user_id, token)
 
         - When logging into a server, the token is active
         - When logging off, the token is kept and set not active
         - When logging out, the token is removed
         """
         query = """
-            SELECT s.name, s.address, s.server_id, t.user_id, t.token 
+            SELECT s.address, t.user_id, t.device_id, t.token
             FROM Servers AS s
             INNER JOIN Tokens AS t
             ON t.address = s.address
@@ -206,9 +226,15 @@ class DataHandler(object):
             row: None | tuple = cursor.fetchone()
             if row is None:
                 return row
-            name, address, server_id, user_id, token = row
-            server = ServerInfo(name=name, address=address, server_id=server_id)
-            return ActiveTokenInfo(server=server, user_id=user_id, token=token)
+            address, user_id, device_id, token = row
+            return ActiveTokenInfo(
+                address=address,
+                user_id=user_id,
+                token_info=TokenInfo(
+                    device_id=device_id,
+                    token=token,
+                ),
+            )
 
     def remove_token(self, address: str, user_id: str):
         """Remove the server access token for the given user_id"""
@@ -252,13 +278,3 @@ class DataHandler(object):
             rows = cursor.fetchall()
         user_infos = [UserInfo(user_id=uid, name=name) for uid, name in rows]
         return user_infos
-
-    def get_token(self, address: str, user_id: str) -> Optional[str]:
-        """Get the saved authentication token for a user id on a server"""
-        query = """SELECT token FROM Tokens WHERE address = ? AND user_id = ?"""
-        params = (address, user_id)
-        with self.connect() as db:
-            row: None | tuple[str] = db.execute(query, params).fetchone()
-        if row is None:
-            return None
-        return row[0]
