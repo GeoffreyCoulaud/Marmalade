@@ -1,3 +1,2 @@
 jellyfin-api-client
 psutil
-bidict

@@ -1,0 +1,11 @@
+# Python requirements needed for development
+# (should be installed in the .venv virtual environment)
+
+pylint
+pygobject-stubs
+
+# Needed for flatpak-pip-generator
+# https://github.com/flatpak/flatpak-builder-tools/tree/master/pip
+requirements-parser
+
+-r requirements.txt
