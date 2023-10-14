@@ -23,7 +23,7 @@ from gi.repository import Adw, Gtk
 
 from src import build_constants, shared
 from src.components.auth_dialog import AuthDialog
-from src.components.server_connected_view import ServerConnectedView
+from src.components.server_home_view import ServerHomeView
 from src.components.servers_list_view import ServersListView
 from src.database.api import ServerInfo
 from src.task import Task
@@ -93,7 +93,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         """Navigate to the server with the given authentication token"""
         shared.settings.set_active_token(address=address, user_id=user_id)
         shared.settings.update_connected_timestamp(address=address)
-        view = ServerConnectedView(
+        view = ServerHomeView(
             navigation=self.views,
             address=address,
             user_id=user_id,

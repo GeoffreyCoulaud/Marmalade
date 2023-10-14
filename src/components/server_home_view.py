@@ -20,19 +20,15 @@
 import logging
 
 from gi.repository import Adw, GObject, Gtk
-from jellyfin_api_client.models.user_dto import UserDto
 
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
-from src.database.api import ServerInfo
 
 
-@Gtk.Template(
-    resource_path=build_constants.PREFIX + "/templates/server_connected_view.ui"
-)
-class ServerConnectedView(Adw.NavigationPage):
+@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
+class ServerHomeView(Adw.NavigationPage):
     # TODO rename to server home view
-    __gtype_name__ = "MarmaladeServerConnectedView"
+    __gtype_name__ = "MarmaladeServerHomeView"
 
     @GObject.Signal(name="log-out", arg_types=[str, str])
     def log_out(self, _address: str, _user_id: str):
