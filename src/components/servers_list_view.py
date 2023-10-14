@@ -20,13 +20,25 @@
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
+from src.components.abc_navigation_page import AbcNavigationPage
 from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_row import ServerRow
 from src.database.api import DataHandler, ServerInfo
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_list_view.ui")
-class ServersListView(Adw.NavigationPage):
+class ServersListView(AbcNavigationPage):
+    """
+    Servers list view navigation page.
+
+    This is the page that is shown to the user when they aren't connected to a server.
+
+    In charge of:
+    - Adding servers
+    - Deleting servers
+    - Starting the login process on a server
+    """
+
     __gtype_name__ = "MarmaladeServersListView"
 
     edit_button = Gtk.Template.Child()
@@ -37,8 +49,8 @@ class ServersListView(Adw.NavigationPage):
     server_rows_group = Gtk.Template.Child()
     servers_view_stack = Gtk.Template.Child()
     status_add_button = Gtk.Template.Child()
+    toast_overlay = Gtk.Template.Child()
 
-    __toast_overlay: Adw.ToastOverlay
     __rows: set[ServerRow]
     __servers_trash: set[ServerInfo]
     __edit_mode: bool
@@ -56,17 +68,13 @@ class ServersListView(Adw.NavigationPage):
     def server_connect_request(self, _server: ServerInfo):
         """Signal emitted when a server is connected"""
 
-    def __init__(
-        self,
-        *args,
-        toast_overlay: Adw.ToastOverlay,
-        **kwargs,
-    ):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, navigation, **kwargs):
+        """Create a server list view"""
+
+        super().__init__(*args, navigation=navigation, **kwargs)
         self.__rows = set()
         self.__servers_trash = set()
         self.__edit_mode = False
-        self.__toast_overlay = toast_overlay
 
         # Initial content
         self.refresh_servers()

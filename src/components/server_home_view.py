@@ -22,11 +22,18 @@ import logging
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
+from src.components.abc_navigation_page import AbcNavigationPage
 from src.components.disconnect_dialog import DisconnectDialog
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
-class ServerHomeView(Adw.NavigationPage):
+class ServerHomeView(AbcNavigationPage):
+    """
+    Server home view navigation page.
+
+    This is the page that is shown to the user when they connect to a server.
+    """
+
     __gtype_name__ = "MarmaladeServerHomeView"
 
     @GObject.Signal(name="log-out", arg_types=[str, str])
@@ -47,7 +54,6 @@ class ServerHomeView(Adw.NavigationPage):
     label: Gtk.Label = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
 
-    __navigation: Adw.NavigationView
     __address: str
     __user_id: str
     __device_id: str
@@ -56,15 +62,16 @@ class ServerHomeView(Adw.NavigationPage):
     def __init__(
         self,
         *args,
-        navigation: Adw.NavigationView,
+        navigation,
         address: str,
         user_id: str,
         device_id: str,
         token: str,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
-        self.__navigation = navigation
+        """Create a server home view"""
+
+        super().__init__(*args, navigation=navigation, **kwargs)
         self.__address = address
         self.__device_id = device_id
         self.__user_id = user_id
