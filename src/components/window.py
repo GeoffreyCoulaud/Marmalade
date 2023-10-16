@@ -50,7 +50,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         super().__init__(*args, **kwargs)
 
         # Add servers list
-        self.__servers_view = ServersListView(navigation=self.navigation)
+        self.__servers_view = ServersListView()
         self.__servers_view.connect(
             "server-connect-request",
             self.on_server_connect_request,
@@ -98,7 +98,6 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         shared.settings.set_active_token(address=address, user_id=user_id)
         shared.settings.update_connected_timestamp(address=address)
         view = ServerHomeView(
-            navigation=self.navigation,
             address=address,
             user_id=user_id,
             device_id=device_id,

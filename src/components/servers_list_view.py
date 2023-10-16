@@ -20,14 +20,14 @@
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
-from src.components.abc_navigation_page import AbcNavigationPage
+from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_row import ServerRow
 from src.database.api import DataHandler, ServerInfo
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_list_view.ui")
-class ServersListView(AbcNavigationPage):
+class ServersListView(MarmaladeNavigationPage):
     """
     Servers list view navigation page.
 
@@ -68,10 +68,10 @@ class ServersListView(AbcNavigationPage):
     def server_connect_request(self, _server: ServerInfo):
         """Signal emitted when a server is connected"""
 
-    def __init__(self, *args, navigation, **kwargs):
+    def __init__(self, *args, **kwargs):
         """Create a server list view"""
 
-        super().__init__(*args, navigation=navigation, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__rows = set()
         self.__servers_trash = set()
         self.__edit_mode = False

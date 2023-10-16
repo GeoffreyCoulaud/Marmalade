@@ -22,12 +22,12 @@ import logging
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
-from src.components.abc_navigation_page import AbcNavigationPage
+from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 from src.components.disconnect_dialog import DisconnectDialog
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
-class ServerHomeView(AbcNavigationPage):
+class ServerHomeView(MarmaladeNavigationPage):
     """
     Server home view navigation page.
 
@@ -62,7 +62,6 @@ class ServerHomeView(AbcNavigationPage):
     def __init__(
         self,
         *args,
-        navigation,
         address: str,
         user_id: str,
         device_id: str,
@@ -71,7 +70,7 @@ class ServerHomeView(AbcNavigationPage):
     ):
         """Create a server home view"""
 
-        super().__init__(*args, navigation=navigation, **kwargs)
+        super().__init__(*args, **kwargs)
         self.__address = address
         self.__device_id = device_id
         self.__user_id = user_id

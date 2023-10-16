@@ -64,10 +64,6 @@ class AuthDialog(Adw.Window):
         view = AuthCredentialsView(dialog=self, server=self.server, username=username)
         view.connect("authenticated", self.on_authenticated)
         self.views.push(view)
-        # If the username was passed, focus the password row
-        # (needs to happen after adding to the view stack)
-        if username:
-            view.focus_password()
 
     def on_authenticated(self, _widget, user_id: str) -> None:
         self.emit("authenticated", self.server.address, user_id)

@@ -46,6 +46,12 @@ class AuthCredentialsView(Adw.NavigationPage):
         self.__dialog = dialog
         self.__username_editable.set_text(username)
         self.__log_in_button.connect("clicked", self.__on_log_in_request)
+        self.connect("map", self.__on_mapped)
+
+    def __on_mapped(self, _page) -> None:
+        """Callback executed when the page is about to be shown"""
+        if self.__username_editable.get_text():
+            self.__password_editable.grab_focus_without_selecting()
 
     def __on_log_in_request(self, _widget) -> None:
         """Try to authenticate the user with the given credentials"""
@@ -119,7 +125,3 @@ class AuthCredentialsView(Adw.NavigationPage):
             error_callback=on_error,
         )
         task.run()
-
-    def focus_password(self) -> None:
-        """Focus the password row"""
-        self.__password_editable.grab_focus_without_selecting()
