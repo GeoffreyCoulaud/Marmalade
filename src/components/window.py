@@ -43,78 +43,21 @@ class MarmaladeWindow(Adw.ApplicationWindow):
 
     navigation = Gtk.Template.Child()
 
-    # TODO remove __servers_view attribute
-    __servers_view: ServersListView
-
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
         # Add servers list
-        self.__servers_view = ServersListView()
-        self.__servers_view.connect(
-            "server-connect-request",
-            self.on_server_connect_request,
-        )
-        self.navigation.add(self.__servers_view)
+        self.navigation.add(ServersListView())
 
         # Try to get the active token to resume navigation on the server
         info = shared.settings.get_active_token()
         if info is not None:
             logging.debug("Resuming where we left off")
-            # TODO create the server home view inline
-            self.navigate_to_server_home(
-                address=info.address,
-                user_id=info.user_id,
-                device_id=info.token_info.device_id,
-                token=info.token_info.token,
+            self.navigation.push(
+                ServerHomeView(
+                    address=info.address,
+                    user_id=info.user_id,
+                    device_id=info.token_info.device_id,
+                    token=info.token_info.token,
+                )
             )
-
-    def on_server_connect_request(self, _emitter, server: ServerInfo) -> None:
-        """Handle a request to connect to a server"""
-        # TODO move on_connect_request to server list view
-        # TODO check server connectivity before showing auth dialog
-        dialog = AuthDialog(server)
-        dialog.connect("authenticated", self.on_user_authenticated)
-        dialog.set_transient_for(self)
-        dialog.set_modal(True)
-        dialog.present()
-
-    def on_user_authenticated(self, _widget, address: str, user_id: str) -> None:
-        # TODO move on_authenticated to server list view
-        logging.debug("Authenticated on %s", address)
-        info = shared.settings.get_token(address=address, user_id=user_id)
-        self.navigate_to_server_home(
-            address=address,
-            user_id=user_id,
-            device_id=info.device_id,
-            token=info.token,
-        )
-
-    def navigate_to_server_home(
-        self, address: str, user_id: str, device_id: str, token: str
-    ) -> None:
-        """Navigate to the server with the given authentication token"""
-        # TODO move navigate_to_server_home to server list view
-        shared.settings.set_active_token(address=address, user_id=user_id)
-        shared.settings.update_connected_timestamp(address=address)
-        view = ServerHomeView(
-            address=address,
-            user_id=user_id,
-            device_id=device_id,
-            token=token,
-        )
-        view.connect("log-off", self.on_server_log_off)
-        view.connect("log-out", self.on_server_log_out)
-        self.navigation.push(view)
-
-    def on_server_log_out(self, _widget, address: str, user_id: str) -> None:
-        # TODO move on_log_out to server home view
-        shared.settings.remove_token(address=address, user_id=user_id)
-        self.__servers_view.refresh_servers()
-        self.navigation.pop()
-
-    def on_server_log_off(self, _widget, _address: str) -> None:
-        # TODO move on_log_off to server home view
-        shared.settings.unset_active_token()
-        self.__servers_view.refresh_servers()
-        self.navigation.pop()

@@ -22,8 +22,8 @@ import logging
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
-from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 from src.components.disconnect_dialog import DisconnectDialog
+from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
@@ -76,7 +76,7 @@ class ServerHomeView(MarmaladeNavigationPage):
         self.__user_id = user_id
         self.__token = token
 
-        # React to user input
+        shared.settings.update_connected_timestamp(address=self.__address)
         self.disconnect_button.connect("clicked", self.on_disconnect_button_clicked)
 
         # TODO server connectivity check (switch to status pages if needed)
@@ -102,15 +102,18 @@ class ServerHomeView(MarmaladeNavigationPage):
     def on_disconnect_dialog_response(self, _dialog, response: str) -> None:
         match response:
             case "log-off":
-                logging.debug(
-                    "Logging off %s",
-                    self.__address,
-                )
-                self.emit("log-off", self.__address)
+                self.log_off()
             case "log-out":
-                logging.debug(
-                    "Logging user id %s out of %s",
-                    self.__user_id,
-                    self.__address,
-                )
-                self.emit("log-out", self.__address, self.__user_id)
+                self.log_out()
+
+    def log_off(self) -> None:
+        """Disconnect from the server"""
+        logging.debug("Logging off %s", self.__address)
+        shared.settings.unset_active_token()
+        self.navigation.pop_to_tag("servers-view")
+
+    def log_out(self) -> None:
+        """Disconnect from the server, deleting the access token"""
+        logging.debug("Logging %s out of %s", self.__user_id, self.__address)
+        shared.settings.remove_token(address=self.__address, user_id=self.__user_id)
+        self.navigation.pop_to_tag("servers-view")

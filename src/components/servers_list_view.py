@@ -20,8 +20,10 @@
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
+from src.components.auth_dialog import AuthDialog
 from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 from src.components.server_add_dialog import ServerAddDialog
+from src.components.server_home_view import ServerHomeView
 from src.components.server_row import ServerRow
 from src.database.api import DataHandler, ServerInfo
 
@@ -56,18 +58,6 @@ class ServersListView(MarmaladeNavigationPage):
     __edit_mode: bool
     __edit_toggled_id: int
 
-    @GObject.Signal(name="server-added", arg_types=[object])
-    def server_added(self, _server: ServerInfo):
-        """Signal emitted when a server is added"""
-
-    @GObject.Signal(name="server-removed", arg_types=[str])
-    def server_removed(self, _address: str):
-        """Signal emitted when a server is removed"""
-
-    @GObject.Signal(name="server-connect-request", arg_types=[object])
-    def server_connect_request(self, _server: ServerInfo):
-        """Signal emitted when a server is connected"""
-
     def __init__(self, *args, **kwargs):
         """Create a server list view"""
 
@@ -88,6 +78,10 @@ class ServersListView(MarmaladeNavigationPage):
         self.__edit_toggled_id = self.edit_button.connect(
             "toggled", self.on_edit_button_toggled
         )
+        self.connect("map", self.__on_mapped)
+
+    def __on_mapped(self, _page) -> None:
+        self.refresh_servers()
 
     def refresh_servers(self) -> None:
         """Refresh the server list from the database"""
@@ -168,4 +162,19 @@ class ServersListView(MarmaladeNavigationPage):
         self.__servers_trash.clear()
 
     def on_server_connect_request(self, row: ServerRow) -> None:
-        self.emit("server-connect-request", row.server)
+        dialog = AuthDialog(row.server)
+        dialog.connect("authenticated", self.on_authenticated)
+        dialog.set_transient_for(self.get_root())
+        dialog.set_modal(True)
+        dialog.present()
+
+    def on_authenticated(self, _widget, address: str, user_id: str) -> None:
+        shared.settings.set_active_token(address=address, user_id=user_id)
+        info = shared.settings.get_token(address=address, user_id=user_id)
+        server_home_view = ServerHomeView(
+            address=address,
+            user_id=user_id,
+            device_id=info.device_id,
+            token=info.token,
+        )
+        self.navigation.push(server_home_view)
