@@ -95,7 +95,7 @@ class ServerHomeView(MarmaladeNavigationPage):
     def on_disconnect_button_clicked(self, _button) -> None:
         dialog = DisconnectDialog()
         dialog.connect("response", self.on_disconnect_dialog_response)
-        dialog.set_transient_for(shared.window)
+        dialog.set_transient_for(self.get_root())
         dialog.set_modal(True)
         dialog.present()
 

@@ -109,7 +109,7 @@ class ServersListView(MarmaladeNavigationPage):
         addresses = {row.server.address for row in self.__rows}
         dialog = ServerAddDialog(addresses=addresses)
         dialog.connect("server-picked", self.on_add_dialog_picked)
-        dialog.set_transient_for(shared.window)
+        dialog.set_transient_for(self.get_root())
         dialog.set_modal(True)
         dialog.present()
 

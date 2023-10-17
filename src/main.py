@@ -59,14 +59,15 @@ class MarmaladeApplication(Adw.Application):
         log_system_info()
 
     def do_activate(self):
-        if not shared.window:
-            shared.window = MarmaladeWindow(application=self)
-        shared.window.present()
+        window = self.get_active_window()
+        if not window:
+            window = MarmaladeWindow(application=self)
+        window.present()
 
     def on_about_action(self, _widget, _):
         """Callback handling the about action"""
         about = Adw.AboutWindow(
-            transient_for=shared.window,
+            transient_for=self.get_active_window(),
             application_name="Marmalade",
             application_icon=build_constants.APP_ID,
             developer_name="Geoffrey Coulaud",
