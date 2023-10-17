@@ -22,10 +22,9 @@ import logging
 from gi.repository import Adw, Gtk
 
 from src import build_constants, shared
-from src.components.auth_dialog import AuthDialog
 from src.components.server_home_view import ServerHomeView
 from src.components.servers_list_view import ServersListView
-from src.database.api import ServerInfo
+from src.jellyfin import JellyfinClient
 from src.task import Task
 
 
@@ -53,11 +52,6 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         info = shared.settings.get_active_token()
         if info is not None:
             logging.debug("Resuming where we left off")
-            self.navigation.push(
-                ServerHomeView(
-                    address=info.address,
-                    user_id=info.user_id,
-                    device_id=info.token_info.device_id,
-                    token=info.token_info.token,
-                )
-            )
+            address, user_id, (device_id, token) = info
+            client = JellyfinClient(address, device_id=device_id, token=token)
+            self.navigation.push(ServerHomeView(client=client, user_id=user_id))

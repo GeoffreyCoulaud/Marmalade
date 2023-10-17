@@ -27,7 +27,8 @@ from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_home_view import ServerHomeView
 from src.components.server_row import ServerRow
-from src.database.api import DataHandler, ServerInfo
+from src.database.api import ServerInfo
+from src.jellyfin import JellyfinClient
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_list_view.ui")
@@ -171,10 +172,6 @@ class ServersListView(MarmaladeNavigationPage):
     def on_authenticated(self, _widget, address: str, user_id: str) -> None:
         shared.settings.set_active_token(address=address, user_id=user_id)
         info = shared.settings.get_token(address=address, user_id=user_id)
-        server_home_view = ServerHomeView(
-            address=address,
-            user_id=user_id,
-            device_id=info.device_id,
-            token=info.token,
-        )
+        client = JellyfinClient(address, device_id=info.device_id, token=info.token)
+        server_home_view = ServerHomeView(client=client, user_id=user_id)
         self.navigation.push(server_home_view)

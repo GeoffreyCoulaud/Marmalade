@@ -25,47 +25,50 @@ class JellyfinClient(Client):
     - The client can be authenticated or not, with the same constructor
     """
 
+    _version: str = "1.9.1"
+    _client: str = "Marmalade"
+    _device_id: str = "-"
+    _device: str
+    _token: str
+
     def __init__(
         self,
         *args,
-        device_id: str = "-",
+        device_id: Optional[str] = None,
         token: Optional[str] = None,
         **kwargs,
     ):
-        headers = {}
-        headers.update(
-            self.__make_emby_header(
-                client="Marmalade",
-                version="1.9.1",
-                device=socket.gethostname(),
-                device_id=device_id,
-                token=token,
-            )
-        )
-        super().__init__(*args, **kwargs, headers=headers)
+        super().__init__(*args, **kwargs)
+        self._device = socket.gethostname()
+        self._token = token
+        if device_id:
+            self._device_id = device_id
+        self._update_emby_header()
 
-    def __make_emby_header(
-        self,
-        client: str,
-        version: str,
-        device: str,
-        device_id: str,
-        token: Optional[str] = None,
-    ) -> dict[str, str]:
+    def _update_emby_header(self) -> None:
         """
-        Make the mandatory X-Emby-Authorization header
+        Update or create the mandatory X-Emby-Authorization header
 
         Note: you can only have a single access token per device id
         (see https://github.com/home-assistant/core/issues/70124#issuecomment-1278033166)
         """
         parameters = {
-            "Client": client,
-            "Version": version,
-            "Device": device,
-            "DeviceId": device_id,
+            "Client": self._client,
+            "Version": self._version,
+            "Device": self._device,
+            "DeviceId": self._device_id,
         }
-        if token is not None:
-            parameters["Token"] = token
+        if self._token is not None:
+            parameters["Token"] = self._token
         parts = [f'{key}="{value}"' for key, value in parameters.items()]
         header_value = f"MediaBrowser {', '.join(parts)}"
-        return {"X-Emby-Authorization": header_value}
+        self._headers["X-Emby-Authorization"] = header_value
+
+    def __str__(self) -> str:
+        return '"%s" Jellyfin Client v%s for %s (%s) on %s' % (
+            self._client,
+            self._version,
+            self._device,
+            self._device_id,
+            self._base_url,
+        )

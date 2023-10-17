@@ -24,6 +24,7 @@ from gi.repository import Adw, GObject, Gtk
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
 from src.components.marmalade_navigation_page import MarmaladeNavigationPage
+from src.jellyfin import JellyfinClient
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
@@ -54,29 +55,14 @@ class ServerHomeView(MarmaladeNavigationPage):
     label: Gtk.Label = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
 
-    __address: str
+    __client: JellyfinClient
     __user_id: str
-    __device_id: str
-    __token: str
 
-    def __init__(
-        self,
-        *args,
-        address: str,
-        user_id: str,
-        device_id: str,
-        token: str,
-        **kwargs,
-    ):
-        """Create a server home view"""
-
+    def __init__(self, *args, client: JellyfinClient, user_id: str, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__address = address
-        self.__device_id = device_id
+        self.__client = client
         self.__user_id = user_id
-        self.__token = token
-
-        shared.settings.update_connected_timestamp(address=self.__address)
+        shared.settings.update_connected_timestamp(address=self.__client._base_url)
         self.disconnect_button.connect("clicked", self.on_disconnect_button_clicked)
 
         # TODO server connectivity check (switch to status pages if needed)
@@ -85,9 +71,9 @@ class ServerHomeView(MarmaladeNavigationPage):
         self.label.set_label(
             "\n".join(
                 (
-                    f"Address: {self.__address}",
+                    f"Address: {self.__client._base_url}",
                     f"User ID: {self.__user_id}",
-                    f"Token: {self.__token}",
+                    f"Token: {self.__client._token}",
                 )
             )
         )
@@ -108,12 +94,19 @@ class ServerHomeView(MarmaladeNavigationPage):
 
     def log_off(self) -> None:
         """Disconnect from the server"""
-        logging.debug("Logging off %s", self.__address)
+        logging.debug("Logging off %s", self.__client._base_url)
         shared.settings.unset_active_token()
         self.navigation.pop_to_tag("servers-view")
 
     def log_out(self) -> None:
         """Disconnect from the server, deleting the access token"""
-        logging.debug("Logging %s out of %s", self.__user_id, self.__address)
-        shared.settings.remove_token(address=self.__address, user_id=self.__user_id)
+        logging.debug(
+            "Logging %s out of %s",
+            self.__user_id,
+            self.__client._base_url,
+        )
+        shared.settings.remove_token(
+            address=self.__client._base_url,
+            user_id=self.__user_id,
+        )
         self.navigation.pop_to_tag("servers-view")
