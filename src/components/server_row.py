@@ -35,6 +35,7 @@ class ServerRow(Adw.ActionRow):
             self.tick.set_active(False)
         self.tick_revealer.set_reveal_child(edit_mode)
         self.button_revealer.set_reveal_child(not edit_mode)
+        self.set_activatable_widget(self.tick if edit_mode else self.button)
 
     @property
     def is_selected(self):

@@ -17,6 +17,8 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import logging
+
 from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
@@ -43,20 +45,21 @@ class ServersListView(MarmaladeNavigationPage):
 
     __gtype_name__ = "MarmaladeServersListView"
 
-    edit_button = Gtk.Template.Child()
-    add_button = Gtk.Template.Child()
-    add_button_revealer = Gtk.Template.Child()
-    remove_selected_button = Gtk.Template.Child()
-    remove_selected_button_revealer = Gtk.Template.Child()
-    server_rows_group = Gtk.Template.Child()
-    servers_view_stack = Gtk.Template.Child()
-    status_add_button = Gtk.Template.Child()
-    toast_overlay = Gtk.Template.Child()
+    # fmt: off
+    __edit_button            = Gtk.Template.Child("edit_button")
+    __add_button             = Gtk.Template.Child("add_button")
+    __add_button_revealer    = Gtk.Template.Child("add_button_revealer")
+    __delete_button          = Gtk.Template.Child("delete_button")
+    __delete_button_revealer = Gtk.Template.Child("delete_button_revealer")
+    __server_rows_group      = Gtk.Template.Child("server_rows_group")
+    __servers_view_stack     = Gtk.Template.Child("servers_view_stack")
+    __status_add_button      = Gtk.Template.Child("status_add_button")
+    __toast_overlay          = Gtk.Template.Child("toast_overlay")
+    # fmt: on
 
     __rows: set[ServerRow]
     __servers_trash: set[ServerInfo]
     __edit_mode: bool
-    __edit_toggled_id: int
 
     def __init__(self, *args, **kwargs):
         """Create a server list view"""
@@ -70,14 +73,10 @@ class ServersListView(MarmaladeNavigationPage):
         self.refresh_servers()
 
         # React to user inputs
-        self.add_button.connect("clicked", self.on_add_button_clicked)
-        self.status_add_button.connect("clicked", self.on_add_button_clicked)
-        self.remove_selected_button.connect(
-            "clicked", self.on_remove_selected_button_clicked
-        )
-        self.__edit_toggled_id = self.edit_button.connect(
-            "toggled", self.on_edit_button_toggled
-        )
+        self.__add_button.connect("clicked", self.on_add_button_clicked)
+        self.__status_add_button.connect("clicked", self.on_add_button_clicked)
+        self.__delete_button.connect("clicked", self.on_delete_button_clicked)
+        self.__edit_button.connect("toggled", self.on_edit_button_toggled)
         self.connect("map", self.__on_mapped)
 
     def __on_mapped(self, _page) -> None:
@@ -85,10 +84,11 @@ class ServersListView(MarmaladeNavigationPage):
 
     def refresh_servers(self) -> None:
         """Refresh the server list from the database"""
+        logging.debug("Refreshing servers view")
         # Empty the view
         for row in set(self.__rows):
             self.__rows.remove(row)
-            self.server_rows_group.remove(row)
+            self.__server_rows_group.remove(row)
         # Refill it
         servers = shared.settings.get_servers()
         for server in servers:
@@ -102,8 +102,8 @@ class ServersListView(MarmaladeNavigationPage):
         row = ServerRow(server)
         row.connect("button-clicked", self.on_server_connect_request)
         self.__rows.add(row)
-        self.server_rows_group.add(row)
-        self.servers_view_stack.set_visible_child_name("servers")
+        self.__server_rows_group.add(row)
+        self.__servers_view_stack.set_visible_child_name("servers")
 
     def on_add_button_clicked(self, _button) -> None:
         addresses = {row.server.address for row in self.__rows}
@@ -118,13 +118,27 @@ class ServersListView(MarmaladeNavigationPage):
 
     def toggle_edit_mode(self) -> None:
         self.__edit_mode = not self.__edit_mode
-        self.add_button_revealer.set_reveal_child(not self.__edit_mode)
-        self.remove_selected_button_revealer.set_reveal_child(self.__edit_mode)
+        self.__add_button_revealer.set_reveal_child(not self.__edit_mode)
+        self.__delete_button_revealer.set_reveal_child(self.__edit_mode)
         for server_row in self.__rows:
             server_row.edit_mode = self.__edit_mode
 
     def on_edit_button_toggled(self, _button) -> None:
         self.toggle_edit_mode()
+
+    def on_delete_button_clicked(self, _button) -> None:
+        selected = [row for row in self.__rows if row.is_selected]
+        self.__servers_trash.clear()
+        for row in selected:
+            self.__server_rows_group.remove(row)
+            self.__rows.remove(row)
+            self.__servers_trash.add(row.server)
+            shared.settings.remove_server(row.server.address)
+        if len(self.__rows) == 0:
+            self.__servers_view_stack.set_visible_child_name("no-server")
+        with self.__edit_button.freeze_notify():
+            self.toggle_edit_mode()
+        self.create_removed_toast()
 
     def create_removed_toast(self) -> None:
         toast = Adw.Toast()
@@ -141,20 +155,6 @@ class ServersListView(MarmaladeNavigationPage):
         toast.set_button_label(_("Undo"))
         toast.connect("button-clicked", self.on_removed_toast_undo)
         self.__toast_overlay.add_toast(toast)
-
-    def on_remove_selected_button_clicked(self, _button) -> None:
-        selected = [row for row in self.__rows if row.is_selected]
-        self.__servers_trash.clear()
-        for row in selected:
-            self.server_rows_group.remove(row)
-            self.__rows.remove(row)
-            self.__servers_trash.add(row.server)
-            shared.settings.remove_server(row.server.address)
-        if len(self.__rows) == 0:
-            self.servers_view_stack.set_visible_child_name("no-server")
-        with self.edit_button.freeze_notify(self.__edit_toggled_id):
-            self.toggle_edit_mode()
-        self.create_removed_toast()
 
     def on_removed_toast_undo(self, _toast) -> None:
         for server in self.__servers_trash:

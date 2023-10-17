@@ -30,12 +30,12 @@ template $MarmaladeAuthLoginMethodView : Adw.NavigationPage {
         }
 
         // Auth method
-        // TODO improve auth mehod selection
         Adw.PreferencesGroup auth_method_group {
           title: _("Authenticate");
 
           Adw.ActionRow {
             title: _("Username &amp; Password");
+            activatable-widget: username_password_button;
             [prefix]
             Image {
               margin-top: 16;
@@ -53,6 +53,7 @@ template $MarmaladeAuthLoginMethodView : Adw.NavigationPage {
           }
           Adw.ActionRow {
             title: _("Quick Connect");
+            activatable-widget: quick_connect_button;
             [prefix]
             Image {
               margin-top: 16;
