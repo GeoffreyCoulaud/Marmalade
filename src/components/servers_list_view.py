@@ -19,11 +19,10 @@
 
 import logging
 
-from gi.repository import Adw, GObject, Gtk
+from gi.repository import Adw, Gtk
 
 from src import build_constants, shared
 from src.components.auth_dialog import AuthDialog
-from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_home_view import ServerHomeView
 from src.components.server_row import ServerRow
@@ -32,7 +31,7 @@ from src.jellyfin import JellyfinClient
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_list_view.ui")
-class ServersListView(MarmaladeNavigationPage):
+class ServersListView(Adw.NavigationPage):
     """
     Servers list view navigation page.
 
@@ -174,4 +173,5 @@ class ServersListView(MarmaladeNavigationPage):
         info = shared.settings.get_token(address=address, user_id=user_id)
         client = JellyfinClient(address, device_id=info.device_id, token=info.token)
         server_home_view = ServerHomeView(client=client, user_id=user_id)
-        self.navigation.push(server_home_view)
+        navigation = self.get_parent()
+        navigation.push(server_home_view)

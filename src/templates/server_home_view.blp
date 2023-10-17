@@ -1,36 +1,63 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServerHomeView : $MarmaladeNavigationPage {
+template $MarmaladeServerHomeView : Adw.NavigationPage {
   child: Adw.ToolbarView {
+
     [top]
     Adw.HeaderBar {
       show-back-button: false;
       [start]
+
+      // TODO left view stack wrapping
+      // - Disconnect button
+      // - Back button
+
       Box {
         Button disconnect_button {
           child: Adw.ButtonContent {
-            icon-name: "system-log-out-symbolic";          
+            icon-name: "system-log-out-symbolic";
           };
         }
       }
+
+      // TODO center view stack wrapping
+      // - home/libraries view switcher
+      // - search bar (results shown in an overlay, picking one pops inner navigation stack)
+      // - path bar
+
+      // TODO right view stack wrapping
+      // - search button
+      // - filter button
+      // - preferences button
+
       [end]
       Box {
         Button search_button {
           child: Adw.ButtonContent {
-            icon-name: "system-search-symbolic";          
+            icon-name: "system-search-symbolic";
           };
         }
         MenuButton collection_filter_button {
-          icon-name: "view-sort-descending-symbolic";          
-          menu-model: collection_filter_menu;
+          icon-name: "view-sort-descending-symbolic";
+          menu-model: filter_menu;
         }
         MenuButton preferences_button {
           icon-name: "open-menu-symbolic";
-          menu-model: preferences_popover_menu;
+          menu-model: preferences_menu;
         }
       }
     }
+
+    // TODO inner items
+    // - Navigation overlay (Gtk.Overlay)
+    //    - Search results (overlay)
+    //    - Inner view stack (content)
+    //       - Error status
+    //       - Inner navigation view
+    //          - Home / Libraries page (unpopable)
+    //          - Dynamic navigation pages
+
     content: Adw.ToastOverlay toast_overlay {
       child: Adw.Clamp {
         child: Label label {
@@ -39,10 +66,11 @@ template $MarmaladeServerHomeView : $MarmaladeNavigationPage {
         };
       };
     };
+
   };
 }
 
-menu collection_filter_menu {
+menu filter_menu {
   section {
     item {
       label: _("Sort by");
@@ -68,7 +96,7 @@ menu collection_filter_menu {
 }
 
 
-menu preferences_popover_menu {
+menu preferences_menu {
   section {
     item {
       label: _("_Preferences");

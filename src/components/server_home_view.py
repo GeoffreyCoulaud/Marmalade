@@ -23,12 +23,11 @@ from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
-from src.components.marmalade_navigation_page import MarmaladeNavigationPage
 from src.jellyfin import JellyfinClient
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_view.ui")
-class ServerHomeView(MarmaladeNavigationPage):
+class ServerHomeView(Adw.NavigationPage):
     """
     Server home view navigation page.
 
@@ -50,7 +49,6 @@ class ServerHomeView(MarmaladeNavigationPage):
 
     disconnect_button = Gtk.Template.Child()
     search_button = Gtk.Template.Child()
-    collection_filter_button = Gtk.Template.Child()
     preferences_button = Gtk.Template.Child()
     label: Gtk.Label = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
@@ -109,4 +107,5 @@ class ServerHomeView(MarmaladeNavigationPage):
             address=self.__client._base_url,
             user_id=self.__user_id,
         )
-        self.navigation.pop_to_tag("servers-view")
+        navigation = self.get_parent()
+        navigation.pop_to_tag("servers-view")
