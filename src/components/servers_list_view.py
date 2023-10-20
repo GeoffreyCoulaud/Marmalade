@@ -25,7 +25,7 @@ from src import build_constants, shared
 from src.components.auth_dialog import AuthDialog
 from src.components.server_add_dialog import ServerAddDialog
 from src.components.server_browser_view import ServerBrowserView
-from src.components.server_row import ServerRow
+from src.components.servers_list_row import ServersListRow
 from src.database.api import ServerInfo
 from src.jellyfin import JellyfinClient
 
@@ -57,7 +57,7 @@ class ServersListView(Adw.NavigationPage):
     __toast_overlay          = Gtk.Template.Child("toast_overlay")
     # fmt: on
 
-    __rows: set[ServerRow]
+    __rows: set[ServersListRow]
     __servers_trash: set[ServerInfo]
     __edit_mode: bool
 
@@ -99,7 +99,7 @@ class ServersListView(Adw.NavigationPage):
         if add_to_settings:
             shared.settings.add_server(server)
         # Create visible row
-        row = ServerRow(server)
+        row = ServersListRow(server)
         row.connect("button-clicked", self.on_server_connect_request)
         self.__rows.add(row)
         self.__server_rows_group.add(row)
@@ -161,7 +161,7 @@ class ServersListView(Adw.NavigationPage):
             self.add_server(server)
         self.__servers_trash.clear()
 
-    def on_server_connect_request(self, row: ServerRow) -> None:
+    def on_server_connect_request(self, row: ServersListRow) -> None:
         dialog = AuthDialog(row.server)
         dialog.connect("authenticated", self.on_authenticated)
         dialog.set_transient_for(self.get_root())

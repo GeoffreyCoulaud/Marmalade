@@ -20,7 +20,7 @@ from jellyfin_api_client.client import Client as JfClient
 from jellyfin_api_client.models.public_system_info import PublicSystemInfo
 
 from src import build_constants
-from src.components.server_row import ServerRow
+from src.components.servers_list_row import ServersListRow
 from src.database.api import ServerInfo
 from src.task import Task
 
@@ -176,7 +176,7 @@ class ServerAddDialog(Adw.Window):
         logging.debug("Discovered %s", str(server))
         self.__discovered_addresses.add(server.address)
         # Add the server row
-        row = ServerRow(server, "list-add-symbolic")
+        row = ServersListRow(server, "list-add-symbolic")
         row.connect("button-clicked", self.on_detected_row_button_clicked)
         self.detected_server_rows_group.add(row)
 
@@ -189,7 +189,7 @@ class ServerAddDialog(Adw.Window):
         self.emit("cancelled")
         self.close()
 
-    def on_detected_row_button_clicked(self, server_row: ServerRow) -> None:
+    def on_detected_row_button_clicked(self, server_row: ServersListRow) -> None:
         self.emit("server-picked", server_row.server)
         self.close()
 

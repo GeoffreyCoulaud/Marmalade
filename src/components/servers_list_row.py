@@ -4,9 +4,9 @@ from src import build_constants
 from src.database.api import ServerInfo
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_row.ui")
-class ServerRow(Adw.ActionRow):
-    __gtype_name__ = "MarmaladeServerRow"
+@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/servers_list_row.ui")
+class ServersListRow(Adw.ActionRow):
+    __gtype_name__ = "MarmaladeServersListRow"
 
     button = Gtk.Template.Child()
     button_revealer = Gtk.Template.Child()
