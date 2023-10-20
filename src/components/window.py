@@ -22,7 +22,7 @@ import logging
 from gi.repository import Adw, Gtk
 
 from src import build_constants, shared
-from src.components.server_home_view import ServerHomeView
+from src.components.server_browser_view import ServerBrowserView
 from src.components.servers_list_view import ServersListView
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -54,4 +54,4 @@ class MarmaladeWindow(Adw.ApplicationWindow):
             logging.debug("Resuming where we left off")
             address, user_id, (device_id, token) = info
             client = JellyfinClient(address, device_id=device_id, token=token)
-            self.navigation.push(ServerHomeView(client=client, user_id=user_id))
+            self.navigation.push(ServerBrowserView(client=client, user_id=user_id))
