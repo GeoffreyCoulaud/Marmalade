@@ -23,8 +23,7 @@ from gi.repository import Adw, GObject, Gtk
 
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
-from src.components.server_loading_view import ServerLoadingView  # For .ui
-from src.components.server_unreachable_view import ServerUnreachableView  # For .ui
+from src.components.server_browser_headerbar import ServerBrowserHeaderbar
 from src.jellyfin import JellyfinClient
 
 
@@ -52,28 +51,16 @@ class ServerBrowserView(Adw.NavigationPage):
         """
 
     # fmt: off
-    __back_button                  = Gtk.Template.Child("back_button")
-    __content_view_stack           = Gtk.Template.Child("content_view_stack")
-    __disconnect_button            = Gtk.Template.Child("disconnect_button")
-    __filter_button                = Gtk.Template.Child("filter_button")
-    __header_center_stack          = Gtk.Template.Child("header_center_stack")
-    __header_left_stack            = Gtk.Template.Child("header_left_stack")
     __home_link                    = Gtk.Template.Child("home_link")
     __libraries_links              = Gtk.Template.Child("libraries_links")
     __navigation                   = Gtk.Template.Child("navigation")
     __overlay_split_view           = Gtk.Template.Child("overlay_split_view")
-    __path_bar                     = Gtk.Template.Child("path_bar")
-    __preferences_button           = Gtk.Template.Child("preferences_button")
-    __search_bar                   = Gtk.Template.Child("search_bar")
-    __search_button                = Gtk.Template.Child("search_button")
     __server_links                 = Gtk.Template.Child("server_links")
     __sidebar_hide_button          = Gtk.Template.Child("sidebar_hide_button")
     __sidebar_hide_button_revealer = Gtk.Template.Child("sidebar_hide_button_revealer")
-    __sidebar_show_button          = Gtk.Template.Child("sidebar_show_button")
-    __sidebar_show_button_revealer = Gtk.Template.Child("sidebar_show_button_revealer")
     __sidebar_title                = Gtk.Template.Child("sidebar_title")
-    __title                        = Gtk.Template.Child("title")
-    __toast_overlay                = Gtk.Template.Child("toast_overlay")
+    __user_settings_link           = Gtk.Template.Child("user_settings_link")
+    __headerbar: ServerBrowserHeaderbar = Gtk.Template.Child("headerbar")
     # fmt: on
 
     __client: JellyfinClient
@@ -84,57 +71,53 @@ class ServerBrowserView(Adw.NavigationPage):
         self.__client = client
         self.__user_id = user_id
         shared.settings.update_connected_timestamp(address=self.__client._base_url)
-        self.__disconnect_button.connect("clicked", self.__on_disconnect_button_clicked)
+        self.__headerbar.connect("disconnect-request", self.__on_disconnect_request)
 
         # Sidebar
-        self.__sidebar_show_button.connect("clicked", self.__toggle_sidebar, True)
+        self.__headerbar.connect("show-sidebar-request", self.__toggle_sidebar, True)
         self.__sidebar_hide_button.connect("clicked", self.__toggle_sidebar, False)
         self.__overlay_split_view.connect(
             "notify::show-sidebar", self.__on_sidebar_shown_changed
         )
 
-        # Browser state
-        self.__content_view_stack.set_visible_child_name("loading")
-
-        # TODO server connectivity check (switch to status pages if needed)
+        # TODO navigate to server home page
+        # (pages are in charge of displaying error status)
 
         # Reactive headerbar title
-        self.__content_view_stack.connect(
-            "notify::visible-child", self.__on_content_stack_page_changed
-        )
         self.__navigation.connect(
             "notify::visible-page", self.__on_navigation_page_changed
         )
         self.connect("map", self.__on_mapped)
 
     def __on_mapped(self, *_args) -> None:
-        self.__on_content_stack_page_changed()
+        """Callback executed when this view is about to be shown"""
+        self.__on_sidebar_shown_changed()
+        self.__on_navigation_page_changed()
+        self.__init_navigation_sidebar()
 
-    def __on_content_stack_page_changed(self, *_args) -> None:
-        child = self.__content_view_stack.get_visible_child()
-        view: Adw.ViewStackPage = self.__content_view_stack.get_page(child)
-        match view.get_name():
-            case "navigation":
-                self.__on_navigation_page_changed()
-            case _:
-                title = view.get_title()
-                self.__title.set_label(title)
+    def __init_navigation_sidebar(self) -> None:
+        """Asynchronously initialize the navigation sidebar's content"""
+        # TODO get user admin status
+        # TODO get user visible librairies
 
     def __on_navigation_page_changed(self, *_args) -> None:
+        """Callback executed when the navigation view changes the current page"""
         view: Adw.NavigationPage = self.__navigation.get_visible_page()
+        if view is None:
+            return
         title = view.get_title()
-        self.__title.set_label(title)
+        self.__headerbar.set_title(title)
 
     def __on_sidebar_shown_changed(self, *_args) -> None:
         shown = self.__overlay_split_view.get_show_sidebar()
         self.__sidebar_hide_button_revealer.set_reveal_child(shown)
-        self.__sidebar_show_button_revealer.set_reveal_child(not shown)
+        self.__headerbar.set_show_sidebar_button_visible(not shown)
 
     def __toggle_sidebar(self, _widget, shown: bool = True) -> None:
         """Toggle the navigation sidebar's visibility"""
         self.__overlay_split_view.set_show_sidebar(shown)
 
-    def __on_disconnect_button_clicked(self, *_args) -> None:
+    def __on_disconnect_request(self, *_args) -> None:
         dialog = DisconnectDialog()
         dialog.connect("response", self.__on_disconnect_dialog_response)
         dialog.set_transient_for(self.get_root())

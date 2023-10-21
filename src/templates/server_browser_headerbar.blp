@@ -1,0 +1,119 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeServerBrowserHeaderbar : HeaderBar {
+
+  // page header left group
+  [start]
+  Box {
+    Revealer sidebar_show_button_revealer {
+      transition-type: slide_right;
+      reveal-child: true;
+      Button sidebar_show_button {
+        icon-name: "sidebar-show-symbolic";
+        margin-end: 8;
+      }
+    }
+    Adw.ViewStack header_left_stack {
+      Adw.ViewStackPage {
+        name: "disconnect";
+        child: Button disconnect_button {
+          icon-name: "system-log-out-symbolic";
+        };
+      }
+      Adw.ViewStackPage {
+        name: "back";
+        child: Button back_button {
+          icon-name: "go-previous-symbolic";
+        };
+      }
+    }
+  }
+
+  // page header center group
+  title-widget: Adw.ViewStack header_center_stack {
+    Adw.ViewStackPage {
+      name: "title";
+      child: Adw.WindowTitle title {};
+    }
+    Adw.ViewStackPage {
+      name: "pathbar";
+      // TODO create path bar widget inspired by nautilus 
+      child: Button path_bar {
+        can-shrink: true;
+        label: "This is a placeholder path bar :D";
+      };
+    }
+    Adw.ViewStackPage {
+      name: "search";
+      child: SearchEntry search_bar {
+        placeholder-text: _("Search libraries");
+        search-delay: 300;
+      };
+    }
+  };
+
+  // page header right group
+  [end]
+  Box {
+    Revealer search_button_revealer {
+      ToggleButton search_button {
+        icon-name: "system-search-symbolic";
+      }
+    }
+    Revealer filter_button_revealer {
+      MenuButton filter_button {
+        icon-name: "view-sort-descending-symbolic";
+        menu-model: filter_menu;
+        visible: false;
+      }
+    }
+    MenuButton preferences_button {
+      icon-name: "open-menu-symbolic";
+      menu-model: preferences_menu;
+    }
+  }
+}
+
+menu filter_menu {
+  section {
+    item {
+      label: _("Sort by");
+    }
+  }
+  section {
+    item {
+      label: _("Filters");
+    }
+    item {
+      label: _("Genres");
+    }
+    item {
+      label: _("Age rating");
+    }
+    item {
+      label: _("Tags");
+    }
+    item {
+      label: _("Year");
+    }
+  }
+}
+
+
+menu preferences_menu {
+  section {
+    item {
+      label: _("_Preferences");
+      action: "app.preferences";
+    }
+    item {
+      label: _("_Keyboard Shortcuts");
+      action: "win.show-help-overlay";
+    }
+    item {
+      label: _("_About Marmalade");
+      action: "app.about";
+    }
+  }
+}

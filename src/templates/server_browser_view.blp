@@ -5,19 +5,19 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
   child: Adw.BreakpointBin {
 
     // TODO handle small sizes properly (secondary toolbar?)
-    width-request: 550; 
+    width-request: 360; 
     height-request: 400;
     
     Adw.Breakpoint {
       condition ("max-width: 675sp")
       setters {
-        // TODO prevent un-collapsing from showing the sidebar if it was hidden
         overlay_split_view.collapsed: true;
       }
     }
     
     child: Adw.OverlaySplitView overlay_split_view {
       show-sidebar: false;
+      pin-sidebar: true;
 
       // Navigation sidebar
       sidebar: Adw.ToolbarView {
@@ -58,6 +58,17 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
                 }
               };
             }
+            ListBoxRow user_settings_link {
+              child: Box {
+                spacing: 10;
+                Image { 
+                  icon-name: "avatar-default-symbolic";
+                }
+                Label {
+                  label: _("User settings");
+                }
+              };
+            }
           }
           ListBox libraries_links {
             styles ["navigation-sidebar"]
@@ -76,145 +87,11 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
 
       // Page content
       content: Adw.ToolbarView {
-
-        // Page header
         [top]
-        Adw.HeaderBar {
-          show-back-button: false;
-
-          // page header left group
-          [start]
-          Box {
-            Revealer sidebar_show_button_revealer {
-              transition-type: slide_right;
-              reveal-child: true;
-              Button sidebar_show_button {
-                icon-name: "sidebar-show-symbolic";
-                margin-end: 8;
-              }
-            }
-            Adw.ViewStack header_left_stack {
-              Adw.ViewStackPage {
-                name: "disconnect";
-                child: Button disconnect_button {
-                  icon-name: "system-log-out-symbolic";
-                };
-              }
-              Adw.ViewStackPage {
-                name: "back";
-                child: Button back_button {
-                  icon-name: "go-previous-symbolic";
-                };
-              }
-            }
-          }
-
-          // page header center group
-          title-widget: Adw.ViewStack header_center_stack {
-            Adw.ViewStackPage {
-              name: "title";
-              child: Label title {
-                styles ["heading"]
-                ellipsize: end;
-              };
-            }
-            Adw.ViewStackPage {
-              name: "pathbar";
-              // TODO create path bar widget inspired by nautilus 
-              child: Button path_bar {
-                label: "This is a placeholder path bar :D";
-              };
-            }
-            Adw.ViewStackPage {
-              name: "search";
-              child: SearchEntry search_bar {
-                placeholder-text: _("Search libraries");
-                search-delay: 300;
-              };
-            }
-          };
-
-          // page header right group
-          [end]
-          Box {
-            ToggleButton search_button {
-              icon-name: "system-search-symbolic";
-            }
-            MenuButton filter_button {
-              icon-name: "view-sort-descending-symbolic";
-              menu-model: filter_menu;
-              visible: false;
-            }
-            MenuButton preferences_button {
-              icon-name: "open-menu-symbolic";
-              menu-model: preferences_menu;
-            }
-          }
-        }
-
-        // Page content (browser sub-pages)
-        content: Adw.ToastOverlay toast_overlay {
-          child: Adw.ViewStack content_view_stack {
-            Adw.ViewStackPage {
-              name: "loading";
-              title: _("Loading");
-              child: $MarmaladeServerLoadingView {};
-            }
-            Adw.ViewStackPage {
-              name: "unreachable";
-              title: _("Unreachable Server");
-              child: $MarmaladeServerUnreachableView {};
-            }
-            Adw.ViewStackPage {
-              name: "navigation";
-              child: Adw.NavigationView navigation {};
-            }
-          };
-        };
+        $MarmaladeServerBrowserHeaderbar headerbar {}
+        content: Adw.NavigationView navigation {};
       };
+
     };
   };
-}
-
-menu filter_menu {
-  section {
-    item {
-      label: _("Sort by");
-    }
-  }
-  section {
-    item {
-      label: _("Filters");
-    }
-    item {
-      label: _("Genres");
-    }
-    item {
-      label: _("Age rating");
-    }
-    item {
-      label: _("Tags");
-    }
-    item {
-      label: _("Year");
-    }
-  }
-}
-
-
-menu preferences_menu {
-  section {
-    item {
-      label: _("_Preferences");
-      action: "app.preferences";
-    }
-    item {
-      label: _("_Keyboard Shortcuts");
-      action: "win.show-help-overlay";
-    }
-    item {
-      label: _("_About Marmalade");
-      action: "app.about";
-    }
-  }
 }
