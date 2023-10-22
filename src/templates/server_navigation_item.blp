@@ -1,10 +1,13 @@
 using Gtk 4.0;
 using Adw 1;
 
-template MarmaladeServerNavigationItem : ListBoxRow {
+template $MarmaladeServerNavigationItem : ListBoxRow {
   child: Box {
   spacing: 10;
     Image image {}
-    Label label {}
+    Label label {
+      wrap: true;
+      wrap-mode: word;
+    }
   };
 }

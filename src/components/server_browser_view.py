@@ -132,7 +132,6 @@ class ServerBrowserView(Adw.NavigationPage):
                 "music": "folder-music-symbolic",
                 "books": "open-book-symbolic",
             }
-            # TODO empty all navigation items but not the title
             self.__libraries_links.remove_all()
             for item in items:
                 logging.debug("Adding library %s to navigation", item.name)

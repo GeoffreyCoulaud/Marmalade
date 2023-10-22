@@ -63,7 +63,7 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
                 visible: false;
               }
             }
-            ListBox libraries_links {
+            ListBox {
               styles ["navigation-sidebar"]
               ListBoxRow {
                 selectable: false;
@@ -74,6 +74,9 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
                   halign: start;
                 }
               }
+            }
+            ListBox libraries_links {
+              styles ["navigation-sidebar"]
             }
           }; 
         };
