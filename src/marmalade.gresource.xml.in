@@ -11,6 +11,7 @@
     <file preprocess="xml-stripblanks">templates/server_add_dialog.ui</file>
     <file preprocess="xml-stripblanks">templates/server_browser_headerbar.ui</file>
     <file preprocess="xml-stripblanks">templates/server_browser_view.ui</file>
+    <file preprocess="xml-stripblanks">templates/server_home_page.ui</file>
     <file preprocess="xml-stripblanks">templates/server_loading_view.ui</file>
     <file preprocess="xml-stripblanks">templates/server_navigation_item.ui</file>
     <file preprocess="xml-stripblanks">templates/server_unreachable_view.ui</file>

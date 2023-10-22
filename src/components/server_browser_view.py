@@ -19,6 +19,7 @@
 
 import logging
 from http import HTTPStatus
+from typing import Optional
 
 from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.api.user import get_current_user
@@ -29,8 +30,11 @@ from jellyfin_api_client.models.base_item_dto_query_result import BaseItemDtoQue
 
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
+from src.components.server_browser import ServerBrowser
 from src.components.server_browser_headerbar import ServerBrowserHeaderbar
+from src.components.server_home_page import ServerHomePage
 from src.components.server_navigation_item import ServerNavigationItem
+from src.components.server_page import ServerPage
 from src.jellyfin import JellyfinClient
 from src.task import Task
 
@@ -38,7 +42,7 @@ from src.task import Task
 @Gtk.Template(
     resource_path=build_constants.PREFIX + "/templates/server_browser_view.ui"
 )
-class ServerBrowserView(Adw.NavigationPage):
+class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
     """
     Server browser page.
 
@@ -72,14 +76,9 @@ class ServerBrowserView(Adw.NavigationPage):
     __headerbar: ServerBrowserHeaderbar = Gtk.Template.Child("headerbar")
     # fmt: on
 
-    __client: JellyfinClient
-    __user_id: str
-
     def __init__(self, *args, client: JellyfinClient, user_id: str, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__client = client
-        self.__user_id = user_id
-        shared.settings.update_connected_timestamp(address=self.__client._base_url)
+        super().__init__(*args, client=client, user_id=user_id, **kwargs)
+        shared.settings.update_connected_timestamp(address=self.client._base_url)
         self.__headerbar.connect("disconnect-request", self.__on_disconnect_request)
 
         # Sidebar
@@ -88,9 +87,6 @@ class ServerBrowserView(Adw.NavigationPage):
         self.__overlay_split_view.connect(
             "notify::show-sidebar", self.__on_sidebar_shown_changed
         )
-
-        # TODO navigate to server home page
-        # (pages are in charge of displaying error status)
 
         # Reactive headerbar title
         self.__navigation.connect(
@@ -103,12 +99,16 @@ class ServerBrowserView(Adw.NavigationPage):
         self.__on_sidebar_shown_changed()
         self.__on_navigation_page_changed()
         self.__init_navigation_sidebar()
+        # Navigate to server home page
+        page = ServerHomePage(browser=self, headerbar=self.__headerbar)
+        navigation: Adw.NavigationView = self.__navigation
+        navigation.replace([page])
 
     def __init_navigation_sidebar(self) -> None:
         """Asynchronously initialize the navigation sidebar's content"""
 
         def query_admin():
-            res = get_current_user.sync_detailed(client=self.__client)
+            res = get_current_user.sync_detailed(client=self.client)
             if res.status_code == HTTPStatus.OK:
                 return res.parsed.policy.is_administrator
             raise UnexpectedStatus(res.status_code, res.content)
@@ -118,7 +118,7 @@ class ServerBrowserView(Adw.NavigationPage):
             self.__admin_dashboard_link.set_visible(is_admin)
 
         def query_libraries():
-            res = get_user_views.sync_detailed(self.__user_id, client=self.__client)
+            res = get_user_views.sync_detailed(self.user_id, client=self.client)
             if res.status_code == HTTPStatus.OK:
                 return res.parsed
             raise UnexpectedStatus(res.status_code, res.content)
@@ -151,11 +151,12 @@ class ServerBrowserView(Adw.NavigationPage):
 
     def __on_navigation_page_changed(self, *_args) -> None:
         """Callback executed when the navigation view changes the current page"""
-        view: Adw.NavigationPage = self.__navigation.get_visible_page()
-        if view is None:
+        page: Optional[ServerPage] = self.__navigation.get_visible_page()
+        if page is None:
             return
-        title = view.get_title()
-        self.__headerbar.set_title(title)
+        self.__headerbar.set_filter_button_visible(page.get_is_filterable())
+        self.__headerbar.set_search_visible(page.get_is_searchable())
+        self.__headerbar.set_title(page.get_title())
 
     def __on_sidebar_shown_changed(self, *_args) -> None:
         shown = self.__overlay_split_view.get_show_sidebar()
@@ -182,7 +183,7 @@ class ServerBrowserView(Adw.NavigationPage):
 
     def log_off(self) -> None:
         """Disconnect from the server"""
-        logging.debug("Logging off %s", self.__client._base_url)
+        logging.debug("Logging off %s", self.client._base_url)
         shared.settings.unset_active_token()
         navigation = self.get_parent()
         navigation.pop_to_tag("servers-view")
@@ -191,12 +192,12 @@ class ServerBrowserView(Adw.NavigationPage):
         """Disconnect from the server, deleting the access token"""
         logging.debug(
             "Logging %s out of %s",
-            self.__user_id,
-            self.__client._base_url,
+            self.user_id,
+            self.client._base_url,
         )
         shared.settings.remove_token(
-            address=self.__client._base_url,
-            user_id=self.__user_id,
+            address=self.client._base_url,
+            user_id=self.user_id,
         )
         navigation = self.get_parent()
         navigation.pop_to_tag("servers-view")

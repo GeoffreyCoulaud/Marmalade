@@ -1,0 +1,36 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeServerHomePage : Adw.NavigationPage {
+  title: _("Home");
+  child: Adw.ToastOverlay toast_overlay {
+    child: Adw.ViewStack view_stack {
+      // Loading view
+      Adw.ViewStackPage {
+        name: "loading";
+        child: Adw.StatusPage loading_status {
+          icon-name: "content-loading-symbolic";
+          title: _("Loading");
+          description: _("Please wait while the server's home is loading");
+        };
+      }
+      // Error view
+      Adw.ViewStackPage {
+        name: "error";
+        child: Adw.StatusPage error_status {
+          icon-name: "dialog-error-symbolic";
+          title: _("Error");
+          description: _("An error occurred while getting the server's home");
+        };
+      }
+      // Content
+      Adw.ViewStackPage {
+        name: "content";
+        // TODO implement home content
+        child: Label content {
+          label: "Placeholder home content";
+        };
+      }
+    };
+  };
+}
