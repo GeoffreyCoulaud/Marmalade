@@ -18,13 +18,21 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+from http import HTTPStatus
 
 from gi.repository import Adw, GObject, Gtk
+from jellyfin_api_client.api.user import get_current_user
+from jellyfin_api_client.api.user_views import get_user_views
+from jellyfin_api_client.errors import UnexpectedStatus
+from jellyfin_api_client.models.base_item_dto import BaseItemDto
+from jellyfin_api_client.models.base_item_dto_query_result import BaseItemDtoQueryResult
 
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
 from src.components.server_browser_headerbar import ServerBrowserHeaderbar
+from src.components.server_navigation_item import ServerNavigationItem
 from src.jellyfin import JellyfinClient
+from src.task import Task
 
 
 @Gtk.Template(
@@ -51,15 +59,16 @@ class ServerBrowserView(Adw.NavigationPage):
         """
 
     # fmt: off
-    __home_link                    = Gtk.Template.Child("home_link")
-    __libraries_links              = Gtk.Template.Child("libraries_links")
     __navigation                   = Gtk.Template.Child("navigation")
     __overlay_split_view           = Gtk.Template.Child("overlay_split_view")
-    __server_links                 = Gtk.Template.Child("server_links")
     __sidebar_hide_button          = Gtk.Template.Child("sidebar_hide_button")
     __sidebar_hide_button_revealer = Gtk.Template.Child("sidebar_hide_button_revealer")
     __sidebar_title                = Gtk.Template.Child("sidebar_title")
+    __server_links                 = Gtk.Template.Child("server_links")
+    __libraries_links              = Gtk.Template.Child("libraries_links")
+    __home_link                    = Gtk.Template.Child("home_link")
     __user_settings_link           = Gtk.Template.Child("user_settings_link")
+    __admin_dashboard_link         = Gtk.Template.Child("admin_dashboard_link")
     __headerbar: ServerBrowserHeaderbar = Gtk.Template.Child("headerbar")
     # fmt: on
 
@@ -97,8 +106,49 @@ class ServerBrowserView(Adw.NavigationPage):
 
     def __init_navigation_sidebar(self) -> None:
         """Asynchronously initialize the navigation sidebar's content"""
-        # TODO get user admin status
-        # TODO get user visible librairies
+
+        def query_admin():
+            res = get_current_user.sync_detailed(client=self.__client)
+            if res.status_code == HTTPStatus.OK:
+                return res.parsed.policy.is_administrator
+            raise UnexpectedStatus(res.status_code, res.content)
+
+        def on_admin_success(is_admin: bool) -> None:
+            logging.debug("Loaded user admin status: %s", str(is_admin))
+            self.__admin_dashboard_link.set_visible(is_admin)
+
+        def query_libraries():
+            res = get_user_views.sync_detailed(self.__user_id, client=self.__client)
+            if res.status_code == HTTPStatus.OK:
+                return res.parsed
+            raise UnexpectedStatus(res.status_code, res.content)
+
+        def on_libraries_success(result: BaseItemDtoQueryResult) -> None:
+            logging.debug("Loaded user libraries")
+            items: list[BaseItemDto] = result.items
+            icon_map = {
+                "tvshows": "tv-symbolic",
+                "movies": "folder-videos-symbolic",
+                "music": "folder-music-symbolic",
+                "books": "open-book-symbolic",
+            }
+            # TODO empty all navigation items but not the title
+            self.__libraries_links.remove_all()
+            for item in items:
+                logging.debug("Adding library %s to navigation", item.name)
+                link = ServerNavigationItem(
+                    title=item.name,
+                    icon_name=icon_map.get(item.collection_type, "folder-symbolic"),
+                )
+                # TODO connect link item navigation
+                self.__libraries_links.append(link)
+            pass
+
+        for task in (
+            Task(main=query_admin, callback=on_admin_success),
+            Task(main=query_libraries, callback=on_libraries_success),
+        ):
+            task.run()
 
     def __on_navigation_page_changed(self, *_args) -> None:
         """Callback executed when the navigation view changes the current page"""

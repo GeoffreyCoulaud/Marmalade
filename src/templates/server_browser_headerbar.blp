@@ -34,7 +34,9 @@ template $MarmaladeServerBrowserHeaderbar : HeaderBar {
   title-widget: Adw.ViewStack header_center_stack {
     Adw.ViewStackPage {
       name: "title";
-      child: Adw.WindowTitle title {};
+      child: Adw.WindowTitle title {
+        title: _("Browsing Server");
+      };
     }
     Adw.ViewStackPage {
       name: "pathbar";

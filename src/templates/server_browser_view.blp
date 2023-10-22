@@ -43,46 +43,40 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
         }
 
         // Sidebar content
-        content: Box {
-          orientation: vertical;
-          ListBox server_links {
-            styles ["navigation-sidebar"]
-            ListBoxRow home_link {
-              child: Box {
-                spacing: 10;
-                Image { 
-                  icon-name: "go-home-symbolic";
-                }
-                Label {
-                  label: _("Home");
-                }
-              };
-            }
-            ListBoxRow user_settings_link {
-              child: Box {
-                spacing: 10;
-                Image { 
-                  icon-name: "avatar-default-symbolic";
-                }
-                Label {
-                  label: _("User settings");
-                }
-              };
-            }
-          }
-          ListBox libraries_links {
-            styles ["navigation-sidebar"]
-            ListBoxRow {
-              selectable: false;
-              activatable: false;
-              Label {
-                styles ["heading"]
-                label: _("Libraries");
-                halign: start;
+        content: ScrolledWindow {
+          propagate-natural-width: true;
+          child: Box {
+            orientation: vertical;
+            ListBox server_links {
+              styles ["navigation-sidebar"]
+              $MarmaladeServerNavigationItem home_link{
+                icon-name: "go-home-symbolic";
+                title: _("Home");
+              }
+              $MarmaladeServerNavigationItem user_settings_link{
+                icon-name: "avatar-default-symbolic";
+                title: _("User settings");
+              }
+              $MarmaladeServerNavigationItem admin_dashboard_link{
+                icon-name: "emblem-system-symbolic";
+                title: _("Administration dashboard");
+                visible: false;
               }
             }
-          }
-        }; 
+            ListBox libraries_links {
+              styles ["navigation-sidebar"]
+              ListBoxRow {
+                selectable: false;
+                activatable: false;
+                Label {
+                  styles ["heading"]
+                  label: _("Libraries");
+                  halign: start;
+                }
+              }
+            }
+          }; 
+        };
       };
 
       // Page content
