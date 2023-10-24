@@ -19,9 +19,10 @@
 
 import logging
 from http import HTTPStatus
-from typing import Optional
+from typing import Callable, Optional
+from urllib.parse import parse_qsl, urlparse
 
-from gi.repository import Adw, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk
 from jellyfin_api_client.api.user import get_current_user
 from jellyfin_api_client.api.user_views import get_user_views
 from jellyfin_api_client.errors import UnexpectedStatus
@@ -47,6 +48,9 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
     Server browser page.
 
     This is the page that is shown to the user when they connect to a server.
+
+    It is in charge of handling the `navigate` action.
+    In that case, it is passed a destination string and optional parameters.
     """
 
     __gtype_name__ = "MarmaladeServerBrowserView"
@@ -63,46 +67,56 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
         """
 
     # fmt: off
-    __navigation                   = Gtk.Template.Child("navigation")
-    __overlay_split_view           = Gtk.Template.Child("overlay_split_view")
+    __split_view                   = Gtk.Template.Child("overlay_split_view")
     __sidebar_hide_button          = Gtk.Template.Child("sidebar_hide_button")
     __sidebar_hide_button_revealer = Gtk.Template.Child("sidebar_hide_button_revealer")
-    __sidebar_title                = Gtk.Template.Child("sidebar_title")
     __server_links                 = Gtk.Template.Child("server_links")
     __libraries_links              = Gtk.Template.Child("libraries_links")
-    __home_link                    = Gtk.Template.Child("home_link")
-    __user_settings_link           = Gtk.Template.Child("user_settings_link")
     __admin_dashboard_link         = Gtk.Template.Child("admin_dashboard_link")
+    __navigation: Adw.NavigationView = Gtk.Template.Child("navigation")
     __headerbar: ServerBrowserHeaderbar = Gtk.Template.Child("headerbar")
     # fmt: on
+
+    __actions: Gio.SimpleActionGroup
 
     def __init__(self, *args, client: JellyfinClient, user_id: str, **kwargs):
         super().__init__(*args, client=client, user_id=user_id, **kwargs)
         shared.settings.update_connected_timestamp(address=self.client._base_url)
-        self.__headerbar.connect("disconnect-request", self.__on_disconnect_request)
 
-        # Sidebar
-        self.__headerbar.connect("show-sidebar-request", self.__toggle_sidebar, True)
-        self.__sidebar_hide_button.connect("clicked", self.__toggle_sidebar, False)
-        self.__overlay_split_view.connect(
-            "notify::show-sidebar", self.__on_sidebar_shown_changed
-        )
+        # Actions
+        self.__actions = Gio.SimpleActionGroup()
+        for args in (
+            ("disconnect", None, self.__on_disconnect),
+            ("show-sidebar", None, self.__on_sidebar_toggle_request, True),
+            ("hide-sidebar", None, self.__on_sidebar_toggle_request, False),
+            ("show-search-bar", None, self.__on_show_search_bar),
+            ("navigate", "s", self.__on_navigate),
+        ):
+            self.__add_simple_action(*args)
+        self.insert_action_group("browser", self.__actions)
 
-        # Reactive headerbar title
-        self.__navigation.connect(
-            "notify::visible-page", self.__on_navigation_page_changed
-        )
+        # Children signals
+        self.__split_view.connect("notify::show-sidebar", self.__on_sidebar_toggled)
+        self.__navigation.connect("notify::visible-page", self.__on_page_changed)
         self.connect("map", self.__on_mapped)
+
+        # Navigate to the home page
+        self.activate_action("browser.navigate", GLib.Variant.new_string("home"))
+
+    def __add_simple_action(
+        self, name: str, type_str: Optional[str], callback: Callable, *args
+    ) -> None:
+        """Add a simple action and connect it to a callback with optional arguments"""
+        variant_type = None if type_str is None else GLib.VariantType(type_str)
+        action = Gio.SimpleAction.new(name, variant_type)
+        action.connect("activate", callback, *args)
+        self.__actions.add_action(action)
 
     def __on_mapped(self, *_args) -> None:
         """Callback executed when this view is about to be shown"""
-        self.__on_sidebar_shown_changed()
-        self.__on_navigation_page_changed()
+        self.__on_sidebar_toggled()
+        self.__on_page_changed()
         self.__init_navigation_sidebar()
-        # Navigate to server home page
-        page = ServerHomePage(browser=self, headerbar=self.__headerbar)
-        navigation: Adw.NavigationView = self.__navigation
-        navigation.replace([page])
 
     def __init_navigation_sidebar(self) -> None:
         """Asynchronously initialize the navigation sidebar's content"""
@@ -138,8 +152,8 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
                 link = ServerNavigationItem(
                     title=item.name,
                     icon_name=icon_map.get(item.collection_type, "folder-symbolic"),
+                    destination=f"library?id={item.id}",
                 )
-                # TODO connect link item navigation
                 self.__libraries_links.append(link)
             pass
 
@@ -149,25 +163,75 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
         ):
             task.run()
 
-    def __on_navigation_page_changed(self, *_args) -> None:
+    def __on_navigate(self, _widget, variant: GLib.Variant) -> None:
+        """
+        Handle the `navigate` action
+
+        Will change the inner Adw.NavigationView to the requested page.
+        Additional parameters are passed as kwargs to the page constructor.
+        """
+
+        # Parse the destination
+        uri = variant.get_string()
+        parsed = urlparse(url=uri)
+        name = parsed.path
+        kwargs = {}
+        for key, value in parse_qsl(parsed.query):
+            kwargs[key] = value
+
+        logging.debug('Navigating to "%s", kwargs: %s', name, kwargs)
+
+        # Handle the "back" destination name
+        if name == "back":
+            self.__navigation.pop()
+            return
+
+        # Create the page from the destination and args
+        page_name_map = {
+            "home": ServerHomePage,
+            "user-settings": None,  # TODO implement user settings page
+            "admin-dashboard": None,  # TODO implement admin dashboard page
+            "library": None,  # TODO implement library page
+        }
+        try:
+            klass = page_name_map[name]
+            if klass is None:
+                raise NotImplementedError()
+        except KeyError:
+            logging.error("Invalid destination %s", name)
+            return
+        except NotImplementedError:
+            logging.error("Destination %s is not implemented", name)
+            return
+        page: ServerPage = klass(browser=self, headerbar=self.__headerbar, **kwargs)
+
+        # Update the view
+        if page.get_is_root():
+            self.__navigation.replace([page])
+        else:
+            self.__navigation.push(page)
+
+    def __on_page_changed(self, *_args) -> None:
         """Callback executed when the navigation view changes the current page"""
         page: Optional[ServerPage] = self.__navigation.get_visible_page()
         if page is None:
             return
+        previous_page = self.__navigation.get_previous_page(page)
+        self.__headerbar.toggle_back_button(previous_page is not None)
         self.__headerbar.set_filter_button_visible(page.get_is_filterable())
-        self.__headerbar.set_search_visible(page.get_is_searchable())
+        self.__headerbar.set_search_button_visible(page.get_is_searchable())
         self.__headerbar.set_title(page.get_title())
 
-    def __on_sidebar_shown_changed(self, *_args) -> None:
-        shown = self.__overlay_split_view.get_show_sidebar()
+    def __on_sidebar_toggle_request(self, *args) -> None:
+        *_rest, shown = args
+        self.__split_view.set_show_sidebar(shown)
+
+    def __on_sidebar_toggled(self, *_args) -> None:
+        shown = self.__split_view.get_show_sidebar()
         self.__sidebar_hide_button_revealer.set_reveal_child(shown)
         self.__headerbar.set_show_sidebar_button_visible(not shown)
 
-    def __toggle_sidebar(self, _widget, shown: bool = True) -> None:
-        """Toggle the navigation sidebar's visibility"""
-        self.__overlay_split_view.set_show_sidebar(shown)
-
-    def __on_disconnect_request(self, *_args) -> None:
+    def __on_disconnect(self, *_args) -> None:
         dialog = DisconnectDialog()
         dialog.connect("response", self.__on_disconnect_dialog_response)
         dialog.set_transient_for(self.get_root())
@@ -180,6 +244,10 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
                 self.log_off()
             case "log-out":
                 self.log_out()
+
+    def __on_show_search_bar(self, *args) -> None:
+        # TODO show the search bar
+        raise NotImplementedError()
 
     def log_off(self) -> None:
         """Disconnect from the server"""

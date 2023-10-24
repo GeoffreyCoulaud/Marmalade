@@ -90,6 +90,24 @@ class ServerPage(GObject.Object):
     def is_filterable(self, value: bool) -> None:
         self.set_is_filterable(value)
 
+    # is_root property
+
+    __is_root: bool
+
+    def set_is_root(self, is_root: bool):
+        self.__is_root = is_root
+
+    def get_is_root(self) -> bool:
+        return self.__is_root
+
+    @GObject.Property(type=bool, default=False)
+    def is_root(self) -> bool:
+        return self.get_is_root()
+
+    @is_root.setter
+    def is_root(self, value: bool) -> None:
+        self.set_is_root(value)
+
     # title property
 
     __title: str

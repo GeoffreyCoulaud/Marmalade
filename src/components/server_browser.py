@@ -1,4 +1,4 @@
-from gi.repository import Adw, GObject
+from gi.repository import Adw, Gio, GLib, GObject
 
 from src.jellyfin import JellyfinClient
 

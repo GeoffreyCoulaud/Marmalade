@@ -14,6 +14,7 @@ template $MarmaladeServerBrowserHeaderbar : HeaderBar {
       reveal-child: true;
       Button sidebar_show_button {
         icon-name: "sidebar-show-symbolic";
+        action-name: "browser.show-sidebar";
         margin-end: 8;
       }
     }
@@ -44,16 +45,8 @@ template $MarmaladeServerBrowserHeaderbar : HeaderBar {
     Adw.ViewStackPage {
       name: "pathbar";
       // TODO create path bar widget inspired by nautilus 
-      child: Button path_bar {
-        can-shrink: true;
-        label: "This is a placeholder path bar :D";
-      };
-    }
-    Adw.ViewStackPage {
-      name: "search";
-      child: SearchEntry search_bar {
-        placeholder-text: _("Search libraries");
-        search-delay: 300;
+      child: Label path_bar {
+        ellipsize: middle;
       };
     }
   };
@@ -62,7 +55,7 @@ template $MarmaladeServerBrowserHeaderbar : HeaderBar {
   [end]
   Box {
     Revealer search_button_revealer {
-      ToggleButton search_button {
+      Button search_button {
         icon-name: "system-search-symbolic";
       }
     }
@@ -73,7 +66,7 @@ template $MarmaladeServerBrowserHeaderbar : HeaderBar {
         visible: false;
       }
     }
-    MenuButton preferences_button {
+    MenuButton {
       icon-name: "open-menu-symbolic";
       menu-model: preferences_menu;
     }

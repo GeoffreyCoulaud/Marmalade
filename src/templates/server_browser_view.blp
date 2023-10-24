@@ -32,6 +32,7 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
             reveal-child: false;
             Button sidebar_hide_button {
               icon-name: "sidebar-show-symbolic";
+              action-name: "browser.hide-sidebar";
               margin-end: 8;
             }
           }
@@ -48,17 +49,20 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
             orientation: vertical;
             ListBox server_links {
               styles ["navigation-sidebar"]
-              $MarmaladeServerNavigationItem home_link{
+              $MarmaladeServerNavigationItem home_link {
                 icon-name: "go-home-symbolic";
                 title: _("Home");
+                destination: "home";
               }
-              $MarmaladeServerNavigationItem user_settings_link{
+              $MarmaladeServerNavigationItem user_settings_link {
                 icon-name: "avatar-default-symbolic";
                 title: _("User settings");
+                destination: "user-settings";
               }
-              $MarmaladeServerNavigationItem admin_dashboard_link{
+              $MarmaladeServerNavigationItem admin_dashboard_link {
                 icon-name: "emblem-system-symbolic";
                 title: _("Administration dashboard");
+                destination: "admin-dashboard";
                 visible: false;
               }
             }

@@ -1,4 +1,4 @@
-from gi.repository import Adw, GObject, Gtk
+from gi.repository import GLib, GObject, Gtk
 
 from src import build_constants
 
@@ -11,6 +11,10 @@ class ServerNavigationItem(Gtk.ListBoxRow):
 
     __image: Gtk.Image = Gtk.Template.Child("image")
     __label: Gtk.Label = Gtk.Template.Child("label")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.set_action_name("browser.navigate")
 
     # icon_name property
 
@@ -43,3 +47,21 @@ class ServerNavigationItem(Gtk.ListBoxRow):
     @title.setter
     def title(self, value: str) -> None:
         self.set_title(value)
+
+    # destination property
+
+    def set_destination(self, destination: str):
+        variant = GLib.Variant.new_string(destination)
+        self.set_action_target_value(variant)
+
+    def get_destination(self) -> str:
+        variant: GLib.Variant = self.get_action_target_value()
+        return variant.get_string()
+
+    @GObject.Property(type=str)
+    def destination(self) -> str:
+        return self.get_destination()
+
+    @destination.setter
+    def destination(self, value: str) -> None:
+        self.set_destination(value)

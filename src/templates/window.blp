@@ -4,5 +4,7 @@ using Adw 1;
 template $MarmaladeWindow : Adw.ApplicationWindow {
   default-width: 800;
   default-height: 600;
-  content: Adw.NavigationView navigation {};
+  content: Adw.NavigationView navigation {
+    pop-on-escape: false;
+  };
 }
