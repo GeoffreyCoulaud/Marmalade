@@ -1,7 +1,7 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServerBrowserView : Adw.NavigationPage {
+template $MarmaladeServerBrowserView {
   child: Adw.BreakpointBin {
 
     width-request: 360; 
@@ -30,7 +30,7 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
           Revealer sidebar_hide_button_revealer {
             transition-type: slide_right;
             reveal-child: false;
-            Button sidebar_hide_button {
+            Button {
               icon-name: "sidebar-show-symbolic";
               action-name: "browser.hide-sidebar";
               margin-end: 8;
@@ -88,7 +88,17 @@ template $MarmaladeServerBrowserView : Adw.NavigationPage {
       // Page content
       content: Adw.ToolbarView {
         [top]
-        $MarmaladeServerBrowserHeaderbar headerbar {}
+        Box {
+          orientation: vertical;
+          $MarmaladeServerBrowserHeaderbar header_bar {}
+          SearchBar search_bar {
+            Adw.Clamp {
+              child: SearchEntry search_entry {
+                placeholder-text: _("Search");
+              };
+            }
+          }
+        }
         content: Adw.NavigationView navigation {};
       };
 

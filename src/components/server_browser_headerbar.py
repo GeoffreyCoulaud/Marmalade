@@ -19,7 +19,6 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
     __header_center_stack          = Gtk.Template.Child("header_center_stack")
     __header_left_stack            = Gtk.Template.Child("header_left_stack")
     __path_bar                     = Gtk.Template.Child("path_bar")
-    __search_button                = Gtk.Template.Child("search_button")
     __search_button_revealer       = Gtk.Template.Child("search_button_revealer")
     __sidebar_show_button          = Gtk.Template.Child("sidebar_show_button")
     __sidebar_show_button_revealer = Gtk.Template.Child("sidebar_show_button_revealer")
@@ -33,7 +32,6 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
         self.__back_button.connect("clicked", self.__on_back_clicked)
         self.__disconnect_button.connect("clicked", self.__on_disconnect_clicked)
         self.__sidebar_show_button.connect("clicked", self.__on_sidebar_show_clicked)
-        self.__search_button.connect("toggled", self.__on_search_toggled)
 
     def __on_sidebar_show_clicked(self, *_args) -> None:
         self.activate_action("browser.hide-sidebar")
@@ -43,9 +41,6 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
 
     def __on_back_clicked(self, *_args) -> None:
         self.activate_action("browser.navigate", GLib.Variant.new_string("back"))
-
-    def __on_search_clicked(self, *_args) -> None:
-        self.activate_action("browser.show-search-bar")
 
     def toggle_back_button(self, back_button_shown: bool = True) -> None:
         name = "back" if back_button_shown else "disconnect"

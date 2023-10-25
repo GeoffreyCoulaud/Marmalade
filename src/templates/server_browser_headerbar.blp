@@ -3,7 +3,6 @@ using Adw 1;
 
 template $MarmaladeServerBrowserHeaderbar : HeaderBar {
 
-  // TODO add separate search bar
   // TODO avoid the Gtk.Centerbox behaviour (path bar must grow)
 
   // page header left group
@@ -55,8 +54,9 @@ template $MarmaladeServerBrowserHeaderbar : HeaderBar {
   [end]
   Box {
     Revealer search_button_revealer {
-      Button search_button {
+      ToggleButton {
         icon-name: "system-search-symbolic";
+        action-name: "browser.search";
       }
     }
     Revealer filter_button_revealer {

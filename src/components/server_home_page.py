@@ -5,7 +5,7 @@ from src.components.server_page import ServerPage
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_page.ui")
-class ServerHomePage(Adw.NavigationPage, ServerPage):
+class ServerHomePage(ServerPage):
     __gtype_name__ = "MarmaladeServerHomePage"
 
     # fmt: off

@@ -1,11 +1,13 @@
-from gi.repository import GObject
+from gi.repository import Adw, GObject
 
 from src.components.server_browser import ServerBrowser
 from src.components.server_browser_headerbar import ServerBrowserHeaderbar
 
 
-class ServerPage(GObject.Object):
+class ServerPage(Adw.NavigationPage):
     """Base class for server pages"""
+
+    __gtype_name__ = "MaramaladeServerPage"
 
     def __init__(
         self,
@@ -15,8 +17,8 @@ class ServerPage(GObject.Object):
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
-        self.__browser = browser
-        self.__headerbar = headerbar
+        self.set_browser(browser)
+        self.set_headerbar(headerbar)
 
     # browser property
 
@@ -107,22 +109,3 @@ class ServerPage(GObject.Object):
     @is_root.setter
     def is_root(self, value: bool) -> None:
         self.set_is_root(value)
-
-    # title property
-
-    __title: str
-
-    def set_title(self, title: str):
-        self.__title = title
-        self.__headerbar.set_title(title)
-
-    def get_title(self) -> str:
-        return self.__title
-
-    @GObject.Property(type=str, default="")
-    def title(self) -> str:
-        return self.get_title()
-
-    @title.setter
-    def title(self, value: str) -> None:
-        self.set_title(value)

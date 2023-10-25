@@ -67,33 +67,39 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
         """
 
     # fmt: off
-    __split_view                   = Gtk.Template.Child("overlay_split_view")
-    __sidebar_hide_button          = Gtk.Template.Child("sidebar_hide_button")
-    __sidebar_hide_button_revealer = Gtk.Template.Child("sidebar_hide_button_revealer")
-    __server_links                 = Gtk.Template.Child("server_links")
-    __libraries_links              = Gtk.Template.Child("libraries_links")
-    __admin_dashboard_link         = Gtk.Template.Child("admin_dashboard_link")
-    __navigation: Adw.NavigationView = Gtk.Template.Child("navigation")
-    __headerbar: ServerBrowserHeaderbar = Gtk.Template.Child("headerbar")
+    __admin_dashboard_link: ServerNavigationItem = Gtk.Template.Child("admin_dashboard_link")
+    __header_bar: ServerBrowserHeaderbar         = Gtk.Template.Child("header_bar")
+    __libraries_links: Gtk.ListBox               = Gtk.Template.Child("libraries_links")
+    __navigation: Adw.NavigationView             = Gtk.Template.Child("navigation")
+    __search_bar: Gtk.SearchBar                  = Gtk.Template.Child("search_bar")
+    __search_entry: Gtk.SearchEntry              = Gtk.Template.Child("search_entry")
+    __server_links: Gtk.ListBox                  = Gtk.Template.Child("server_links")
+    __sidebar_hide_button_revealer: Gtk.Revealer = Gtk.Template.Child("sidebar_hide_button_revealer")
+    __split_view: Adw.OverlaySplitView           = Gtk.Template.Child("overlay_split_view")
     # fmt: on
 
     __actions: Gio.SimpleActionGroup
+    __search_action: Gio.PropertyAction
 
     def __init__(self, *args, client: JellyfinClient, user_id: str, **kwargs):
         super().__init__(*args, client=client, user_id=user_id, **kwargs)
-        shared.settings.update_connected_timestamp(address=self.client._base_url)
+
+        # Inner widgets init
+        self.__search_bar.connect_entry(self.__search_entry)
 
         # Actions
         self.__actions = Gio.SimpleActionGroup()
+        self.insert_action_group("browser", self.__actions)
         for args in (
             ("disconnect", None, self.__on_disconnect),
             ("show-sidebar", None, self.__on_sidebar_toggle_request, True),
             ("hide-sidebar", None, self.__on_sidebar_toggle_request, False),
-            ("show-search-bar", None, self.__on_show_search_bar),
             ("navigate", "s", self.__on_navigate),
         ):
-            self.__add_simple_action(*args)
-        self.insert_action_group("browser", self.__actions)
+            self.__create_simple_action(*args)
+        self.__search_action = self.__create_prop_action(
+            "search", self.__search_bar, "search-mode-enabled"
+        )
 
         # Children signals
         self.__split_view.connect("notify::show-sidebar", self.__on_sidebar_toggled)
@@ -103,17 +109,27 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
         # Navigate to the home page
         self.activate_action("browser.navigate", GLib.Variant.new_string("home"))
 
-    def __add_simple_action(
+    def __create_simple_action(
         self, name: str, type_str: Optional[str], callback: Callable, *args
-    ) -> None:
+    ) -> Gio.SimpleAction:
         """Add a simple action and connect it to a callback with optional arguments"""
         variant_type = None if type_str is None else GLib.VariantType(type_str)
         action = Gio.SimpleAction.new(name, variant_type)
         action.connect("activate", callback, *args)
         self.__actions.add_action(action)
+        return action
+
+    def __create_prop_action(
+        self, name: str, obj: GObject.Object, property_name: str
+    ) -> Gio.PropertyAction:
+        action = Gio.PropertyAction.new(name, obj, property_name)
+        self.__actions.add_action(action)
+        return action
 
     def __on_mapped(self, *_args) -> None:
         """Callback executed when this view is about to be shown"""
+        shared.settings.update_connected_timestamp(address=self.client._base_url)
+        self.__search_bar.set_key_capture_widget(self.get_root())
         self.__on_sidebar_toggled()
         self.__on_page_changed()
         self.__init_navigation_sidebar()
@@ -203,10 +219,10 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
         except NotImplementedError:
             logging.error("Destination %s is not implemented", name)
             return
-        page: ServerPage = klass(browser=self, headerbar=self.__headerbar, **kwargs)
+        page: ServerPage = klass(browser=self, headerbar=self.__header_bar, **kwargs)
 
         # Update the view
-        if page.get_is_root():
+        if page.get_lonely():
             self.__navigation.replace([page])
         else:
             self.__navigation.push(page)
@@ -217,10 +233,11 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
         if page is None:
             return
         previous_page = self.__navigation.get_previous_page(page)
-        self.__headerbar.toggle_back_button(previous_page is not None)
-        self.__headerbar.set_filter_button_visible(page.get_is_filterable())
-        self.__headerbar.set_search_button_visible(page.get_is_searchable())
-        self.__headerbar.set_title(page.get_title())
+        self.__header_bar.toggle_back_button(previous_page is not None)
+        self.__header_bar.bind_property("title", page, "title")
+        self.__header_bar.bind_property("filter_button_visible", page, "is_filterable")
+        self.__header_bar.bind_property("search_button_visible", page, "is_seachable")
+        self.__search_action.bind_property("enabled", page, "is_searchable")
 
     def __on_sidebar_toggle_request(self, *args) -> None:
         *_rest, shown = args
@@ -229,7 +246,7 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
     def __on_sidebar_toggled(self, *_args) -> None:
         shown = self.__split_view.get_show_sidebar()
         self.__sidebar_hide_button_revealer.set_reveal_child(shown)
-        self.__headerbar.set_show_sidebar_button_visible(not shown)
+        self.__header_bar.set_show_sidebar_button_visible(not shown)
 
     def __on_disconnect(self, *_args) -> None:
         dialog = DisconnectDialog()
@@ -244,10 +261,6 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
                 self.log_off()
             case "log-out":
                 self.log_out()
-
-    def __on_show_search_bar(self, *args) -> None:
-        # TODO show the search bar
-        raise NotImplementedError()
 
     def log_off(self) -> None:
         """Disconnect from the server"""
