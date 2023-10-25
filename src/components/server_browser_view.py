@@ -43,7 +43,7 @@ from src.task import Task
 @Gtk.Template(
     resource_path=build_constants.PREFIX + "/templates/server_browser_view.ui"
 )
-class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
+class ServerBrowserView(ServerBrowser):
     """
     Server browser page.
 
@@ -129,7 +129,6 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
     def __on_mapped(self, *_args) -> None:
         """Callback executed when this view is about to be shown"""
         shared.settings.update_connected_timestamp(address=self.client._base_url)
-        self.__search_bar.set_key_capture_widget(self.get_root())
         self.__on_sidebar_toggled()
         self.__on_page_changed()
         self.__init_navigation_sidebar()
@@ -222,22 +221,52 @@ class ServerBrowserView(Adw.NavigationPage, ServerBrowser):
         page: ServerPage = klass(browser=self, headerbar=self.__header_bar, **kwargs)
 
         # Update the view
-        if page.get_lonely():
+        if page.get_is_root():
             self.__navigation.replace([page])
         else:
             self.__navigation.push(page)
 
     def __on_page_changed(self, *_args) -> None:
         """Callback executed when the navigation view changes the current page"""
+
+        # Get current navigation state
         page: Optional[ServerPage] = self.__navigation.get_visible_page()
         if page is None:
             return
         previous_page = self.__navigation.get_previous_page(page)
+
+        # Update controls from navigation state
         self.__header_bar.toggle_back_button(previous_page is not None)
-        self.__header_bar.bind_property("title", page, "title")
-        self.__header_bar.bind_property("filter_button_visible", page, "is_filterable")
-        self.__header_bar.bind_property("search_button_visible", page, "is_seachable")
-        self.__search_action.bind_property("enabled", page, "is_searchable")
+
+        # Bind controls properties to the page properties
+        page.bind_property("title", self.__header_bar, "title")
+        page.bind_property("is_filterable", self.__header_bar, "filter_button_visible")
+
+        # Toggle search depending if the page is searchable or not
+        page.connect("notify::is-searchable", self.__on_searchable_changed)
+
+        # Force notify page properties to update bound properties
+        page.notify("title")
+        page.notify("is_filterable")
+        page.notify("is_searchable")
+
+    def __on_searchable_changed(self, page: Optional[ServerPage] = None, *args) -> None:
+        """
+        Callback executed when the current page changes or
+        its is_searchable property changes.
+
+        - Toggles the type to search action
+        - Hides the search bar if the page isn't searchable
+        - Empties the search entry if the page isn't searchable
+        """
+        is_searchable = page is not None and page.get_is_searchable()
+        logging.debug("Page search enabled: %s", str(is_searchable))
+        key_capture_widget = self.get_root() if is_searchable else None
+        self.__search_bar.set_key_capture_widget(key_capture_widget)
+        self.__header_bar.set_search_button_visible(is_searchable)
+        if not is_searchable:
+            self.__search_entry.set_text("")
+            self.__search_bar.set_search_mode(False)
 
     def __on_sidebar_toggle_request(self, *args) -> None:
         *_rest, shown = args

@@ -1,8 +1,11 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServerHomePage : $MarmaladeServerPage {
+template $MarmaladeServerHomePage {
   title: _("Home");
+  is_searchable: true;
+  is_filterable: false;
+  is_root: true;
   child: Adw.ToastOverlay toast_overlay {
     child: Adw.ViewStack view_stack {
       // Loading view

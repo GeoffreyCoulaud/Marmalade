@@ -24,88 +24,88 @@ class ServerPage(Adw.NavigationPage):
 
     __browser: ServerBrowser
 
-    def set_browser(self, browser: ServerBrowser):
-        self.__browser = browser
-
-    def get_browser(self) -> ServerBrowser:
-        return self.__browser
-
     @GObject.Property(type=object)
     def browser(self) -> ServerBrowser:
-        return self.get_browser()
+        return self.__browser
+
+    def get_browser(self) -> ServerBrowser:
+        return self.get_property("browser")
 
     @browser.setter
     def browser(self, value: ServerBrowser) -> None:
-        self.set_browser(value)
+        self.__browser = value
+
+    def set_browser(self, value: ServerBrowser):
+        self.set_property("browser", value)
 
     # headerbar property
 
     __headerbar: ServerBrowserHeaderbar
 
-    def set_headerbar(self, headerbar: ServerBrowserHeaderbar):
-        self.__headerbar = headerbar
-
-    def get_headerbar(self) -> ServerBrowserHeaderbar:
-        return self.__headerbar
-
     @GObject.Property(type=object)
     def headerbar(self) -> ServerBrowserHeaderbar:
-        return self.get_headerbar()
+        return self.__headerbar
+
+    def get_headerbar(self) -> ServerBrowserHeaderbar:
+        return self.get_property("headerbar")
 
     @headerbar.setter
     def headerbar(self, value: ServerBrowserHeaderbar) -> None:
-        self.set_headerbar(value)
+        self.__headerbar = value
+
+    def set_headerbar(self, value: ServerBrowserHeaderbar):
+        self.set_property("headerbar", value)
 
     # is_searchable property
 
     __is_searchable: bool
 
-    def set_is_searchable(self, is_searchable: bool):
-        self.__is_searchable = is_searchable
-
-    def get_is_searchable(self) -> bool:
-        return self.__is_searchable
-
     @GObject.Property(type=bool, default=False)
     def is_searchable(self) -> bool:
-        return self.get_is_searchable()
+        return self.__is_searchable
+
+    def get_is_searchable(self) -> bool:
+        return self.get_property("is_searchable")
 
     @is_searchable.setter
     def is_searchable(self, value: bool) -> None:
-        self.set_is_searchable(value)
+        self.__is_searchable = value
+
+    def set_is_searchable(self, value: bool):
+        self.set_property("is_searchable", value)
 
     # is_filterable property
 
     __is_filterable: bool
 
-    def set_is_filterable(self, is_filterable: bool):
-        self.__is_filterable = is_filterable
-
-    def get_is_filterable(self) -> bool:
-        return self.__is_filterable
-
     @GObject.Property(type=bool, default=False)
     def is_filterable(self) -> bool:
-        return self.get_is_filterable()
+        return self.__is_filterable
+
+    def get_is_filterable(self) -> bool:
+        return self.get_property("is_filterable")
 
     @is_filterable.setter
     def is_filterable(self, value: bool) -> None:
-        self.set_is_filterable(value)
+        self.__is_filterable = value
+
+    def set_is_filterable(self, value: bool):
+        self.set_property("is_filterable", value)
 
     # is_root property
 
     __is_root: bool
 
-    def set_is_root(self, is_root: bool):
-        self.__is_root = is_root
-
-    def get_is_root(self) -> bool:
-        return self.__is_root
-
     @GObject.Property(type=bool, default=False)
     def is_root(self) -> bool:
-        return self.get_is_root()
+        return self.__is_root
+
+    def get_is_root(self) -> bool:
+        return self.get_property("is_root")
 
     @is_root.setter
     def is_root(self, value: bool) -> None:
-        self.set_is_root(value)
+        self.__is_root = value
+
+    def set_is_root(self, value: bool):
+        self.set_property("is_root", value)

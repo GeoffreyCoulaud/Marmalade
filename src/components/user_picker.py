@@ -20,8 +20,6 @@ class UserPicker(Gtk.Box):
     __title_label     = Gtk.Template.Child("title_label")
     # fmt: on
 
-    __lines: int = 1
-    __columns: int = 4
     __server: Optional[ServerInfo] = None
     __users: list[UserInfo]
 
@@ -39,53 +37,57 @@ class UserPicker(Gtk.Box):
 
     # lines property
 
-    @GObject.Property(type=int)
+    __lines: int
+
+    @GObject.Property(type=int, default=1)
     def lines(self) -> int:
         return self.__lines
-
-    @lines.setter
-    def lines(self, value: int) -> None:
-        self.__lines = value
-        self.__recreate_pages()
 
     def get_lines(self) -> int:
         return self.get_property("lines")
 
-    def set_lines(self, value: int) -> None:
+    @lines.setter
+    def lines(self, value: int) -> None:
+        self.__lines = value
+
+    def set_lines(self, value: int):
         self.set_property("lines", value)
 
     # columns property
 
-    @GObject.Property(type=int)
+    __columns: int
+
+    @GObject.Property(type=int, default=4)
     def columns(self) -> int:
         return self.__columns
-
-    @columns.setter
-    def columns(self, value: int) -> None:
-        self.__columns = value
-        self.__recreate_pages()
 
     def get_columns(self) -> int:
         return self.get_property("columns")
 
-    def set_columns(self, value: int) -> None:
+    @columns.setter
+    def columns(self, value: int) -> None:
+        self.__columns = value
+
+    def set_columns(self, value: int):
         self.set_property("columns", value)
 
     # title property
 
+    __title: str
+
     @GObject.Property(type=str, default="")
     def title(self) -> str:
-        return self.__title_label.get_label()
-
-    @title.setter
-    def title(self, text: str) -> None:
-        self.__title_label.set_label(text)
-        self.__title_label.set_visible(len(text) > 0)
+        return self.__title_label.get_title()
 
     def get_title(self) -> str:
         return self.get_property("title")
 
-    def set_title(self, value: str) -> None:
+    @title.setter
+    def title(self, value: str) -> None:
+        self.__title_label.set_title(value)
+        self.__title_label.set_visible(len(value) > 0)
+
+    def set_title(self, value: str):
         self.set_property("title", value)
 
     # n_pages property

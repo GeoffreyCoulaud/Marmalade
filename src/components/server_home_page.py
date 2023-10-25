@@ -18,9 +18,6 @@ class ServerHomePage(ServerPage):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_is_searchable(True)
-        self.set_is_filterable(False)
-        self.set_is_root(True)
         self.__load_contents()
 
     def __load_contents(self) -> None:

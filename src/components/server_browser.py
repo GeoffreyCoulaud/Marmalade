@@ -3,8 +3,10 @@ from gi.repository import Adw, Gio, GLib, GObject
 from src.jellyfin import JellyfinClient
 
 
-class ServerBrowser(GObject.Object):
+class ServerBrowser(Adw.NavigationPage):
     """Base class representing a server browser"""
+
+    __gtype_name__ = "MarmaladeServerBrowser"
 
     def __init__(self, *args, client: JellyfinClient, user_id: str, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -15,34 +17,34 @@ class ServerBrowser(GObject.Object):
 
     __client: JellyfinClient
 
-    def set_client(self, client: JellyfinClient):
-        self.__client = client
-
-    def get_client(self) -> JellyfinClient:
-        return self.__client
-
     @GObject.Property(type=object)
     def client(self) -> JellyfinClient:
-        return self.get_client()
+        return self.__client
+
+    def get_client(self) -> JellyfinClient:
+        return self.get_property("client")
 
     @client.setter
     def client(self, value: JellyfinClient) -> None:
-        self.set_client(value)
+        self.__client = value
+
+    def set_client(self, value: JellyfinClient):
+        self.set_property("client", value)
 
     # user_id property
 
     __user_id: str
 
-    def set_user_id(self, user_id: str):
-        self.__user_id = user_id
-
-    def get_user_id(self) -> str:
+    @GObject.Property(type=str)
+    def user_id(self) -> str:
         return self.__user_id
 
-    @GObject.Property(type=str, default="")
-    def user_id(self) -> str:
-        return self.get_user_id()
+    def get_user_id(self) -> str:
+        return self.get_property("user_id")
 
     @user_id.setter
     def user_id(self, value: str) -> None:
-        self.set_user_id(value)
+        self.__user_id = value
+
+    def set_user_id(self, value: str):
+        self.set_property("user_id", value)

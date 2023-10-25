@@ -18,50 +18,50 @@ class ServerNavigationItem(Gtk.ListBoxRow):
 
     # icon_name property
 
-    def set_icon_name(self, icon_name: str):
-        self.__image.set_from_icon_name(icon_name)
-
-    def get_icon_name(self) -> str:
-        return self.__image.get_icon_name()
-
     @GObject.Property(type=str, default="")
     def icon_name(self) -> str:
-        return self.get_icon_name()
+        return self.__image.get_icon_name()
+
+    def get_icon_name(self) -> str:
+        return self.get_property("icon_name")
 
     @icon_name.setter
     def icon_name(self, value: str) -> None:
-        self.set_icon_name(value)
+        self.__image.set_from_icon_name(value)
+
+    def set_icon_name(self, value: str):
+        self.set_property("icon_name", value)
 
     # title property
 
-    def set_title(self, title: str):
-        self.__label.set_label(title)
-
-    def get_title(self) -> str:
-        return self.__label.get_label()
+    __title: str
 
     @GObject.Property(type=str, default="")
     def title(self) -> str:
-        return self.get_title()
+        return self.__label.get_label()
+
+    def get_title(self) -> str:
+        return self.get_property("title")
 
     @title.setter
     def title(self, value: str) -> None:
-        self.set_title(value)
+        self.__label.set_label(value)
+
+    def set_title(self, value: str):
+        self.set_property("title", value)
 
     # destination property
 
-    def set_destination(self, destination: str):
-        variant = GLib.Variant.new_string(destination)
-        self.set_action_target_value(variant)
-
-    def get_destination(self) -> str:
-        variant: GLib.Variant = self.get_action_target_value()
-        return variant.get_string()
-
     @GObject.Property(type=str)
     def destination(self) -> str:
-        return self.get_destination()
+        return self.get_action_target_value().get_string()
+
+    def get_destination(self) -> str:
+        return self.get_property("destination")
 
     @destination.setter
     def destination(self, value: str) -> None:
-        self.set_destination(value)
+        self.set_action_target_value(GLib.Variant.new_string(value))
+
+    def set_destination(self, value: str):
+        self.set_property("destination", value)
