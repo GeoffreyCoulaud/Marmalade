@@ -84,7 +84,7 @@ class UserPicker(Gtk.Box):
 
     @title.setter
     def title(self, value: str) -> None:
-        self.__title_label.set_title(value)
+        self.__title_label.set_label(value)
         self.__title_label.set_visible(len(value) > 0)
 
     def set_title(self, value: str):

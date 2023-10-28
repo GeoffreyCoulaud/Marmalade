@@ -24,5 +24,4 @@ class ServerHomePage(ServerPage):
     def __load_contents(self) -> None:
         """Load the page contents asynchronously"""
         self.__view_stack.set_visible_child_name("loading")
-        self.__loading_view.set_animate(True)
         # TODO load page content

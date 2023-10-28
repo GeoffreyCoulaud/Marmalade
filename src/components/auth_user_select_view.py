@@ -8,6 +8,7 @@ from jellyfin_api_client.api.user import get_public_users
 from jellyfin_api_client.errors import UnexpectedStatus
 
 from src import build_constants, shared
+from src.components.loading_view import LoadingView
 from src.components.user_picker import UserPicker
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient

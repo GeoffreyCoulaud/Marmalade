@@ -21,10 +21,7 @@ template $MarmaladeAuthUserSelectView: Adw.NavigationPage {
         Adw.ViewStack user_picker_view_stack {
           Adw.ViewStackPage {
             name: "loading";
-            // TODO improve the loading status
-            child: Spinner {
-              spinning: true;
-            };
+            child: $MarmaladeLoadingView {};
           }
           Adw.ViewStackPage {
             name: "error";
