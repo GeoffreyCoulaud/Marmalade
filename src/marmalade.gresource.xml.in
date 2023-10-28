@@ -9,11 +9,11 @@
     <file preprocess="xml-stripblanks">templates/disconnect_dialog.ui</file>
     <file preprocess="xml-stripblanks">templates/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">templates/loading_view.ui</file>
+    <file preprocess="xml-stripblanks">templates/list_box_row_content.ui</file>
     <file preprocess="xml-stripblanks">templates/server_add_dialog.ui</file>
     <file preprocess="xml-stripblanks">templates/server_browser_headerbar.ui</file>
     <file preprocess="xml-stripblanks">templates/server_browser_view.ui</file>
     <file preprocess="xml-stripblanks">templates/server_home_page.ui</file>
-    <file preprocess="xml-stripblanks">templates/server_navigation_item.ui</file>
     <file preprocess="xml-stripblanks">templates/servers_list_row.ui</file>
     <file preprocess="xml-stripblanks">templates/servers_list_view.ui</file>
     <file preprocess="xml-stripblanks">templates/user_badge.ui</file>

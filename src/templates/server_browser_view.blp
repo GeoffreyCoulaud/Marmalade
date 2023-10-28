@@ -49,27 +49,54 @@ template $MarmaladeServerBrowserView {
             orientation: vertical;
             ListBox server_links {
               styles ["navigation-sidebar"]
-              $MarmaladeServerNavigationItem home_link {
-                icon-name: "go-home-symbolic";
-                title: _("Home");
-                destination: "home";
+              selection-mode: none;
+
+              // Home navigation link
+              $MarmaladeListBoxRow {
+                action-name: "browser.navigate";
+                action-target-string: "home";
+                child: $MarmaladeListBoxRowContent {
+                  icon-name: "go-home-symbolic";
+                  label: _("Home");
+                };
               }
-              $MarmaladeServerNavigationItem user_settings_link {
-                icon-name: "avatar-default-symbolic";
-                title: _("User settings");
-                destination: "user-settings";
+
+              // User settings navigation link
+              $MarmaladeListBoxRow {
+                action-name: "browser.navigate";
+                action-target-string: "user-settings";
+                child: $MarmaladeListBoxRowContent {
+                  icon-name: "avatar-default-symbolic";
+                  label: _("User settings");
+                };
               }
-              $MarmaladeServerNavigationItem admin_dashboard_link {
-                icon-name: "emblem-system-symbolic";
-                title: _("Administration dashboard");
-                destination: "admin-dashboard";
+
+              // Admin dashboard navigation link
+              $MarmaladeListBoxRow admin_dashboard_link {
+                action-name: "browser.navigate";
+                action-target-string: "admin-dashboard";
                 visible: false;
+                child: $MarmaladeListBoxRowContent {
+                  icon-name: "emblem-system-symbolic";
+                  label: _("Administration dashboard");
+                };
               }
+
+              // Exit link
+              $MarmaladeListBoxRow {
+                action-name: "browser.disconnect";
+                child: $MarmaladeListBoxRowContent {
+                  icon-name: "system-log-out-symbolic";
+                  label: _("Exit server");
+                };
+              }
+
             }
+
             ListBox {
               styles ["navigation-sidebar"]
+              selection-mode: none;
               ListBoxRow {
-                selectable: false;
                 activatable: false;
                 Label {
                   styles ["heading"]
@@ -78,9 +105,12 @@ template $MarmaladeServerBrowserView {
                 }
               }
             }
+
             ListBox libraries_links {
               styles ["navigation-sidebar"]
+              selection-mode: none;
             }
+
           }; 
         };
       };

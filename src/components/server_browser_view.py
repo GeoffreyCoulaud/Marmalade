@@ -31,10 +31,11 @@ from jellyfin_api_client.models.base_item_dto_query_result import BaseItemDtoQue
 
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
+from src.components.list_box_row import ListBoxRow
+from src.components.list_box_row_content import ListBoxRowContent
 from src.components.server_browser import ServerBrowser
 from src.components.server_browser_headerbar import ServerBrowserHeaderbar
 from src.components.server_home_page import ServerHomePage
-from src.components.server_navigation_item import ServerNavigationItem
 from src.components.server_page import ServerPage
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -67,7 +68,7 @@ class ServerBrowserView(ServerBrowser):
         """
 
     # fmt: off
-    __admin_dashboard_link: ServerNavigationItem = Gtk.Template.Child("admin_dashboard_link")
+    __admin_dashboard_link: Gtk.ListBoxRow       = Gtk.Template.Child("admin_dashboard_link")
     __header_bar: ServerBrowserHeaderbar         = Gtk.Template.Child("header_bar")
     __libraries_links: Gtk.ListBox               = Gtk.Template.Child("libraries_links")
     __navigation: Adw.NavigationView             = Gtk.Template.Child("navigation")
@@ -164,12 +165,16 @@ class ServerBrowserView(ServerBrowser):
             self.__libraries_links.remove_all()
             for item in items:
                 logging.debug("Adding library %s to navigation", item.name)
-                link = ServerNavigationItem(
-                    title=item.name,
+                row_content = ListBoxRowContent(
                     icon_name=icon_map.get(item.collection_type, "folder-symbolic"),
-                    destination=f"library?id={item.id}",
+                    label=item.name,
                 )
-                self.__libraries_links.append(link)
+                row = ListBoxRow(
+                    action_name="browser.navigate",
+                    action_target_string=f"library?id={item.id}",
+                    child=row_content,
+                )
+                self.__libraries_links.append(row)
             pass
 
         for task in (
