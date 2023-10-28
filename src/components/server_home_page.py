@@ -1,6 +1,7 @@
 from gi.repository import Adw, Gtk
 
 from src import build_constants
+from src.components.loading_view import LoadingView
 from src.components.server_page import ServerPage
 
 
@@ -9,11 +10,11 @@ class ServerHomePage(ServerPage):
     __gtype_name__ = "MarmaladeServerHomePage"
 
     # fmt: off
-    __toast_overlay  = Gtk.Template.Child("toast_overlay")
-    __view_stack     = Gtk.Template.Child("view_stack")
-    __loading_status = Gtk.Template.Child("loading_status")
-    __error_status   = Gtk.Template.Child("error_status")
-    __content        = Gtk.Template.Child("content")
+    __toast_overlay: Adw.ToastOverlay = Gtk.Template.Child("toast_overlay")
+    __view_stack: Adw.ViewStack       = Gtk.Template.Child("view_stack")
+    __loading_view: LoadingView       = Gtk.Template.Child("loading_view")
+    __error_view: Adw.StatusPage      = Gtk.Template.Child("error_view")
+    __content_view                    = Gtk.Template.Child("content_view")
     # fmt: on
 
     def __init__(self, *args, **kwargs):
@@ -23,4 +24,5 @@ class ServerHomePage(ServerPage):
     def __load_contents(self) -> None:
         """Load the page contents asynchronously"""
         self.__view_stack.set_visible_child_name("loading")
+        self.__loading_view.set_animate(True)
         # TODO load page content

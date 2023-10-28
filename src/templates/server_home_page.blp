@@ -11,16 +11,12 @@ template $MarmaladeServerHomePage {
       // Loading view
       Adw.ViewStackPage {
         name: "loading";
-        child: Adw.StatusPage loading_status {
-          icon-name: "content-loading-symbolic";
-          title: _("Loading");
-          description: _("Please wait while the server's home is loading");
-        };
+        child: $MarmaladeLoadingView loading_view {};
       }
       // Error view
       Adw.ViewStackPage {
         name: "error";
-        child: Adw.StatusPage error_status {
+        child: Adw.StatusPage error_view {
           icon-name: "dialog-error-symbolic";
           title: _("Error");
           description: _("An error occurred while getting the server's home");
@@ -30,7 +26,7 @@ template $MarmaladeServerHomePage {
       Adw.ViewStackPage {
         name: "content";
         // TODO implement home content
-        child: Label content {
+        child: Label content_view {
           label: "Placeholder home content";
         };
       }

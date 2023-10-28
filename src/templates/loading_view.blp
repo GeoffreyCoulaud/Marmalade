@@ -1,0 +1,20 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeLoadingView : Box {
+  valign: center;
+  halign: center;
+  Adw.Clamp {
+    child: Box {
+      orientation: vertical;
+      Spinner spinner {
+        height-request: 64;
+        width-request: 64;
+        halign: center;
+        spinning: false;
+      }
+      Adw.StatusPage status_page {}
+      Adw.Bin child_bin {}
+    };
+  }
+}
