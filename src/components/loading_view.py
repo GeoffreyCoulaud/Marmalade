@@ -82,7 +82,7 @@ class LoadingView(Gtk.Box):
 
     # animate property
 
-    __animate: bool
+    __animate: bool = True
 
     @GObject.Property(type=bool, default=True)
     def animate(self) -> bool:
