@@ -54,6 +54,7 @@ template $MarmaladeServerBrowserHeaderbar : HeaderBar {
   [end]
   Box {
     Revealer search_button_revealer {
+      reveal-child: true;
       ToggleButton {
         icon-name: "system-search-symbolic";
         action-name: "browser.search";

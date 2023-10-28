@@ -242,31 +242,9 @@ class ServerBrowserView(ServerBrowser):
         page.bind_property("title", self.__header_bar, "title")
         page.bind_property("is_filterable", self.__header_bar, "filter_button_visible")
 
-        # Toggle search depending if the page is searchable or not
-        page.connect("notify::is-searchable", self.__on_searchable_changed)
-
         # Force notify page properties to update bound properties
         page.notify("title")
         page.notify("is_filterable")
-        page.notify("is_searchable")
-
-    def __on_searchable_changed(self, page: Optional[ServerPage] = None, *args) -> None:
-        """
-        Callback executed when the current page changes or
-        its is_searchable property changes.
-
-        - Toggles the type to search action
-        - Hides the search bar if the page isn't searchable
-        - Empties the search entry if the page isn't searchable
-        """
-        is_searchable = page is not None and page.get_is_searchable()
-        logging.debug("Page search enabled: %s", str(is_searchable))
-        key_capture_widget = self.get_root() if is_searchable else None
-        self.__search_bar.set_key_capture_widget(key_capture_widget)
-        self.__header_bar.set_search_button_visible(is_searchable)
-        if not is_searchable:
-            self.__search_entry.set_text("")
-            self.__search_bar.set_search_mode(False)
 
     def __on_sidebar_toggle_request(self, *args) -> None:
         *_rest, shown = args

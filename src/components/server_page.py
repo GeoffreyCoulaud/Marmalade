@@ -56,24 +56,6 @@ class ServerPage(Adw.NavigationPage):
     def set_headerbar(self, value: ServerBrowserHeaderbar):
         self.set_property("headerbar", value)
 
-    # is_searchable property
-
-    __is_searchable: bool
-
-    @GObject.Property(type=bool, default=False)
-    def is_searchable(self) -> bool:
-        return self.__is_searchable
-
-    def get_is_searchable(self) -> bool:
-        return self.get_property("is_searchable")
-
-    @is_searchable.setter
-    def is_searchable(self, value: bool) -> None:
-        self.__is_searchable = value
-
-    def set_is_searchable(self, value: bool):
-        self.set_property("is_searchable", value)
-
     # is_filterable property
 
     __is_filterable: bool
