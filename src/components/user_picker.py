@@ -98,6 +98,7 @@ class UserPicker(Adw.Bin):
         # HACK: Using a delegate Shelf widget, since PyGObject doesn't allow inheriting
         # from classes decorated with @Gtk.Template
         self.set_child(shelf := Shelf())
+        shelf.add_css_class("compact")
 
         # Bind read-only props
         flags = GObject.BindingFlags.SYNC_CREATE

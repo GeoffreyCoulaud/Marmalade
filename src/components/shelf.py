@@ -24,7 +24,7 @@ class Shelf(Gtk.Box):
     __previous_button: Gtk.Button = Gtk.Template.Child("previous_button")
     __title_label: Gtk.Label = Gtk.Template.Child("title_label")
     __view_stack: Adw.ViewStack = Gtk.Template.Child("view_stack")
-    __empty_shelf_page: Adw.ViewStackPage = Gtk.Template.Child("empty_shelf_page")
+    __empty_shelf_page: Adw.Bin = Gtk.Template.Child("empty_shelf_page")
     # fmt: on
 
     # lines property
@@ -214,3 +214,6 @@ class Shelf(Gtk.Box):
     def add_child(self, builder=None, child=None, type=None) -> None:
         # TODO Check that this does work
         self.append(child)
+
+
+Shelf.set_css_name("shelf")

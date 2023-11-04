@@ -1,0 +1,10 @@
+/* 
+    Shelves that are not marked as collapsible have 
+    a minimum height on their placeholder 
+*/
+shelf #shelf-placeholder-bin {
+    min-height: 200px;
+}
+shelf.compact #shelf-placeholder-bin {
+    min-height: 0px;
+}

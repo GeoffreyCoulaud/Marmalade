@@ -5,7 +5,6 @@ template $MarmaladeShelf : Gtk.Box {
   orientation: vertical;
   valign: start;
   spacing: 8;
-  margin-bottom: 12;
 
   Gtk.Box {
     orientation: horizontal;
@@ -28,26 +27,19 @@ template $MarmaladeShelf : Gtk.Box {
       }
 
       Adw.ViewStack view_stack {
+        styles ["card"]
 
         Adw.ViewStackPage {
           name: "carousel";
           child: Adw.Carousel carousel {
-            styles ["card"]
             hexpand: true;
           };
         }
 
-        Adw.ViewStackPage empty_shelf_page {
+        Adw.ViewStackPage {
           name: "empty-shelf-page";
-          child: Adw.Bin {
-            styles ["card"]
-            height-request: 200;
-            child: Image {
-              icon-name: "image-missing-symbolic";
-              valign: center;
-              halign: center;
-              pixel-size: 64;
-            };
+          child: Adw.Bin empty_shelf_page {
+            name: "shelf-placeholder-bin";
           };
         }
 
