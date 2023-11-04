@@ -98,9 +98,19 @@ class Shelf(Gtk.Box):
     def set_empty_child(self, value: Gtk.Widget):
         self.set_property("empty_child", value)
 
+    # is_navigation_visible property
+
+    @GObject.Property(type=bool, default=False, flags=GObject.ParamFlags.READABLE)
+    def is_navigation_visible(self) -> bool:
+        return self._get_n_pages() > 1
+
+    def get_is_navigation_visible(self) -> bool:
+        return self.get_property("is_navigation_visible")
+
     # Init
 
     def __init__(self, *args, **kwargs) -> None:
+        """Create a new Shelf widget"""
         super().__init__(*args, **kwargs)
         self.__next_button.connect("clicked", self.__on_next_button_clicked)
         self.__previous_button.connect("clicked", self.__on_previous_button_clicked)
@@ -158,16 +168,21 @@ class Shelf(Gtk.Box):
             raise IndexError()
         return self.__carousel.get_nth_page(index)
 
+    def __create_page(self) -> None:
+        page = ShelfPage()
+        flags = GObject.BindingFlags.SYNC_CREATE
+        for prop in ("columns", "lines"):
+            self.bind_property(prop, page, prop, flags)
+        self.__carousel.append(page)
+
     def append(self, widget: Gtk.Widget) -> None:
         """
         Append an item to the shelf.
         Before appending, adds a page if none exists or the last one is full.
         """
-        if self._get_n_pages() == 0:
-            self.__carousel.append(ShelfPage())
+        if (self._get_n_pages() == 0) or (self._get_nth_page(-1).is_full):
+            self.__create_page()
         page = self._get_nth_page(-1)
-        if len(page) >= self.get_columns() * self.get_lines():
-            self.__carousel.append(page := ShelfPage())
         page.append(widget)
 
     def pop(self) -> Gtk.Widget:

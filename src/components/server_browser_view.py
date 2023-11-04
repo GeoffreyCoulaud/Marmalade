@@ -244,12 +244,11 @@ class ServerBrowserView(ServerBrowser):
         self.__header_bar.toggle_back_button(previous_page is not None)
 
         # Bind controls properties to the page properties
-        page.bind_property("title", self.__header_bar, "title")
-        page.bind_property("is_filterable", self.__header_bar, "filter_button_visible")
-
-        # Force notify page properties to update bound properties
-        page.notify("title")
-        page.notify("is_filterable")
+        flags = GObject.BindingFlags.SYNC_CREATE
+        page.bind_property("title", self.__header_bar, "title", flags)
+        page.bind_property(
+            "is_filterable", self.__header_bar, "filter_button_visible", flags
+        )
 
     def __on_sidebar_toggle_request(self, *args) -> None:
         *_rest, shown = args

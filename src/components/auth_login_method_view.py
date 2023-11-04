@@ -57,9 +57,8 @@ class AuthLoginMethodView(Adw.NavigationPage):
         self.user_picker.set_visible(has_users)
         if not has_users:
             return
-        self.user_picker.clear()
         self.user_picker.append(*users)
-        if self.user_picker.get_n_pages() > 1:
+        if self.user_picker.get_is_navigation_visible():
             self.auth_method_group.set_margin_start(48)
             self.auth_method_group.set_margin_end(48)
 

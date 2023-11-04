@@ -80,7 +80,6 @@ class AuthUserSelectView(Adw.NavigationPage):
             return authenticated
 
         def on_success(users: list[UserInfo]) -> None:
-            self.user_picker.clear()
             self.user_picker.append(*users)
             self.user_picker_view_stack.set_visible_child_name("users")
 
