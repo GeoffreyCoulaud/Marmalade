@@ -1,10 +1,12 @@
 import logging
 from http import HTTPStatus
-from threading import Thread
-from typing import Any, Sequence
+from typing import Callable, Sequence
 
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gtk
 from httpx import Response
+from jellyfin_api_client.api.items import get_resume_items
+from jellyfin_api_client.api.tv_shows import get_next_up
+from jellyfin_api_client.api.user_library import get_latest_media
 from jellyfin_api_client.api.user_views import get_user_views
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.base_item_dto import BaseItemDto
@@ -13,6 +15,7 @@ from src import build_constants
 from src.components.loading_view import LoadingView
 from src.components.server_browser import ServerBrowser
 from src.components.server_page import ServerPage
+from src.components.shelf import Shelf
 from src.jellyfin import JellyfinClient
 from src.task import Task
 
@@ -26,7 +29,9 @@ class ServerHomePage(ServerPage):
     __view_stack: Adw.ViewStack       = Gtk.Template.Child("view_stack")
     __loading_view: LoadingView       = Gtk.Template.Child("loading_view")
     __error_view: Adw.StatusPage      = Gtk.Template.Child("error_view")
-    __content_view                    = Gtk.Template.Child("content_view")
+    __content_view: Gtk.Box           = Gtk.Template.Child("content_view")
+    __resume_watching_shelf: Shelf    = Gtk.Template.Child("resume_watching_shelf")
+    __next_up_shelf: Shelf            = Gtk.Template.Child("next_up_shelf")
     # fmt: on
 
     def __init__(self, *args, **kwargs):
@@ -51,32 +56,41 @@ class ServerHomePage(ServerPage):
             # self.__view_stack.set_visible_child_name("error")
 
         def on_libraries_success(items: Sequence[BaseItemDto]) -> None:
-            # TODO Create the "Item Shelf" component
-            # TODO Add the "resume watching" shelf
-            # TODO Add the "up next" shelf
-            # TODO Add the library shelves
-            self.__view_stack.set_visible_child_name("content")
-            # TODO Get every shelf's content in tasks
+            # Add the library shelves
+            for item in items:
+                # TODO filter out collection libraries (and maybe others?)
+                shelf = Shelf()
+                shelf.set_title(_("Latest in {library}").format(library=item.name))
+                self.__content_view.append(shelf)
+                # TODO query library shelf content in a task
 
-        def query_shelf_items(name: str) -> None:
-            # TODO Get the shelf's content
-            pass
+        def query_shelf_items(shelf: Shelf, request_func: Callable) -> None:
+            response: Response = request_func()
+            if response.status_code != HTTPStatus.OK:
+                raise UnexpectedStatus(response.status_code, response.content)
+            return response.parsed.items
 
-        def on_shelf_items_error(error: Exception, widget) -> None:
+        def on_shelf_items_error(shelf: Shelf, error: Exception) -> None:
             # TODO Handle shelf content error
             pass
 
-        def on_shelf_items_success(result) -> None:
+        def on_shelf_items_success(shelf: Shelf, result: Sequence[BaseItemDto]) -> None:
             # TODO Create the "Item Card" component
             # TODO add shelf content
             pass
 
-        self.__view_stack.set_visible_child_name("loading")
+        self.__view_stack.set_visible_child_name("content")
 
-        # Spawn the home content thread
-        Task(
-            main=query_libraries,
-            main_args=(self.get_browser(),),
-            callback=on_libraries_success,
-            error_callback=on_libraries_error,
-        ).run()
+        # Spawn content query tasks
+        tasks = (
+            Task(
+                main=query_libraries,
+                main_args=(self.get_browser(),),
+                callback=on_libraries_success,
+                error_callback=on_libraries_error,
+            ),
+            # TODO Add "resume watching" shelf content task
+            # TODO Add "up next" shelf content task
+        )
+        for task in tasks:
+            task.run()

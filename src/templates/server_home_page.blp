@@ -24,9 +24,18 @@ template $MarmaladeServerHomePage {
       // Content
       Adw.ViewStackPage {
         name: "content";
-        // TODO implement home content
-        child: Label content_view {
-          label: "Placeholder home content";
+        child: Adw.Clamp {
+          child: ScrolledWindow {
+            child: Box content_view {
+              orientation: vertical;
+              $MarmaladeShelf resume_watching_shelf {
+                title: _("Resume Watching");
+              }
+              $MarmaladeShelf next_up_shelf {
+                title: _("Next Up");
+              }
+            };
+          };
         };
       }
     };
