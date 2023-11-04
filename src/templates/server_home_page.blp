@@ -24,9 +24,14 @@ template $MarmaladeServerHomePage {
       // Content
       Adw.ViewStackPage {
         name: "content";
-        child: Adw.Clamp {
-          child: ScrolledWindow {
+        child: ScrolledWindow {
+          child: Adw.Clamp {
+            maximum-size: 1240;
             child: Box content_view {
+              margin-start: 25;
+              margin-end: 25;
+              margin-bottom: 25;
+              margin-top: 25;
               orientation: vertical;
               $MarmaladeShelf resume_watching_shelf {
                 title: _("Resume Watching");

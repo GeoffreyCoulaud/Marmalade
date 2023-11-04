@@ -23,6 +23,8 @@ class Shelf(Gtk.Box):
     __next_button: Gtk.Button = Gtk.Template.Child("next_button")
     __previous_button: Gtk.Button = Gtk.Template.Child("previous_button")
     __title_label: Gtk.Label = Gtk.Template.Child("title_label")
+    __view_stack: Adw.ViewStack = Gtk.Template.Child("view_stack")
+    __empty_shelf_page: Adw.ViewStackPage = Gtk.Template.Child("empty_shelf_page")
     # fmt: on
 
     # lines property
@@ -80,6 +82,22 @@ class Shelf(Gtk.Box):
     def set_title(self, value: str):
         self.set_property("title", value)
 
+    # empty_child property
+
+    @GObject.Property(type=Gtk.Widget)
+    def empty_child(self) -> Gtk.Widget:
+        return self.__empty_shelf_page.get_child()
+
+    def get_empty_child(self) -> Gtk.Widget:
+        return self.get_property("empty_child")
+
+    @empty_child.setter
+    def empty_child(self, value: Gtk.Widget) -> None:
+        self.__empty_shelf_page.set_child(value)
+
+    def set_empty_child(self, value: Gtk.Widget):
+        self.set_property("empty_child", value)
+
     # Init
 
     def __init__(self, *args, **kwargs) -> None:
@@ -89,6 +107,7 @@ class Shelf(Gtk.Box):
         self.__carousel.connect("page-changed", self.__on_page_changed)
         self.__carousel.connect("notify::n-pages", self.__on_n_pages_changed)
         self.__update_navigation_visibility()
+        self.__update_visible_stack_page()
 
     # Navigation methods
 
@@ -104,7 +123,7 @@ class Shelf(Gtk.Box):
 
     def __on_n_pages_changed(self, _carousel, _value) -> None:
         self.__update_navigation_visibility()
-        self.notify("n_pages")
+        self.__update_visible_stack_page()
 
     def __update_navigation_visibility(self) -> None:
         has_multiple_pages = self._get_n_pages() > 1
@@ -114,6 +133,11 @@ class Shelf(Gtk.Box):
             self.__dots,
         ):
             widget.set_visible(has_multiple_pages)
+
+    def __update_visible_stack_page(self) -> None:
+        self.__view_stack.set_visible_child_name(
+            "empty-shelf-page" if self._get_n_pages() == 0 else "carousel"
+        )
 
     def _shift_carousel(self, offset: int = 1, animate: bool = True) -> None:
         """Navigate the carousel relatively"""
