@@ -1,7 +1,7 @@
 using Gtk 4.0;
 using Adw 1;
 
-template $MarmaladeServerAddDialog : Adw.Window {
+template $MarmaladeServerAddDialog : Adw.ApplicationWindow {
   default-width: 600;
   default-height: 300;
   modal: true;
@@ -15,36 +15,38 @@ template $MarmaladeServerAddDialog : Adw.Window {
       }
     }
     content: Adw.ToastOverlay toast_overlay {
-      child: Adw.ClampScrollable {
-        margin-top: 16;
-        margin-start: 16;
-        margin-end: 16;
-        margin-bottom: 16;
-        Box {
-          orientation: vertical;
-          Adw.PreferencesGroup {
-            margin-bottom: 16;
-            Adw.EntryRow manual_add_editable {
-              title: _("Server address");
-              [suffix]
-              Button manual_add_button {
-                valign: center;
-                icon-name: "list-add-symbolic";
+      child: ScrolledWindow {
+        child: Adw.Clamp {
+          margin-top: 16;
+          margin-start: 16;
+          margin-end: 16;
+          margin-bottom: 16;
+          Box {
+            orientation: vertical;
+            Adw.PreferencesGroup {
+              margin-bottom: 16;
+              Adw.EntryRow manual_add_editable {
+                title: _("Server address");
+                [suffix]
+                Button manual_add_button {
+                  valign: center;
+                  icon-name: "list-add-symbolic";
+                }
+              }
+            }
+            Adw.PreferencesGroup detected_server_rows_group {
+              title: C_("servers list", "Discovered servers");
+              [header-suffix]
+              Revealer spinner_revealer {
+                reveal-child: true;
+                transition-type: crossfade;
+                Spinner spinner {
+                  spinning: true;
+                }
               }
             }
           }
-          Adw.PreferencesGroup detected_server_rows_group {
-            title: C_("servers list", "Discovered servers");
-            [header-suffix]
-            Revealer spinner_revealer {
-              reveal-child: true;
-              transition-type: crossfade;
-              Spinner spinner {
-                spinning: true;
-              }
-            }
-          }
-        }
+        };
       };
     };
   };

@@ -107,7 +107,9 @@ class ServersListView(Adw.NavigationPage):
 
     def on_add_button_clicked(self, _button) -> None:
         addresses = {row.server.address for row in self.__rows}
-        dialog = ServerAddDialog(addresses=addresses)
+        window: Adw.ApplicationWindow = self.get_root()
+        application = window.get_application()
+        dialog = ServerAddDialog(application=application, addresses=addresses)
         dialog.connect("server-picked", self.on_add_dialog_picked)
         dialog.set_transient_for(self.get_root())
         dialog.set_modal(True)

@@ -30,7 +30,7 @@ class KnownAddressError(Exception):
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_add_dialog.ui")
-class ServerAddDialog(Adw.Window):
+class ServerAddDialog(Adw.ApplicationWindow):
     __gtype_name__ = "MarmaladeServerAddDialog"
 
     DISCOVERY_PORT: int = 7359
@@ -61,8 +61,10 @@ class ServerAddDialog(Adw.Window):
     def server_picked(self, _server: ServerInfo):
         """Signal emitted when a server is picked"""
 
-    def __init__(self, *args, addresses=set[str], **kwargs) -> None:
-        super().__init__(**kwargs)
+    def __init__(
+        self, application: Adw.Application, addresses=set[str], **kwargs
+    ) -> None:
+        super().__init__(application=application, **kwargs)
         self.cancel_button.connect("clicked", self.on_cancel_button_clicked)
         self.manual_add_button.connect("clicked", self.on_manual_button_clicked)
         self.__tasks_cancellable = Gio.Cancellable.new()
