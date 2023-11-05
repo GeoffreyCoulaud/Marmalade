@@ -10,6 +10,7 @@ from jellyfin_api_client.api.user_library import get_latest_media
 from jellyfin_api_client.api.user_views import get_user_views
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.base_item_dto import BaseItemDto
+from jellyfin_api_client.types import UNSET
 
 from src import build_constants
 from src.components.loading_view import LoadingView
@@ -63,8 +64,10 @@ class ServerHomePage(ServerPage):
 
         def on_libraries_success(items: Sequence[BaseItemDto]) -> None:
             # Add the library shelves
+            included_types = {"books", "movies", "music", "tvshows", UNSET}
             for item in items:
-                # TODO filter out collection libraries (and maybe others?)
+                if item.collection_type not in included_types:
+                    continue
                 shelf = Shelf()
                 shelf.set_title(_("Latest in {library}").format(library=item.name))
                 self.__content_view.append(shelf)

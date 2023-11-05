@@ -28,6 +28,7 @@ from jellyfin_api_client.api.user_views import get_user_views
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.base_item_dto import BaseItemDto
 from jellyfin_api_client.models.base_item_dto_query_result import BaseItemDtoQueryResult
+from jellyfin_api_client.types import UNSET
 
 from src import build_constants, shared
 from src.components.disconnect_dialog import DisconnectDialog
@@ -164,7 +165,7 @@ class ServerBrowserView(ServerBrowser):
                 "movies": "library-movies-symbolic",
                 "music": "library-music-symbolic",
                 "tvshows": "library-shows-symbolic",
-                None: "library-unknown-symbolic",
+                UNSET: "library-unknown-symbolic",
             }
             self.__libraries_links.remove_all()
             for item in items:
