@@ -18,9 +18,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
-from typing import Callable
+from typing import Callable, Optional
 
-from gi.repository import Adw, Gio
+from gi.repository import Adw, Gio, GLib
 
 # pylint: disable=no-name-in-module
 from src import build_constants, shared
@@ -35,36 +35,47 @@ class MarmaladeApplication(Adw.Application):
     settings: DataHandler
     window: MarmaladeWindow
 
-    def __init__(self):
-        super().__init__(
-            application_id=build_constants.APP_ID,
-            flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
-        )
-        self.init_app_dirs()
-        self.init_logging()
-        database_file = shared.app_data_dir / "marmalade.db"
-        shared.settings = DataHandler(file=database_file)
-        self.create_action("quit", lambda *_: self.quit(), ["<primary>q"])
-        self.create_action("about", self.on_about_action)
-
-    def init_app_dirs(self) -> None:
+    def __init_app_dirs(self) -> None:
         shared.app_data_dir.mkdir(parents=True, exist_ok=True)
         shared.app_cache_dir.mkdir(parents=True, exist_ok=True)
         shared.app_config_dir.mkdir(parents=True, exist_ok=True)
 
-    def init_logging(self) -> None:
+    def __init_logging(self) -> None:
         """Set the logging system up"""
         log_file = shared.app_cache_dir / "marmalade.log"
         setup_logging(log_file)
         log_system_info()
 
-    def do_activate(self):
-        window = self.get_active_window()
-        if not window:
-            window = MarmaladeWindow(application=self)
-        window.present()
+    def __create_action(
+        self,
+        name: str,
+        callback: Callable,
+        param_type: Optional[str | GLib.VariantType] = None,
+        shortcuts: Optional[list[str]] = None,
+    ) -> None:
+        """Create an action with a name, handler and optional shortcuts"""
+        if isinstance(param_type, str):
+            param_type = GLib.VariantType.new(param_type)
+        action = Gio.SimpleAction.new(name, param_type)
+        action.connect("activate", callback)
+        self.add_action(action)
+        if shortcuts is not None:
+            self.set_accels_for_action(f"app.{name}", shortcuts)
 
-    def on_about_action(self, _widget, _):
+    def __on_error_details(self, _widget, variant: GLib.Variant) -> None:
+        """Display error details in a message dialog"""
+        # TODO replace various implementations of error details with this action
+        title, details, *_rest = variant.get_strv()
+        msg = Adw.MessageDialog(
+            parent=self.get_active_window(),
+            heading=title,
+            body=details,
+        )
+        msg.add_response("close", _("Close"))
+        msg.set_modal(True)
+        msg.present()
+
+    def __on_about(self, *_args):
         """Callback handling the about action"""
         about = Adw.AboutWindow(
             transient_for=self.get_active_window(),
@@ -77,13 +88,26 @@ class MarmaladeApplication(Adw.Application):
         )
         about.present()
 
-    def create_action(self, name: str, callback: Callable, shortcuts=None):
-        """Create an action with a name, handler and optional shortcuts"""
-        action = Gio.SimpleAction.new(name, None)
-        action.connect("activate", callback)
-        self.add_action(action)
-        if shortcuts:
-            self.set_accels_for_action(f"app.{name}", shortcuts)
+    # Public methods
+
+    def __init__(self):
+        super().__init__(
+            application_id=build_constants.APP_ID,
+            flags=Gio.ApplicationFlags.DEFAULT_FLAGS,
+        )
+        self.__init_app_dirs()
+        self.__init_logging()
+        database_file = shared.app_data_dir / "marmalade.db"
+        shared.settings = DataHandler(file=database_file)
+        self.__create_action("quit", lambda *_: self.quit(), shortcuts=["<primary>q"])
+        self.__create_action("about", self.__on_about)
+        self.__create_action("error-details", self.__on_error_details, param_type="as")
+
+    def do_activate(self):
+        window = self.get_active_window()
+        if not window:
+            window = MarmaladeWindow(application=self)
+        window.present()
 
 
 def main(_version):

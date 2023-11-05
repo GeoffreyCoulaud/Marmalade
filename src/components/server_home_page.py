@@ -2,7 +2,7 @@ import logging
 from http import HTTPStatus
 from typing import Callable, Sequence
 
-from gi.repository import Adw, Gtk
+from gi.repository import Adw, GLib, Gtk
 from httpx import Response
 from jellyfin_api_client.api.items import get_resume_items
 from jellyfin_api_client.api.tv_shows import get_next_up
@@ -52,8 +52,14 @@ class ServerHomePage(ServerPage):
 
         def on_libraries_error(error: Exception) -> None:
             logging.error("Error while loading user libraries", exc_info=error)
-            # TODO Display the error in the status page
-            # self.__view_stack.set_visible_child_name("error")
+            toast = Adw.Toast(title=_("Could not load user libraries"))
+            toast.set_timeout(0)
+            toast.set_button_label(_("Details"))
+            toast.set_action_name("app.error-details")
+            toast.set_action_target_value(
+                GLib.Variant.new_strv([_("User Libraries Error"), str(error)])
+            )
+            self.__toast_overlay.add_toast(toast)
 
         def on_libraries_success(items: Sequence[BaseItemDto]) -> None:
             # Add the library shelves
