@@ -24,6 +24,13 @@
   </gresource>
   <gresource prefix="@PREFIX@/icons/scalable/actions/">
     <file alias="phonelink-symbolic.svg">../data/icons/external/phonelink-symbolic.svg</file>
-    <file alias="open-book-symbolic.svg">../data/icons/external/open-book-symbolic.svg</file>
+    <file alias="library-books-symbolic.svg">../data/icons/external/library-books-symbolic.svg</file>
+    <file alias="library-collections-symbolic.svg">../data/icons/external/library-collections-symbolic.svg</file>
+    <file alias="library-generic-symbolic.svg">../data/icons/external/library-generic-symbolic.svg</file>
+    <file alias="library-images-symbolic.svg">../data/icons/external/library-images-symbolic.svg</file>
+    <file alias="library-movies-symbolic.svg">../data/icons/external/library-movies-symbolic.svg</file>
+    <file alias="library-music-symbolic.svg">../data/icons/external/library-music-symbolic.svg</file>
+    <file alias="library-shows-symbolic.svg">../data/icons/external/library-shows-symbolic.svg</file>
+    <file alias="library-unknown-symbolic.svg">../data/icons/external/library-unknown-symbolic.svg</file>
   </gresource>
 </gresources>

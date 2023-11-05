@@ -156,17 +156,25 @@ class ServerBrowserView(ServerBrowser):
         def on_libraries_success(result: BaseItemDtoQueryResult) -> None:
             logging.debug("Loaded user libraries")
             items: list[BaseItemDto] = result.items
+            default_icon = "library-unknown-symbolic"
             icon_map = {
-                "tvshows": "tv-symbolic",
-                "movies": "folder-videos-symbolic",
-                "music": "folder-music-symbolic",
-                "books": "open-book-symbolic",
+                "books": "library-books-symbolic",
+                "boxsets": "library-collections-symbolic",
+                "homevideos": "library-images-symbolic",
+                "movies": "library-movies-symbolic",
+                "music": "library-music-symbolic",
+                "tvshows": "library-shows-symbolic",
+                None: "library-unknown-symbolic",
             }
             self.__libraries_links.remove_all()
             for item in items:
-                logging.debug("Adding library %s to navigation", item.name)
+                logging.debug(
+                    "Adding library %s (%s) to navigation",
+                    item.name,
+                    item.collection_type,
+                )
                 row_content = ListBoxRowContent(
-                    icon_name=icon_map.get(item.collection_type, "folder-symbolic"),
+                    icon_name=icon_map.get(item.collection_type, default_icon),
                     label=item.name,
                 )
                 row = ListBoxRow(
