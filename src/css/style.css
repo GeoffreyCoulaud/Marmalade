@@ -1,10 +1,34 @@
-/* 
-    Shelves that are not marked as collapsible have 
-    a minimum height on their placeholder 
-*/
+@keyframes shelf_placeholder_shine {
+    0% {
+        background-image: linear-gradient(
+            90deg, 
+            @card_bg_color -20%, 
+            mix(@card_bg_color, white, 0.02) -10%, 
+            @card_bg_color 0%
+        );
+    }
+    20% {
+        background-image: linear-gradient(
+            90deg, 
+            @card_bg_color 100%, 
+            mix(@card_bg_color, white, 0.02) 110%, 
+            @card_bg_color 120%
+        );
+    }
+    100% {
+        background-image: linear-gradient(
+            90deg, 
+            @card_bg_color 100%, 
+            mix(@card_bg_color, white, 0.02) 110%,
+            @card_bg_color 120%
+        );
+    }
+}
 shelf #shelf-placeholder-bin {
     min-height: 200px;
+    animation: 5s ease-out infinite shelf_placeholder_shine; 
 }
 shelf.compact #shelf-placeholder-bin {
     min-height: 0px;
+    animation: none;
 }
