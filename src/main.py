@@ -64,14 +64,10 @@ class MarmaladeApplication(Adw.Application):
 
     def __on_error_details(self, _widget, variant: GLib.Variant) -> None:
         """Display error details in a message dialog"""
-        # TODO replace various implementations of error details with this action
         title, details, *_rest = variant.get_strv()
-        msg = Adw.MessageDialog(
-            parent=self.get_active_window(),
-            heading=title,
-            body=details,
-        )
+        msg = Adw.MessageDialog(heading=title, body=details)
         msg.add_response("close", _("Close"))
+        msg.set_transient_for(self.get_active_window())
         msg.set_modal(True)
         msg.present()
 

@@ -1,8 +1,7 @@
 import logging
-import socket
 from http import HTTPStatus
 
-from gi.repository import Adw, GObject, Gtk
+from gi.repository import Adw, GLib, GObject, Gtk
 from jellyfin_api_client.api.user import authenticate_user_by_name
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.authenticate_user_by_name import AuthenticateUserByName
@@ -97,22 +96,11 @@ class AuthCredentialsView(Adw.NavigationPage):
                     logging.error("Credentials login error", exc_info=error)
                     toast.set_title(_("Autentication failed"))
                     toast.set_button_label(_("Details"))
-                    toast.connect(
-                        "button-clicked",
-                        on_details,
-                        _("Authentication Error"),
-                        str(error),
+                    toast.set_action_name("app.error-details")
+                    toast.set_action_target_value(
+                        GLib.Variant.new_strv([_("Authentication Error"), str(error)])
                     )
             self.__toast_overlay.add_toast(toast)
-
-        def on_details(_button, title: str, details: str) -> None:
-            logging.debug("Credentials login error details requested")
-            msg = Adw.MessageDialog()
-            msg.add_response("close", _("Close"))
-            msg.set_heading(title)
-            msg.set_body(details)
-            msg.set_transient_for(self.__dialog)
-            msg.present()
 
         username = self.__username_editable.get_text()
         password = self.__password_editable.get_text()

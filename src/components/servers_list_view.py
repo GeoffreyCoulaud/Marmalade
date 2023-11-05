@@ -162,9 +162,11 @@ class ServersListView(Adw.NavigationPage):
         self.__servers_trash.clear()
 
     def on_server_connect_request(self, row: ServersListRow) -> None:
-        dialog = AuthDialog(row.server)
+        window: Adw.ApplicationWindow = self.get_root()
+        application = window.get_application()
+        dialog = AuthDialog(application=application, server=row.server)
         dialog.connect("authenticated", self.on_authenticated)
-        dialog.set_transient_for(self.get_root())
+        dialog.set_transient_for(window)
         dialog.set_modal(True)
         dialog.present()
 

@@ -9,7 +9,7 @@ from src.database.api import ServerInfo
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/auth_dialog.ui")
-class AuthDialog(Adw.Window):
+class AuthDialog(Adw.ApplicationWindow):
     __gtype_name__ = "MarmaladeAuthDialog"
 
     views = Gtk.Template.Child()
@@ -24,8 +24,10 @@ class AuthDialog(Adw.Window):
     def cancelled(self):
         """Signal emitted when the login process is cancelled"""
 
-    def __init__(self, server: ServerInfo, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self, application: Adw.Application, server: ServerInfo, **kwargs
+    ) -> None:
+        super().__init__(application=application, **kwargs)
 
         self.server = server
 

@@ -1,7 +1,7 @@
 import logging
 from http import HTTPStatus
 
-from gi.repository import Adw, Gio, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk
 from jellyfin_api_client.api.quick_connect import initiate as initiate_quick_connect
 from jellyfin_api_client.api.user import authenticate_with_quick_connect
 from jellyfin_api_client.errors import UnexpectedStatus
@@ -87,12 +87,14 @@ class AuthQuickConnectView(Adw.NavigationPage):
                 logging.error("Unexpected Quick Connect error", exc_info=error)
                 toast.set_title(_("An unexpected error occured"))
                 toast.set_button_label(_("Details"))
-                args = (_("Unexpected Quick Connect Error"), str(error))
-                toast.connect("button-clicked", self.on_error_details, *args)
+                toast.set_action_name("app.error-details")
+                toast.set_action_target_value(
+                    GLib.Variant.new_strv([_("Quick Connect Error"), str(error)])
+                )
             self.__toast_overlay.add_toast(toast)
             self.__code_state_stack.set_visible_child_name("error")
-            self.__connect_button.set_sensitive(False)
 
+        self.__connect_button.set_sensitive(False)
         self.__cancellable.cancel()
         self.__cancellable.reset()
         self.__code_state_stack.set_visible_child_name("loading")
@@ -138,26 +140,20 @@ class AuthQuickConnectView(Adw.NavigationPage):
             if isinstance(error, UnauthorizedQuickConnect):
                 logging.error("Quick connect not authorized yet")
                 toast.set_title(_("Code hasn't been verified yet"))
+                self.__connect_button.set_sensitive(True)
             else:
                 toast.set_timeout(0)
                 logging.error("Unexpected Quick Connect error", exc_info=error)
                 toast.set_title(_("An unexpected error occured"))
                 toast.set_button_label(_("Details"))
-                args = (_("Unexpected Quick Connect Error"), str(error))
-                toast.connect("button-clicked", on_details, *args)
+                toast.set_action_name("app.error-details")
+                toast.set_action_target_value(
+                    GLib.Variant.new_strv([_("Quick Connect Error"), str(error)])
+                )
                 self.__code_state_stack.set_visible_child_name("error")
-                self.__connect_button.set_sensitive(False)
             self.__toast_overlay.add_toast(toast)
 
-        def on_details(_widget, title: str, details: str) -> None:
-            logging.debug("Quick Connect error details requested")
-            msg = Adw.MessageDialog()
-            msg.add_response("close", _("Close"))
-            msg.set_heading(title)
-            msg.set_body(details)
-            msg.set_transient_for(self.__dialog)
-            msg.present()
-
+        self.__connect_button.set_sensitive(False)
         task = Task(
             main=main,
             callback=on_success,
