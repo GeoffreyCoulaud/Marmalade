@@ -97,6 +97,7 @@ class ServerBrowserView(ServerBrowser):
             ("show-sidebar", None, self.__on_sidebar_toggle_request, True),
             ("hide-sidebar", None, self.__on_sidebar_toggle_request, False),
             ("navigate", "s", self.__on_navigate),
+            ("reload", None, self.__on_reload),
         ):
             self.__create_simple_action(*args)
         self.__search_action = self.__create_prop_action(
@@ -192,6 +193,8 @@ class ServerBrowserView(ServerBrowser):
         ):
             task.run()
 
+    __current_uri: str
+
     def __on_navigate(self, _widget, variant: GLib.Variant) -> None:
         """
         Handle the `navigate` action
@@ -233,12 +236,14 @@ class ServerBrowserView(ServerBrowser):
             logging.error("Destination %s is not implemented", name)
             return
         page: ServerPage = klass(browser=self, headerbar=self.__header_bar, **kwargs)
+        self.__current_uri = uri
 
         # Update the view
         if page.get_is_root():
             self.__navigation.replace([page])
         else:
             self.__navigation.push(page)
+        page.load()
 
     def __on_page_changed(self, *_args) -> None:
         """Callback executed when the navigation view changes the current page"""
@@ -281,6 +286,12 @@ class ServerBrowserView(ServerBrowser):
                 self.log_off()
             case "log-out":
                 self.log_out()
+
+    def __on_reload(self, *_args) -> None:
+        """handle the reload action"""
+        self.activate_action(
+            "browser.navigate", GLib.Variant.new_string(self.__current_uri)
+        )
 
     def log_off(self) -> None:
         """Disconnect from the server"""

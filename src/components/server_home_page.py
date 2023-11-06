@@ -2,7 +2,7 @@ import logging
 from http import HTTPStatus
 from typing import Callable, Sequence
 
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, Gtk
 from httpx import Response
 from jellyfin_api_client.api.items import get_resume_items
 from jellyfin_api_client.api.tv_shows import get_next_up
@@ -35,12 +35,8 @@ class ServerHomePage(ServerPage):
     __next_up_shelf: Shelf            = Gtk.Template.Child("next_up_shelf")
     # fmt: on
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__load_contents()
-
-    def __load_contents(self) -> None:
-        """Load the page contents asynchronously"""
+    def load(self) -> None:
+        """Load the home page content"""
 
         def query_libraries(browser: ServerBrowser) -> Sequence[BaseItemDto]:
             """Query user libraries"""
@@ -55,15 +51,13 @@ class ServerHomePage(ServerPage):
             logging.error("Error while loading user libraries", exc_info=error)
             toast = Adw.Toast(title=_("Could not load user libraries"))
             toast.set_timeout(0)
-            toast.set_button_label(_("Details"))
-            toast.set_action_name("app.error-details")
-            toast.set_action_target_value(
-                GLib.Variant.new_strv([_("User Libraries Error"), str(error)])
-            )
+            toast.set_button_label(_("Reload Page"))
+            toast.set_action_name("browser.reload")
             self.__toast_overlay.add_toast(toast)
 
         def on_libraries_success(items: Sequence[BaseItemDto]) -> None:
             # Add the library shelves
+            logging.debug("Home libraries: %s", str([item.name for item in items]))
             included_types = {"books", "movies", "music", "tvshows", UNSET}
             for item in items:
                 if item.collection_type not in included_types:
@@ -91,7 +85,7 @@ class ServerHomePage(ServerPage):
         self.__view_stack.set_visible_child_name("content")
 
         # Spawn content query tasks
-        tasks = (
+        for task in (
             Task(
                 main=query_libraries,
                 main_args=(self.get_browser(),),
@@ -100,6 +94,5 @@ class ServerHomePage(ServerPage):
             ),
             # TODO Add "resume watching" shelf content task
             # TODO Add "up next" shelf content task
-        )
-        for task in tasks:
+        ):
             task.run()

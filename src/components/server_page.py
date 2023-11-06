@@ -1,4 +1,7 @@
-from gi.repository import Adw, GObject
+from functools import partial
+from typing import Callable
+
+from gi.repository import Adw, GLib, GObject
 
 from src.components.server_browser import ServerBrowser
 from src.components.server_browser_headerbar import ServerBrowserHeaderbar
@@ -8,17 +11,6 @@ class ServerPage(Adw.NavigationPage):
     """Base class for server pages"""
 
     __gtype_name__ = "MaramaladeServerPage"
-
-    def __init__(
-        self,
-        *args,
-        browser: ServerBrowser,
-        headerbar: ServerBrowserHeaderbar,
-        **kwargs,
-    ) -> None:
-        super().__init__(*args, **kwargs)
-        self.set_browser(browser)
-        self.set_headerbar(headerbar)
 
     # browser property
 
@@ -91,3 +83,26 @@ class ServerPage(Adw.NavigationPage):
 
     def set_is_root(self, value: bool):
         self.set_property("is_root", value)
+
+    # Protected methods
+
+    def _run_in_main_loop(self, func: Callable, *args, **kwargs) -> None:
+        """Run a function with args and kwargs in the main loop"""
+        partial_func = partial(func, *args, **kwargs)
+        GLib.idle_add(partial_func)
+
+    # Public methods
+
+    def __init__(
+        self,
+        *args,
+        browser: ServerBrowser,
+        headerbar: ServerBrowserHeaderbar,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.set_browser(browser)
+        self.set_headerbar(headerbar)
+
+    def load(self) -> None:
+        """Load the page content"""
