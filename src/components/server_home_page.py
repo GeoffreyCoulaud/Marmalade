@@ -1,9 +1,8 @@
 import logging
 from http import HTTPStatus
-from typing import Callable, Sequence
+from typing import Sequence
 
-from gi.repository import Adw, Gtk
-from httpx import Response
+from gi.repository import Adw, GLib, Gtk
 from jellyfin_api_client.api.items import get_resume_items
 from jellyfin_api_client.api.tv_shows import get_next_up
 from jellyfin_api_client.api.user_library import get_latest_media
@@ -31,21 +30,23 @@ class ServerHomePage(ServerPage):
     __loading_view: LoadingView       = Gtk.Template.Child("loading_view")
     __error_view: Adw.StatusPage      = Gtk.Template.Child("error_view")
     __content_view: Gtk.Box           = Gtk.Template.Child("content_view")
-    __resume_watching_shelf: Shelf    = Gtk.Template.Child("resume_watching_shelf")
+    __resume_shelf: Shelf             = Gtk.Template.Child("resume_shelf")
     __next_up_shelf: Shelf            = Gtk.Template.Child("next_up_shelf")
     # fmt: on
 
     def load(self) -> None:
         """Load the home page content"""
 
-        def query_libraries(browser: ServerBrowser) -> Sequence[BaseItemDto]:
+        browser = self.get_browser()
+        user_id = browser.get_user_id()
+        client = browser.get_client()
+
+        def query_libraries() -> Sequence[BaseItemDto]:
             """Query user libraries"""
-            response = get_user_views.sync_detailed(
-                browser.get_user_id(), client=browser.get_client()
-            )
-            if response.status_code != HTTPStatus.OK:
-                raise UnexpectedStatus(response.status_code, response.content)
-            return response.parsed.items
+            res = get_user_views.sync_detailed(user_id, client=client)
+            if res.status_code != HTTPStatus.OK:
+                raise UnexpectedStatus(res.status_code, res.content)
+            return res.parsed.items
 
         def on_libraries_error(error: Exception) -> None:
             logging.error("Error while loading user libraries", exc_info=error)
@@ -62,25 +63,58 @@ class ServerHomePage(ServerPage):
             for item in items:
                 if item.collection_type not in included_types:
                     continue
+
+                # Create the shelf
                 shelf = Shelf()
                 shelf.set_title(_("Latest in {library}").format(library=item.name))
                 self.__content_view.append(shelf)
-                # TODO query library shelf content in a task
 
-        def query_shelf_items(shelf: Shelf, request_func: Callable) -> None:
-            response: Response = request_func()
-            if response.status_code != HTTPStatus.OK:
-                raise UnexpectedStatus(response.status_code, response.content)
-            return response.parsed.items
+                # Query shelf content in a task
+                task = Task(
+                    main=query_library_items,
+                    main_args=(item.id,),
+                    callback=on_shelf_items_success,
+                    callback_args=(shelf,),
+                    error_callback=on_shelf_items_error,
+                    error_callback_args=(shelf,),
+                )
+                task.run()
+
+        def query_library_items(library_id: str) -> Sequence[BaseItemDto]:
+            res = get_latest_media.sync_detailed(
+                user_id, client=client, parent_id=library_id
+            )
+            if res.status_code != HTTPStatus.OK:
+                raise UnexpectedStatus(res.status_code, res.content)
+            return res.parsed
+
+        def query_resume_items() -> Sequence[BaseItemDto]:
+            res = get_resume_items.sync_detailed(user_id, client=client)
+            if res.status_code != HTTPStatus.OK:
+                raise UnexpectedStatus(res.status_code, res.content)
+            return res.parsed.items
+
+        def query_next_up_items() -> Sequence[BaseItemDto]:
+            res = get_next_up.sync_detailed(client=client, user_id=user_id)
+            if res.status_code != HTTPStatus.OK:
+                raise UnexpectedStatus(res.status_code, res.content)
+            return res.parsed.items
 
         def on_shelf_items_error(shelf: Shelf, error: Exception) -> None:
-            # TODO Handle shelf content error
-            pass
+            logging.error("Couldn't get %s items", shelf.get_title(), exc_info=error)
+            toast = Adw.Toast(title=_("Could not load shelf items"))
+            toast.set_button_label(_("Details"))
+            toast.set_action_name("app.error-details")
+            toast.set_action_target_value(
+                GLib.Variant.new_strv([_("Shelf Items Error"), str(error)])
+            )
+            self.__toast_overlay.add_toast(toast)
+            self.__content_view.remove(shelf)
 
         def on_shelf_items_success(shelf: Shelf, result: Sequence[BaseItemDto]) -> None:
+            logging.debug('Shelf "%s": %d items', shelf.get_title(), len(result))
             # TODO Create the "Item Card" component
             # TODO add shelf content
-            pass
 
         self.__view_stack.set_visible_child_name("content")
 
@@ -88,11 +122,22 @@ class ServerHomePage(ServerPage):
         for task in (
             Task(
                 main=query_libraries,
-                main_args=(self.get_browser(),),
                 callback=on_libraries_success,
                 error_callback=on_libraries_error,
             ),
-            # TODO Add "resume watching" shelf content task
-            # TODO Add "up next" shelf content task
+            Task(
+                main=query_resume_items,
+                callback=on_shelf_items_success,
+                callback_args=(self.__resume_shelf,),
+                error_callback=on_shelf_items_error,
+                error_callback_args=(self.__resume_shelf,),
+            ),
+            Task(
+                main=query_next_up_items,
+                callback=on_shelf_items_success,
+                callback_args=(self.__next_up_shelf,),
+                error_callback=on_shelf_items_error,
+                error_callback_args=(self.__next_up_shelf,),
+            ),
         ):
             task.run()

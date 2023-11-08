@@ -69,7 +69,7 @@ class Shelf(Gtk.Box):
 
     @GObject.Property(type=str, default="")
     def title(self) -> str:
-        return self.__title_label.get_title()
+        return self.__title_label.get_label()
 
     def get_title(self) -> str:
         return self.get_property("title")
