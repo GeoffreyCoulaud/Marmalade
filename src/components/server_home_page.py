@@ -13,10 +13,8 @@ from jellyfin_api_client.types import UNSET
 
 from src import build_constants
 from src.components.loading_view import LoadingView
-from src.components.server_browser import ServerBrowser
 from src.components.server_page import ServerPage
 from src.components.shelf import Shelf
-from src.jellyfin import JellyfinClient
 from src.task import Task
 
 
