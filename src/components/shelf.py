@@ -98,6 +98,24 @@ class Shelf(Gtk.Box):
     def set_empty_child(self, value: Gtk.Widget):
         self.set_property("empty_child", value)
 
+    # stretch_items property
+
+    __stretch_items: bool = True
+
+    @GObject.Property(type=bool, default=True)
+    def stretch_items(self) -> bool:
+        return self.__stretch_items
+
+    def get_stretch_items(self) -> bool:
+        return self.get_property("stretch_items")
+
+    @stretch_items.setter
+    def stretch_items(self, value: bool) -> None:
+        self.__stretch_items = value
+
+    def set_stretch_items(self, value: bool):
+        self.set_property("stretch_items", value)
+
     # is_navigation_visible property
 
     @GObject.Property(type=bool, default=False, flags=GObject.ParamFlags.READABLE)
@@ -114,9 +132,9 @@ class Shelf(Gtk.Box):
         super().__init__(*args, **kwargs)
         self.__next_button.connect("clicked", self.__on_next_button_clicked)
         self.__previous_button.connect("clicked", self.__on_previous_button_clicked)
-        self.__carousel.connect("page-changed", self.__on_page_changed)
+        self.__carousel.connect("page-changed", self.__update_navigation_controls)
         self.__carousel.connect("notify::n-pages", self.__on_n_pages_changed)
-        self.__update_navigation_visibility()
+        self.__update_navigation_controls()
         self.__update_visible_stack_page()
 
     # Navigation methods
@@ -127,22 +145,16 @@ class Shelf(Gtk.Box):
     def __on_next_button_clicked(self, _button) -> None:
         self._shift_carousel(1)
 
-    def __on_page_changed(self, _carousel, index) -> None:
-        self.__next_button.set_sensitive(index < self.__carousel.get_n_pages() - 1)
-        self.__previous_button.set_sensitive(index > 0)
-
     def __on_n_pages_changed(self, _carousel, _value) -> None:
-        self.__update_navigation_visibility()
+        self.__update_navigation_controls()
         self.__update_visible_stack_page()
 
-    def __update_navigation_visibility(self) -> None:
-        has_multiple_pages = self._get_n_pages() > 1
-        for widget in (
-            self.__previous_button,
-            self.__next_button,
-            self.__dots,
-        ):
-            widget.set_visible(has_multiple_pages)
+    def __update_navigation_controls(self, *_args) -> None:
+        has_multiple_pages = self.__carousel.get_n_pages() > 1
+        self.__dots.set_visible(has_multiple_pages)
+        index = self.__carousel.get_position()
+        self.__next_button.set_sensitive(index < self.__carousel.get_n_pages() - 1)
+        self.__previous_button.set_sensitive(index > 0)
 
     def __update_visible_stack_page(self) -> None:
         self.__view_stack.set_visible_child_name(
@@ -171,7 +183,7 @@ class Shelf(Gtk.Box):
     def __create_page(self) -> None:
         page = ShelfPage()
         flags = GObject.BindingFlags.SYNC_CREATE
-        for prop in ("columns", "lines"):
+        for prop in ("columns", "lines", "stretch_items"):
             self.bind_property(prop, page, prop, flags)
         self.__carousel.append(page)
 

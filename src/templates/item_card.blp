@@ -1,0 +1,27 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $MarmaladeItemCard {
+    child: Button button {
+        child: Box {
+            orientation: vertical;
+            Image image {}
+            Box {
+                orientation: vertical;
+                spacing: 8;
+                margin-top: 8;
+                margin-bottom: 8;
+                margin-start: 8;
+                margin-end: 8;
+                Label title_label {
+                    styles ["heading"]
+                    wrap: true;
+                }
+                Label subtitle_label {
+                    styles ["dim-label"]
+                    wrap: true;
+                }
+            }
+        };
+    };
+}

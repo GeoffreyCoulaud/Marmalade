@@ -2,6 +2,8 @@ import socket
 import time
 from typing import Optional
 
+from hishel import CacheTransport
+from httpx import HTTPTransport
 from jellyfin_api_client.client import Client
 
 
@@ -26,7 +28,7 @@ class JellyfinClient(Client):
     """
 
     _version: str = "1.9.1"
-    _client: str = "Marmalade"
+    _client_name: str = "Marmalade"
     _device_id: str = "-"
     _device: str
     _token: str
@@ -38,14 +40,19 @@ class JellyfinClient(Client):
         token: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__(*args, **kwargs)
+        # Initialize the client, with caching support
+        httpx_args = {
+            "transport": CacheTransport(transport=HTTPTransport()),
+        }
+        super().__init__(*args, **kwargs, httpx_args=httpx_args)
+        # Set the client headers
         self._device = socket.gethostname()
         self._token = token
         if device_id:
             self._device_id = device_id
-        self._update_emby_header()
+        self._init_emby_header()
 
-    def _update_emby_header(self) -> None:
+    def _init_emby_header(self) -> None:
         """
         Update or create the mandatory X-Emby-Authorization header
 
@@ -53,7 +60,7 @@ class JellyfinClient(Client):
         (see https://github.com/home-assistant/core/issues/70124#issuecomment-1278033166)
         """
         parameters = {
-            "Client": self._client,
+            "Client": self._client_name,
             "Version": self._version,
             "Device": self._device,
             "DeviceId": self._device_id,
@@ -66,7 +73,7 @@ class JellyfinClient(Client):
 
     def __str__(self) -> str:
         return '"%s" Jellyfin Client v%s for %s (%s) on %s' % (
-            self._client,
+            self._client_name,
             self._version,
             self._device,
             self._device_id,

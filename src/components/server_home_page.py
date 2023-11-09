@@ -12,6 +12,7 @@ from jellyfin_api_client.models.base_item_dto import BaseItemDto
 from jellyfin_api_client.types import UNSET
 
 from src import build_constants
+from src.components.item_card import ItemCard
 from src.components.loading_view import LoadingView
 from src.components.server_page import ServerPage
 from src.components.shelf import Shelf
@@ -63,8 +64,12 @@ class ServerHomePage(ServerPage):
                     continue
 
                 # Create the shelf
-                shelf = Shelf()
-                shelf.set_title(_("Latest in {library}").format(library=item.name))
+                shelf = Shelf(
+                    title=_("Latest in {library}").format(library=item.name),
+                    stretch_items=False,
+                    columns=6,
+                    lines=1,
+                )
                 self.__content_view.append(shelf)
 
                 # Query shelf content in a task
@@ -111,8 +116,15 @@ class ServerHomePage(ServerPage):
 
         def on_shelf_items_success(shelf: Shelf, result: Sequence[BaseItemDto]) -> None:
             logging.debug('Shelf "%s": %d items', shelf.get_title(), len(result))
-            # TODO Create the "Item Card" component
-            # TODO add shelf content
+            for item in result:
+                add_item_card(shelf, item)
+
+        def add_item_card(shelf: Shelf, item: BaseItemDto) -> None:
+            card = ItemCard(title=item.name, image_width=200, image_height=300)
+            shelf.append(card)
+            # TODO Load the card image
+            # TODO Properly handle the subtitle
+            # TODO Set the card action
 
         self.__view_stack.set_visible_child_name("content")
 

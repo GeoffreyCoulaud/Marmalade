@@ -48,13 +48,35 @@ class ShelfPage(Gtk.FlowBox):
     def set_columns(self, value: int):
         self.set_property("columns", value)
 
+    # stretch_items property
+
+    __stretch_items: bool = True
+
+    @GObject.Property(type=bool, default=True)
+    def stretch_items(self) -> bool:
+        return self.__stretch_items
+
+    def get_stretch_items(self) -> bool:
+        return self.get_property("stretch_items")
+
+    @stretch_items.setter
+    def stretch_items(self, value: bool) -> None:
+        self.__stretch_items = value
+
+    def set_stretch_items(self, value: bool):
+        self.set_property("stretch_items", value)
+
     # Private python methods
 
     def __create_widget_func(self, item: ListStoreItem, *_args) -> Gtk.Widget:
         return item.value
 
     def __on_model_items_changed(self, *args):
-        page_columns = min(self.get_columns(), self.__model.get_n_items())
+        page_columns = (
+            min(self.get_columns(), self.__model.get_n_items())
+            if self.get_stretch_items()
+            else self.get_columns()
+        )
         self.set_max_children_per_line(page_columns)
         self.set_min_children_per_line(page_columns)
 
