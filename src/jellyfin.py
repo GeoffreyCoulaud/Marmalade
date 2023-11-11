@@ -2,9 +2,11 @@ import socket
 import time
 from typing import Optional
 
-from hishel import CacheTransport
+from hishel import CacheTransport, FileStorage
 from httpx import HTTPTransport
 from jellyfin_api_client.client import Client
+
+from src import shared
 
 
 def make_device_id() -> str:
@@ -40,10 +42,16 @@ class JellyfinClient(Client):
         token: Optional[str] = None,
         **kwargs,
     ):
-        # Initialize the client, with caching support
-        httpx_args = {
-            "transport": CacheTransport(transport=HTTPTransport()),
-        }
+        # TODO enable HTTP caching
+        # httpx_args = {
+        #     "transport": CacheTransport(
+        #         transport=HTTPTransport(),
+        #         storage=FileStorage(
+        #             base_path=shared.app_cache_dir / "http-cache",
+        #         ),
+        #     ),
+        # }
+        httpx_args = {}
         super().__init__(*args, **kwargs, httpx_args=httpx_args)
         # Set the client headers
         self._device = socket.gethostname()

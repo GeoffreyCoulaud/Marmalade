@@ -116,15 +116,18 @@ class ServerHomePage(ServerPage):
 
         def on_shelf_items_success(shelf: Shelf, result: Sequence[BaseItemDto]) -> None:
             logging.debug('Shelf "%s": %d items', shelf.get_title(), len(result))
+            client = self.get_browser().get_client()
             for item in result:
-                add_item_card(shelf, item)
-
-        def add_item_card(shelf: Shelf, item: BaseItemDto) -> None:
-            card = ItemCard(title=item.name, image_width=200, image_height=300)
-            shelf.append(card)
-            # TODO Load the card image
-            # TODO Properly handle the subtitle
-            # TODO Set the card action
+                card = ItemCard(
+                    title=item.name,
+                    item_id=item.id,
+                    image_width=200,
+                    image_height=200,
+                )
+                shelf.append(card)
+                card.load_image(client)
+                # TODO Properly handle the subtitle
+                # TODO Set the card action
 
         self.__view_stack.set_visible_child_name("content")
 
