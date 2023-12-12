@@ -11,6 +11,7 @@
     <file preprocess="xml-stripblanks">templates/item_card.ui</file>
     <file preprocess="xml-stripblanks">templates/loading_view.ui</file>
     <file preprocess="xml-stripblanks">templates/list_box_row_content.ui</file>
+    <file preprocess="xml-stripblanks">templates/scrollable_shelf.ui</file>
     <file preprocess="xml-stripblanks">templates/server_add_dialog.ui</file>
     <file preprocess="xml-stripblanks">templates/server_browser_headerbar.ui</file>
     <file preprocess="xml-stripblanks">templates/server_browser_view.ui</file>

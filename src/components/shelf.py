@@ -98,24 +98,6 @@ class Shelf(Gtk.Box):
     def set_empty_child(self, value: Gtk.Widget):
         self.set_property("empty_child", value)
 
-    # stretch_items property
-
-    __stretch_items: bool = True
-
-    @GObject.Property(type=bool, default=True)
-    def stretch_items(self) -> bool:
-        return self.__stretch_items
-
-    def get_stretch_items(self) -> bool:
-        return self.get_property("stretch_items")
-
-    @stretch_items.setter
-    def stretch_items(self, value: bool) -> None:
-        self.__stretch_items = value
-
-    def set_stretch_items(self, value: bool):
-        self.set_property("stretch_items", value)
-
     # is_navigation_visible property
 
     @GObject.Property(type=bool, default=False, flags=GObject.ParamFlags.READABLE)
@@ -183,7 +165,7 @@ class Shelf(Gtk.Box):
     def __create_page(self) -> None:
         page = ShelfPage()
         flags = GObject.BindingFlags.SYNC_CREATE
-        for prop in ("columns", "lines", "stretch_items"):
+        for prop in ("columns", "lines"):
             self.bind_property(prop, page, prop, flags)
         self.__carousel.append(page)
 

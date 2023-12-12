@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from http import HTTPStatus
 from typing import Optional
 
@@ -7,7 +8,6 @@ from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.image_type import ImageType
 
 from src import build_constants
-from src.components.loading_view import LoadingView
 from src.jellyfin import JellyfinClient
 from src.task import Task
 
@@ -18,6 +18,16 @@ class ImageDownloadError(UnexpectedStatus):
 
 class NoImageError(ImageDownloadError):
     """Error raised when an item has no image of the requested type"""
+
+
+@dataclass
+class Size:
+    width: int
+    height: int
+
+
+POSTER = Size(200, 300)
+WIDE_SCREENSHOT = Size(200, 112.5)
 
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/item_card.ui")
@@ -49,41 +59,23 @@ class ItemCard(Adw.Bin):
     def set_item_id(self, value: str):
         self.set_property("item_id", value)
 
-    # image_width property
+    # image_size property
 
-    __image_width: int
+    __image_size: Size = POSTER
 
-    @GObject.Property(type=int, default=-1)
-    def image_width(self) -> int:
-        return self.__image_width
+    @GObject.Property(type=object)
+    def image_size(self) -> Size:
+        return self.__image_size
 
-    def get_image_width(self) -> int:
-        return self.get_property("image_width")
+    def get_image_size(self) -> Size:
+        return self.get_property("image_size")
 
-    @image_width.setter
-    def image_width(self, value: int) -> None:
-        self.__image_width = value
+    @image_size.setter
+    def image_size(self, value: Size) -> None:
+        self.__image_size = value
 
-    def set_image_width(self, value: int):
-        self.set_property("image_width", value)
-
-    # image_height property
-
-    __image_height: int
-
-    @GObject.Property(type=int, default=-1)
-    def image_height(self) -> int:
-        return self.__image_height
-
-    def get_image_height(self) -> int:
-        return self.get_property("image_height")
-
-    @image_height.setter
-    def image_height(self, value: int) -> None:
-        self.__image_height = value
-
-    def set_image_height(self, value: int):
-        self.set_property("image_height", value)
+    def set_image_size(self, value: Size):
+        self.set_property("image_size", value)
 
     # image_type property
 
@@ -205,17 +197,14 @@ class ItemCard(Adw.Bin):
 
             # Create query
             url = f"/Items/{self.get_item_id()}/Images/{self.get_image_type()}"
-            params = {"format": "Png"}
-            if (height := self.get_image_height()) > 0:
-                params["fillHeight"] = height
-            if (width := self.get_image_width()) > 0:
-                params["fillWidth"] = width
+            image_size = self.get_image_size()
+            params = {
+                "format": "Png",
+                "maxHeight": image_size.height,
+                "maxWidth": image_size.width,
+            }
             if tag := self.get_image_tag():
                 params["tag"] = tag
-
-            logging.debug(
-                "Getting item %s image: %s %s", self.get_item_id(), url, str(params)
-            )
 
             # Make the request
             httpx_client = client.get_httpx_client()
@@ -229,11 +218,11 @@ class ItemCard(Adw.Bin):
                     raise ImageDownloadError(res.status_code, res.content)
 
             # Wrap in a Gtk.Paintable
+            # TODO composite the image to be the exact image format
             return Gdk.Texture.new_from_bytes(GLib.Bytes.new(res.content))
 
         def on_download_success(paintable: Gdk.Texture):
             self.__picture.set_paintable(paintable)
-            logging.debug("Displayed image for %s", self.get_item_id())
 
         def on_download_error(error: Exception):
             match error:
@@ -243,6 +232,10 @@ class ItemCard(Adw.Bin):
                 case ImageDownloadError():
                     logging.error(
                         "Item %s image error %d", self.get_item_id(), error.status_code
+                    )
+                case _:
+                    logging.error(
+                        "Unexpected %s error", self.get_item_id(), exc_info=error
                     )
 
         # Download the image asynchronously

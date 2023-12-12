@@ -6,21 +6,25 @@ template $MarmaladeItemCard {
         styles ["card"]
         child: Box {
             orientation: vertical;
-            Picture picture {}
+            Picture picture {
+                can-shrink: false;
+            }
             Box {
                 orientation: vertical;
-                spacing: 8;
-                margin-top: 8;
-                margin-bottom: 8;
-                margin-start: 8;
-                margin-end: 8;
+                spacing: 12;
+                margin-top: 12;
+                margin-bottom: 12;
+                margin-start: 12;
+                margin-end: 12;
                 Label title_label {
                     styles ["heading"]
-                    wrap: true;
+                    ellipsize: end;
+                    halign: start;
                 }
                 Label subtitle_label {
                     styles ["dim-label"]
-                    wrap: true;
+                    ellipsize: end;
+                    halign: start;
                 }
             }
         };

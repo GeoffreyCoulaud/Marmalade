@@ -9,10 +9,11 @@ from jellyfin_api_client.api.user_library import get_latest_media
 from jellyfin_api_client.api.user_views import get_user_views
 from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.base_item_dto import BaseItemDto
+from jellyfin_api_client.models.image_type import ImageType
 from jellyfin_api_client.types import UNSET
 
 from src import build_constants
-from src.components.item_card import ItemCard
+from src.components.item_card import POSTER, WIDE_SCREENSHOT, ItemCard
 from src.components.loading_view import LoadingView
 from src.components.server_page import ServerPage
 from src.components.shelf import Shelf
@@ -64,12 +65,8 @@ class ServerHomePage(ServerPage):
                     continue
 
                 # Create the shelf
-                shelf = Shelf(
-                    title=_("Latest in {library}").format(library=item.name),
-                    stretch_items=False,
-                    columns=6,
-                    lines=1,
-                )
+                title = _("Latest in {library}").format(library=item.name)
+                shelf = Shelf(title=title, columns=6, lines=1)
                 self.__content_view.append(shelf)
 
                 # Query shelf content in a task
@@ -118,11 +115,12 @@ class ServerHomePage(ServerPage):
             logging.debug('Shelf "%s": %d items', shelf.get_title(), len(result))
             client = self.get_browser().get_client()
             for item in result:
+                # TODO ensure that the image type gets close to the format (?))
                 card = ItemCard(
-                    title=item.name,
                     item_id=item.id,
-                    image_width=200,
-                    image_height=200,
+                    title=item.name,
+                    image_type=ImageType.PRIMARY,
+                    image_size=POSTER,
                 )
                 shelf.append(card)
                 card.load_image(client)
