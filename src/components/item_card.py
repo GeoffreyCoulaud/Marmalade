@@ -73,6 +73,7 @@ class ItemCard(Adw.Bin):
     @image_size.setter
     def image_size(self, value: Size) -> None:
         self.__image_size = value
+        self.__picture.set_size_request(value.width, value.height)
 
     def set_image_size(self, value: Size):
         self.set_property("image_size", value)
@@ -246,3 +247,4 @@ class ItemCard(Adw.Bin):
             error_callback=on_download_error,
         )
         task.run()
+

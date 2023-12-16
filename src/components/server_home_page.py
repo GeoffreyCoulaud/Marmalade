@@ -115,7 +115,6 @@ class ServerHomePage(ServerPage):
             logging.debug('Shelf "%s": %d items', shelf.get_title(), len(result))
             client = self.get_browser().get_client()
             for item in result:
-                # TODO ensure that the image type gets close to the format (?))
                 card = ItemCard(
                     item_id=item.id,
                     title=item.name,

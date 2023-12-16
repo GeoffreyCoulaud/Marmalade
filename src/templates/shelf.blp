@@ -32,15 +32,14 @@ template $MarmaladeShelf : Gtk.Box {
         Adw.ViewStackPage {
           name: "carousel";
           child: Adw.Carousel carousel {
-            styles ["card"]
             hexpand: true;
+            halign: start;
           };
         }
 
         Adw.ViewStackPage {
           name: "empty-shelf-page";
           child: Adw.Bin empty_shelf_page {
-            styles ["card"]
             name: "shelf-placeholder-bin";
           };
         }
