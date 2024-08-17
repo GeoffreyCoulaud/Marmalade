@@ -20,7 +20,6 @@
     <file preprocess="xml-stripblanks">templates/servers_list_view.ui</file>
     <file preprocess="xml-stripblanks">templates/shelf.ui</file>
     <file preprocess="xml-stripblanks">templates/shelf_page.ui</file>
-    <file preprocess="xml-stripblanks">templates/user_badge.ui</file>
     <file preprocess="xml-stripblanks">templates/window.ui</file>
     <file alias="style.css">css/style.css</file>
   </gresource>
