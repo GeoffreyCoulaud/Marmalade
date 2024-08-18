@@ -1,7 +1,7 @@
 import logging
-from typing import Any, Generic, Self, Sequence, TypeVar
+from typing import Any, Generic, Never, Self, Sequence, TypeVar
 
-from gi.repository import Gtk
+from gi.repository import Adw, Gtk
 
 WidgetType = TypeVar("WidgetType", bound=Gtk.Widget)
 ChildWidgetType = TypeVar("ChildWidgetType", bound=Gtk.Widget)
@@ -36,6 +36,12 @@ class WidgetBuilder(Generic[WidgetType]):
             setter(value)
         return self
 
+    def __check_1_child(self, children: Sequence[Gtk.Widget]) -> None:
+        if len(children) != 1:
+            raise ValueError(
+                f"Widget type ${self.__widget_class_name} may only receive one child"
+            )
+
     def add_children(self, children: Sequence[Gtk.Widget]) -> Self:
         """Add children to the widget"""
         if not children:
@@ -45,12 +51,13 @@ class WidgetBuilder(Generic[WidgetType]):
             # Case "Gtk.Box"
             for child in children:
                 self.__widget.append(child)
+        elif isinstance(self.__widget, Adw.ApplicationWindow):
+            # Case "Adw.ApplicationWindow"
+            self.__check_1_child(children)
+            self.__widget.set_content(children[0])
         elif getattr(self.__widget, "set_child") is not None:
             # Any other case where there is a "set_child" method
-            if len(children) > 1:
-                raise ValueError(
-                    f"Widget type ${self.__widget_class_name} may only receive one child"
-                )
+            self.__check_1_child(children)
             self.__widget.set_child(children[0])  # type: ignore
         else:
             # Cannot set children
