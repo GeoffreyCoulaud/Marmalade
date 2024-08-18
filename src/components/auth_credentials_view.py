@@ -22,8 +22,8 @@ class AuthCredentialsView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeAuthCredentialsView"
 
     __log_in_button: Gtk.Button
-    __username_editable: Adw.EntryRow
-    __password_editable: Adw.EntryRow
+    __username_entry_row: Adw.EntryRow
+    __password_entry_row: Adw.EntryRow
     __toast_overlay: Adw.ToastOverlay
 
     __dialog: Adw.Window  # TODO remove if unused
@@ -38,11 +38,12 @@ class AuthCredentialsView(Adw.NavigationPage):
             klass=Gtk.Button,
             properties={"css_classes": "suggested-action", "label": _("Log In")},
         )
-        self.__username_editable = WidgetFactory(
+        self.__log_in_button.connect("clicked", self.__on_log_in_request)
+        self.__username_entry_row = WidgetFactory(
             klass=Adw.EntryRow,
             properties={"title": _("Username")},
         )
-        self.__password_editable = WidgetFactory(
+        self.__password_entry_row = WidgetFactory(
             klass=Adw.EntryRow,
             properties={"title": _("Password")},
         )
@@ -59,8 +60,8 @@ class AuthCredentialsView(Adw.NavigationPage):
                 children=WidgetFactory(
                     klass=Adw.PreferencesGroup,
                     children=[
-                        self.__username_editable,
-                        self.__password_editable,
+                        self.__username_entry_row,
+                        self.__password_entry_row,
                     ],
                 ),
             ),
@@ -89,14 +90,13 @@ class AuthCredentialsView(Adw.NavigationPage):
         self.__init_widget()
         self.__server = server
         self.__dialog = dialog
-        self.__username_editable.set_text(username)
-        self.__log_in_button.connect("clicked", self.__on_log_in_request)
+        self.__username_entry_row.set_text(username)
         self.connect("map", self.__on_mapped)
 
     def __on_mapped(self, _page) -> None:
         """Callback executed when the page is about to be shown"""
-        if self.__username_editable.get_text():
-            self.__password_editable.grab_focus_without_selecting()
+        if self.__username_entry_row.get_text():
+            self.__password_entry_row.grab_focus_without_selecting()
 
     def __on_log_in_request(self, _widget) -> None:
         """Try to authenticate the user with the given credentials"""
@@ -156,8 +156,8 @@ class AuthCredentialsView(Adw.NavigationPage):
                     )
             self.__toast_overlay.add_toast(toast)
 
-        username = self.__username_editable.get_text()
-        password = self.__password_editable.get_text()
+        username = self.__username_entry_row.get_text()
+        password = self.__password_entry_row.get_text()
         self.__log_in_button.set_sensitive(False)
         logging.debug("Authenticating %s on %s", username, self.__server.address)
         task = Task(
