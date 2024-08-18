@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="@PREFIX@">
-    <file preprocess="xml-stripblanks">templates/auth_credentials_view.ui</file>
     <file preprocess="xml-stripblanks">templates/auth_dialog.ui</file>
     <file preprocess="xml-stripblanks">templates/auth_login_method_view.ui</file>
     <file preprocess="xml-stripblanks">templates/auth_quick_connect_view.ui</file>

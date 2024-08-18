@@ -12,7 +12,7 @@ def WidgetFactory(
     klass: type[WidgetType],
     arguments: None | dict[str, Any] = None,
     properties: None | dict[str, Any] = None,
-    children: None | ChildWidgetType | Sequence[ChildWidgetType] = None,
+    children: None | ChildWidgetType | Sequence[None | ChildWidgetType] = None,
 ) -> WidgetType:
     """
     Create a widget from a given class and constructor arguments,
