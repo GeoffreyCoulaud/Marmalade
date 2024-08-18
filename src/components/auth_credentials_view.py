@@ -7,7 +7,8 @@ from jellyfin_api_client.errors import UnexpectedStatus
 from jellyfin_api_client.models.authenticate_user_by_name import AuthenticateUserByName
 from jellyfin_api_client.models.authentication_result import AuthenticationResult
 
-from src import build_constants, shared
+from src import shared
+from src.components.widget_factory import WidgetFactory
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
@@ -17,30 +18,75 @@ class InvalidCredentialsError(Exception):
     """Error raised when the user cannot be authenticated"""
 
 
-@Gtk.Template(
-    resource_path=build_constants.PREFIX + "/templates/auth_credentials_view.ui"
-)
 class AuthCredentialsView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeAuthCredentialsView"
 
-    # fmt: off
-    __log_in_button     = Gtk.Template.Child("log_in_button")
-    __username_editable = Gtk.Template.Child("username_editable")
-    __password_editable = Gtk.Template.Child("password_editable")
-    __toast_overlay     = Gtk.Template.Child("toast_overlay")
-    # fmt: on
+    __log_in_button: Gtk.Button
+    __username_editable: Adw.EntryRow
+    __password_editable: Adw.EntryRow
+    __toast_overlay: Adw.ToastOverlay
 
-    __dialog: Adw.Window
+    __dialog: Adw.Window  # TODO remove if unused
     __server: ServerInfo
 
     @GObject.Signal(name="authenticated", arg_types=[str])
     def authenticated(self, _user_id: str):
         """Signal emitted when the user is authenticated"""
 
+    def __init_widget(self):
+        self.__log_in_button = WidgetFactory(
+            klass=Gtk.Button,
+            properties={"css_classes": "suggested-action", "label": _("Log In")},
+        )
+        self.__username_editable = WidgetFactory(
+            klass=Adw.EntryRow,
+            properties={"title": _("Username")},
+        )
+        self.__password_editable = WidgetFactory(
+            klass=Adw.EntryRow,
+            properties={"title": _("Password")},
+        )
+        self.__toast_overlay = WidgetFactory(
+            klass=Adw.ToastOverlay,
+            children=WidgetFactory(
+                klass=Adw.Clamp,
+                properties={
+                    "margin_top": 16,
+                    "margin_bottom": 16,
+                    "margin_start": 16,
+                    "margin_end": 16,
+                },
+                children=WidgetFactory(
+                    klass=Adw.PreferencesGroup,
+                    children=[
+                        self.__username_editable,
+                        self.__password_editable,
+                    ],
+                ),
+            ),
+        )
+        self.set_title(_("Credentials"))
+        self.set_tag("credentials")
+        self.set_child(
+            WidgetFactory(
+                klass=Adw.ToolbarView,
+                children=[
+                    WidgetFactory(
+                        klass=Adw.HeaderBar,
+                        properties={"decoration_layout": ""},
+                        children=[None, None, self.__log_in_button],
+                    ),
+                    self.__toast_overlay,
+                    None,
+                ],
+            )
+        )
+
     def __init__(
         self, *args, dialog: Adw.Window, server: ServerInfo, username: str, **kwargs
     ) -> None:
         super().__init__(*args, **kwargs)
+        self.__init_widget()
         self.__server = server
         self.__dialog = dialog
         self.__username_editable.set_text(username)
@@ -60,7 +106,7 @@ class AuthCredentialsView(Adw.NavigationPage):
             client = JellyfinClient(base_url=self.__server.address, device_id=device_id)
             response = authenticate_user_by_name.sync_detailed(
                 client=client,
-                json_body=AuthenticateUserByName(username=username, pw=password),
+                json_body=AuthenticateUserByName(username=username, pw=password),  # type: ignore
             )
             if response.status_code == HTTPStatus.OK:
                 return response.parsed
@@ -70,20 +116,28 @@ class AuthCredentialsView(Adw.NavigationPage):
 
         def on_success(result: AuthenticationResult) -> None:
             logging.debug(
-                "Authenticated %s on %s", result.user.name, self.__server.address
+                "Authenticated %s on %s",
+                result.user.name,  # type: ignore
+                self.__server.address,
             )
             self.__log_in_button.set_sensitive(True)
             shared.settings.add_users(
                 self.__server.address,
-                UserInfo(user_id=result.user.id, name=result.user.name),
+                UserInfo(
+                    user_id=result.user.id,  # type: ignore
+                    name=result.user.name,  # type: ignore
+                ),
             )
             shared.settings.add_token(
                 address=self.__server.address,
-                user_id=result.user.id,
-                token=result.access_token,
-                device_id=result.session_info.device_id,
+                user_id=result.user.id,  # type: ignore
+                token=result.access_token,  # type: ignore
+                device_id=result.session_info.device_id,  # type: ignore
             )
-            self.emit("authenticated", result.user.id)
+            self.emit(
+                "authenticated",
+                result.user.id,  # type: ignore
+            )
 
         def on_error(error: Exception):
             self.__log_in_button.set_sensitive(True)
