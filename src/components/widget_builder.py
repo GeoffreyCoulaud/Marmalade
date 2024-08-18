@@ -1,3 +1,4 @@
+import logging
 from typing import Any, Generic, Self, Sequence, TypeVar
 
 from gi.repository import Gtk
@@ -23,11 +24,15 @@ class WidgetBuilder(Generic[WidgetType]):
     def set_properties(self, properties: dict[str, Any]) -> Self:
         """Add properties to set on the widget"""
         for key, value in properties.items():
-            if not callable(setter := getattr(self.__widget, f"set_{key}")):
+            clean_key = key.replace("-", "_")
+            setter_name = f"set_{clean_key}"
+            if not callable(setter := getattr(self.__widget, setter_name)):
                 raise AttributeError(
                     "Widget type %s doesn't have a setter for property %s"
                     % (self.__widget_class_name, key)
                 )
+            if key != clean_key:
+                logging.warning("Consider using underscores for property %s", key)
             setter(value)
         return self
 
