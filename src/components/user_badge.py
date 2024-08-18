@@ -2,11 +2,11 @@ import logging
 from http import HTTPStatus
 from pathlib import Path
 
-from gi.repository import Adw, GObject, Gtk  # type: ignore
+from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.errors import UnexpectedStatus
 
 from src import shared
-from src.components.utils import widget_factory
+from src.components.widget_factory import WidgetFactory
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -41,7 +41,7 @@ class UserBadge(Adw.Bin):
     def __init_widget(self) -> None:
         """Create the widget structure"""
 
-        self.__avatar = widget_factory(
+        self.__avatar = WidgetFactory(
             klass=Adw.Avatar,
             properties={
                 "icon_name": "avatar-default-symbolic",
@@ -50,7 +50,7 @@ class UserBadge(Adw.Bin):
                 "size": 128,
             },
         )
-        self.__label = widget_factory(
+        self.__label = WidgetFactory(
             klass=Gtk.Label,
             properties={
                 "css_classes": ["dim-label", "heading"],
@@ -59,16 +59,16 @@ class UserBadge(Adw.Bin):
                 "wrap": True,
             },
         )
-        self.__button = widget_factory(
+        self.__button = WidgetFactory(
             klass=Gtk.Button,
             properties={"css_classes": ["flat"]},
-            children=widget_factory(
+            children=WidgetFactory(
                 klass=Gtk.Box,
                 properties={"orientation": Gtk.Orientation.VERTICAL},
                 children=(self.__avatar, self.__label),
             ),
         )
-        self.__button.connect("clicked", self.clicked_signal)
+        self.__button.connect("clicked", self.__on_button_clicked)
         self.set_child(self.__button)
 
     def __init__(self, *args, server: ServerInfo, user: UserInfo, **kwargs) -> None:
@@ -89,6 +89,9 @@ class UserBadge(Adw.Bin):
         self.__label.set_label(user.name)
         self.__avatar.set_text(user.name)
         self.load_image()
+
+    def __on_button_clicked(self, _button):
+        self.emit("clicked")
 
     def load_image(self) -> None:
         """

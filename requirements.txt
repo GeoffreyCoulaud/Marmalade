@@ -1,3 +1,4 @@
 jellyfin-api-client
 hishel
 psutil
+PyGObject
