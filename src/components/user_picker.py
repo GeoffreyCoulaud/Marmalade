@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Type, cast
 
 from gi.repository import Adw, GObject
 
@@ -31,7 +31,7 @@ class UserPicker(Adw.Bin):
         return self.get_property("lines")
 
     @lines.setter
-    def lines(self, value: int) -> None:
+    def lines_setter(self, value: int) -> None:
         self.__lines = value
 
     def set_lines(self, value: int):
@@ -49,7 +49,7 @@ class UserPicker(Adw.Bin):
         return self.get_property("columns")
 
     @columns.setter
-    def columns(self, value: int) -> None:
+    def columns_setter(self, value: int) -> None:
         self.__columns = value
 
     def set_columns(self, value: int):
@@ -67,7 +67,7 @@ class UserPicker(Adw.Bin):
         return self.get_property("title")
 
     @title.setter
-    def title(self, value: str) -> None:
+    def title_setter(self, value: str) -> None:
         self.__title = value
 
     def set_title(self, value: str):
@@ -97,6 +97,7 @@ class UserPicker(Adw.Bin):
 
         # HACK: Using a delegate Shelf widget, since PyGObject doesn't allow inheriting
         # from classes decorated with @Gtk.Template
+        # TODO remove hack, since we're getting rid of templates
         self.set_child(shelf := Shelf())
         shelf.add_css_class("compact")
 
@@ -139,7 +140,7 @@ class UserPicker(Adw.Bin):
                 new_users_set.add(user)
                 new_users.append(user)
 
-        shelf = self.get_child()
+        shelf = cast(Shelf, self.get_child())
         for user in new_users:
             badge = UserBadge(server=self.__server, user=user)
             badge.connect("clicked", self.__on_user_clicked, user.user_id)
