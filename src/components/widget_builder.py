@@ -1,15 +1,18 @@
-from typing import Any, Self, Sequence
+from typing import Any, Generic, Self, Sequence, TypeVar
 
 from gi.repository import Gtk
 
+WidgetType = TypeVar("WidgetType", bound=Gtk.Widget)
+ChildWidgetType = TypeVar("ChildWidgetType", bound=Gtk.Widget)
 
-class WidgetBuilder:
+
+class WidgetBuilder(Generic[WidgetType]):
     """Builder pattern to sequentially create Gtk Widget subclasses"""
 
-    __widget: Gtk.Widget
+    __widget: WidgetType
 
     def __init__(
-        self, widget_class: type[Gtk.Widget], **arguments: dict[str, Any]
+        self, widget_class: type[WidgetType], **arguments: dict[str, Any]
     ) -> None:
         self.__widget = widget_class(**arguments)  # type: ignore
 
@@ -51,6 +54,6 @@ class WidgetBuilder:
             )
         return self
 
-    def build(self) -> Gtk.Widget:
+    def build(self) -> WidgetType:
         """Build the widget according to the instructions"""
         return self.__widget
