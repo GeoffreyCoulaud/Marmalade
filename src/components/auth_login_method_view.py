@@ -36,7 +36,9 @@ class AuthLoginMethodView(Adw.NavigationPage):
     def authenticated(self, _user_id: str):
         """Signal emitted when a user is authenticated via quick resume"""
 
-    def __init__(self, *args, dialog: Adw.Window, server: ServerInfo, **kwargs) -> None:
+    def __init__(
+        self, *args, dialog: Adw.ApplicationWindow, server: ServerInfo, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         self.__dialog = dialog

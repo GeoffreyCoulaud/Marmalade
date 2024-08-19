@@ -31,7 +31,7 @@ class AuthUserSelectView(Adw.NavigationPage):
 
     other_user_button = Gtk.Template.Child()
 
-    dialog: Adw.Window
+    dialog: Adw.ApplicationWindow
     server: ServerInfo
 
     @GObject.Signal(name="user-picked", arg_types=[str])
@@ -42,7 +42,9 @@ class AuthUserSelectView(Adw.NavigationPage):
     def skipped(self):
         """Signal emitted when the other user button is clicked"""
 
-    def __init__(self, *args, dialog: Adw.Window, server: ServerInfo, **kwargs) -> None:
+    def __init__(
+        self, *args, dialog: Adw.ApplicationWindow, server: ServerInfo, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.dialog = dialog
         self.server = server

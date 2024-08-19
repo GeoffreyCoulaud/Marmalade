@@ -26,7 +26,6 @@ class AuthCredentialsView(Adw.NavigationPage):
     __password_entry_row: Adw.EntryRow
     __toast_overlay: Adw.ToastOverlay
 
-    __dialog: Adw.Window  # TODO remove if unused
     __server: ServerInfo
 
     @GObject.Signal(name="authenticated", arg_types=[str])
@@ -83,13 +82,10 @@ class AuthCredentialsView(Adw.NavigationPage):
             )
         )
 
-    def __init__(
-        self, *args, dialog: Adw.Window, server: ServerInfo, username: str, **kwargs
-    ) -> None:
+    def __init__(self, *args, server: ServerInfo, username: str, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.__init_widget()
         self.__server = server
-        self.__dialog = dialog
         self.__username_entry_row.set_text(username)
         self.connect("map", self.__on_mapped)
 
