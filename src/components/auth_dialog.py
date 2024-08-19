@@ -38,7 +38,7 @@ class AuthDialog(Adw.ApplicationWindow):
         self.server = server
 
         # Create the login method / quick resume view
-        view = AuthLoginMethodView(dialog=self, server=server)
+        view = AuthLoginMethodView(server=server)
         view.connect("chose-username-password", self.on_username_password_chosen)
         view.connect("chose-quick-connect", self.on_quick_connect_chosen)
         view.connect("authenticated", self.on_authenticated)

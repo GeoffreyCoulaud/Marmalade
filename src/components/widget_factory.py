@@ -1,4 +1,4 @@
-from typing import Any, Sequence, TypeVar
+from typing import Any, Callable, Sequence, TypeVar
 
 from gi.repository import Gtk
 
@@ -12,6 +12,7 @@ def WidgetFactory(
     klass: type[WidgetType],
     arguments: None | dict[str, Any] = None,
     properties: None | dict[str, Any] = None,
+    signal_handlers: None | dict[str, Callable] = None,
     children: None | ChildWidgetType | Sequence[None | ChildWidgetType] = None,
 ) -> WidgetType:
     """
@@ -23,6 +24,9 @@ def WidgetFactory(
     return (
         WidgetBuilder(klass, **(arguments if isinstance(arguments, dict) else {}))
         .set_properties(properties if isinstance(properties, dict) else {})
+        .add_signal_handlers(
+            signal_handlers if isinstance(signal_handlers, dict) else {}
+        )
         .add_children(
             children
             if isinstance(children, Sequence)

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Generic, Never, Self, Sequence, TypeVar, cast
+from typing import Any, Callable, Generic, Never, Self, Sequence, TypeVar, cast
 
 from gi.repository import Adw, Gtk
 
@@ -50,8 +50,18 @@ class WidgetBuilder(Generic[WidgetType]):
                 % (self.__widget_class_name, n, len(children))
             )
 
-    def add_children(self, children: Sequence[Gtk.Widget | None]) -> Self:
+    def add_children(
+        self,
+        # TODO Remove type override
+        children: "Sequence[WidgetBuilder | Gtk.Widget | None]",  # type: ignore
+    ) -> Self:
         """Add children to the widget"""
+
+        # Convert WidgetBuilder children to Widget
+        children: Sequence[Gtk.Widget | None] = [
+            (child.build() if isinstance(child, WidgetBuilder) else child)
+            for child in children
+        ]
 
         if not children:
             pass
@@ -93,6 +103,15 @@ class WidgetBuilder(Generic[WidgetType]):
                 self.__widget.pack_end(end)
             self.__widget.set_title_widget(title)
 
+        # Adw.ActionRow
+        elif isinstance(self.__widget, Adw.ActionRow):
+            self.__check_n_children(2, children)
+            prefix, suffix = children
+            if isinstance(prefix, Gtk.Widget):
+                self.__widget.add_prefix(prefix)
+            if isinstance(suffix, Gtk.Widget):
+                self.__widget.add_suffix(suffix)
+
         # Any widget with "set_child"
         elif getattr(self.__widget, "set_child", None) is not None:
             self.__check_n_children(1, children)
@@ -104,6 +123,12 @@ class WidgetBuilder(Generic[WidgetType]):
                 f"Widgets ${self.__widget_class_name} may not receive children"
             )
 
+        return self
+
+    def add_signal_handlers(self, signal_handlers: dict[str, Callable]) -> Self:
+        """Add signal handlers to the built widget"""
+        for signal, handler in signal_handlers.items():
+            self.__widget.connect(signal, handler)
         return self
 
     def build(self) -> WidgetType:
