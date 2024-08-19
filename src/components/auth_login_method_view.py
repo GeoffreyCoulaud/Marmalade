@@ -1,10 +1,11 @@
+from multiprocessing.dummy import active_children
 from typing import Callable
 
 from gi.repository import Adw, GObject, Gtk
 
 from src import shared
 from src.components.user_picker import UserPicker
-from src.components.widget_factory import WidgetFactory
+from src.components.widget_builder import WidgetBuilder
 from src.database.api import ServerInfo
 
 
@@ -36,30 +37,24 @@ class AuthLoginMethodView(Adw.NavigationPage):
 
     def __init_widget(self):
 
-        self.__cancel_button = WidgetFactory(
-            klass=Gtk.Button,
-            signal_handlers={"clicked": self.on_cancel_button_clicked},
-            properties={"label": _("Cancel")},
-        )
-        self.__user_picker = WidgetFactory(
-            klass=UserPicker,
-            signal_handlers={"user-picked": self.on_quick_resume_picked},
-            properties={
-                "title": _("Resume Session"),
-                "columns": 4,
-                "lines": 1,
-            },
-        )
+        self.__cancel_button = (
+            WidgetBuilder(Gtk.Button)
+            .set_properties(label=_("Cancel"))
+            .add_signal_handlers(clicked=self.on_cancel_button_clicked)
+        ).build()
+
+        self.__user_picker = (
+            WidgetBuilder(UserPicker)
+            .add_signal_handlers(user_picked=self.on_quick_resume_picked)
+            .set_properties(title=_("Resume Session"), columns=4, lines=1)
+        ).build()
 
         def next_button_factory(clicked_handler: Callable) -> Gtk.Button:
-            return WidgetFactory(
-                klass=Gtk.Button,
-                signal_handlers={"clicked": clicked_handler},
-                properties={
-                    "valign": Gtk.Align.CENTER,
-                    "icon_name": "go-next-symbolic",
-                },
-            )
+            return (
+                WidgetBuilder(Gtk.Button)
+                .add_signal_handlers(clicked=clicked_handler)
+                .set_properties(valign=Gtk.Align.CENTER, icon_name="go-next-symbolic")
+            ).build()
 
         self.__username_password_button = next_button_factory(
             clicked_handler=self.on_credentials_clicked
@@ -73,82 +68,70 @@ class AuthLoginMethodView(Adw.NavigationPage):
             icon: str,
             activatable: Gtk.Widget,
         ) -> Adw.ActionRow:
-            return WidgetFactory(
-                Adw.ActionRow,
-                properties={"title": title, "activatable_widget": activatable},
-                children=[
-                    WidgetFactory(
-                        Gtk.Image,
-                        properties={
-                            "margin_top": 16,
-                            "margin_bottom": 16,
-                            "margin_start": 10,
-                            "margin_end": 16,
-                            "icon_size": Gtk.IconSize.LARGE,
-                            "from_icon_name": icon,
-                        },
-                    ),
-                    activatable,
-                ],
-            )
+            return (
+                WidgetBuilder(Adw.ActionRow)
+                .set_properties(title=title, activatable_widget=activatable)
+                .add_children(
+                    WidgetBuilder(Gtk.Image).set_properties(
+                        margin_top=16,
+                        margin_bottom=16,
+                        margin_start=10,
+                        margin_end=16,
+                        icon_size=Gtk.IconSize.LARGE,
+                        from_icon_name=icon,
+                    )
+                )
+            ).build()
 
         self.set_title(_("Login Method"))
         self.set_can_pop(False)
         self.set_child(
-            WidgetFactory(
-                klass=Adw.ToolbarView,
-                children=[
-                    WidgetFactory(
-                        klass=Adw.HeaderBar,
-                        properties={"decoration_layout": ""},
-                        children=[
-                            self.__cancel_button,
-                            None,
-                            None,
-                        ],
-                    ),
-                    WidgetFactory(
-                        klass=Adw.Clamp,
-                        properties={
-                            "margin_top": 16,
-                            "margin_bottom": 16,
-                            "margin_start": 16,
-                            "margin_end": 16,
-                        },
-                        children=WidgetFactory(
-                            klass=Gtk.Box,
-                            properties={
-                                "orientation": Gtk.Orientation.VERTICAL,
-                                "spacing": 16,
-                            },
-                            children=[
-                                self.__user_picker,
-                                WidgetFactory(
-                                    klass=Adw.PreferencesGroup,
-                                    properties={
-                                        "title": _("Authenticate"),
-                                        "margin_start": 48,
-                                        "margin_end": 48,
-                                    },
-                                    children=[
-                                        auth_method_row_factory(
-                                            title=_("Username &amp; Password"),
-                                            icon="dialog-password-symbolic",
-                                            activatable=self.__username_password_button,
-                                        ),
-                                        auth_method_row_factory(
-                                            title=_("Quick Connect"),
-                                            icon="phonelink-symbolic",
-                                            activatable=self.__quick_connect_button,
-                                        ),
-                                    ],
-                                ),
-                            ],
+            WidgetBuilder(Adw.ToolbarView)
+            .add_children(
+                # Header bar
+                WidgetBuilder(Adw.HeaderBar)
+                .set_properties(decoration_layout="")
+                .add_children(self.__cancel_button, None, None),
+                # Content
+                WidgetBuilder(Adw.Clamp)
+                .set_properties(
+                    margin_top=16,
+                    margin_bottom=16,
+                    margin_start=16,
+                    margin_end=16,
+                )
+                .add_children(
+                    WidgetBuilder(Gtk.Box)
+                    .set_properties(
+                        orientation=Gtk.Orientation.VERTICAL,
+                        spacing=16,
+                    )
+                    .add_children(
+                        # User picker
+                        self.__user_picker,
+                        # Authentication methods
+                        WidgetBuilder(Adw.PreferencesGroup)
+                        .set_properties(
+                            title=_("Authenticate"),
+                            margin_start=48,
+                            margin_end=48,
+                        )
+                        .add_children(
+                            auth_method_row_factory(
+                                title=_("Username &amp; Password"),
+                                icon="dialog-password-symbolic",
+                                activatable=self.__username_password_button,
+                            ),
+                            auth_method_row_factory(
+                                title=_("Quick Connect"),
+                                icon="phonelink-symbolic",
+                                activatable=self.__quick_connect_button,
+                            ),
                         ),
-                    ),
-                    None,
-                ],
+                    )
+                ),
             )
+            .build()
         )
 
     def __init__(self, *args, server: ServerInfo, **kwargs) -> None:

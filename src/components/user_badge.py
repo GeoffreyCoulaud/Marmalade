@@ -6,7 +6,7 @@ from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.errors import UnexpectedStatus
 
 from src import shared
-from src.components.widget_factory import WidgetFactory
+from src.components.widget_builder import WidgetBuilder
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -41,34 +41,34 @@ class UserBadge(Adw.Bin):
     def __init_widget(self) -> None:
         """Create the widget structure"""
 
-        self.__avatar = WidgetFactory(
-            klass=Adw.Avatar,
-            properties={
-                "icon_name": "avatar-default-symbolic",
-                "valign": Gtk.Align.CENTER,
-                "margin_bottom": 8,
-                "size": 128,
-            },
-        )
-        self.__label = WidgetFactory(
-            klass=Gtk.Label,
-            properties={
-                "css_classes": ["dim-label", "heading"],
-                "justify": Gtk.Justification.CENTER,
-                "valign": Gtk.Align.CENTER,
-                "wrap": True,
-            },
-        )
-        self.__button = WidgetFactory(
-            klass=Gtk.Button,
-            properties={"css_classes": ["flat"]},
-            children=WidgetFactory(
-                klass=Gtk.Box,
-                properties={"orientation": Gtk.Orientation.VERTICAL},
-                children=(self.__avatar, self.__label),
-            ),
-        )
-        self.__button.connect("clicked", self.__on_button_clicked)
+        self.__avatar = (
+            WidgetBuilder(Adw.Avatar).set_properties(
+                icon_name="avatar-default-symbolic",
+                valign=Gtk.Align.CENTER,
+                margin_bottom=8,
+                size=128,
+            )
+        ).build()
+
+        self.__label = (
+            WidgetBuilder(Gtk.Label).set_properties(
+                css_classes=["dim-label", "heading"],
+                justify=Gtk.Justification.CENTER,
+                valign=Gtk.Align.CENTER,
+                wrap=True,
+            )
+        ).build()
+
+        self.__button = (
+            WidgetBuilder(Gtk.Button)
+            .set_properties(css_classes=["flat"])
+            .add_signal_handlers(clicked=self.__on_button_clicked)
+            .add_children(
+                WidgetBuilder(Gtk.Box)
+                .set_properties(orientation=Gtk.Orientation.VERTICAL)
+                .add_children(self.__avatar, self.__label)
+            )
+        ).build()
         self.set_child(self.__button)
 
     def __init__(self, *args, server: ServerInfo, user: UserInfo, **kwargs) -> None:

@@ -8,7 +8,7 @@ from jellyfin_api_client.models.authenticate_user_by_name import AuthenticateUse
 from jellyfin_api_client.models.authentication_result import AuthenticationResult
 
 from src import shared
-from src.components.widget_factory import WidgetFactory
+from src.components.widget_builder import WidgetBuilder
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
@@ -33,53 +33,48 @@ class AuthCredentialsView(Adw.NavigationPage):
         """Signal emitted when the user is authenticated"""
 
     def __init_widget(self):
-        self.__log_in_button = WidgetFactory(
-            klass=Gtk.Button,
-            properties={"css_classes": "suggested-action", "label": _("Log In")},
-        )
-        self.__log_in_button.connect("clicked", self.__on_log_in_request)
-        self.__username_entry_row = WidgetFactory(
-            klass=Adw.EntryRow,
-            properties={"title": _("Username")},
-        )
-        self.__password_entry_row = WidgetFactory(
-            klass=Adw.EntryRow,
-            properties={"title": _("Password")},
-        )
-        self.__toast_overlay = WidgetFactory(
-            klass=Adw.ToastOverlay,
-            children=WidgetFactory(
-                klass=Adw.Clamp,
-                properties={
-                    "margin_top": 16,
-                    "margin_bottom": 16,
-                    "margin_start": 16,
-                    "margin_end": 16,
-                },
-                children=WidgetFactory(
-                    klass=Adw.PreferencesGroup,
-                    children=[
+        self.__log_in_button = (
+            WidgetBuilder(Gtk.Button)
+            .set_properties(css_class=["suggested-action"], label=_("Log In"))
+            .add_signal_handlers(clicked=self.__on_log_in_request)
+        ).build()
+
+        self.__username_entry_row = (
+            WidgetBuilder(Adw.EntryRow).set_properties(title=_("Username"))
+        ).build()
+
+        self.__password_entry_row = (
+            WidgetBuilder(Adw.EntryRow).set_properties(title=_("Password"))
+        ).build()
+
+        self.__toast_overlay = (
+            WidgetBuilder(Adw.ToastOverlay).add_children(
+                WidgetBuilder(Adw.Clamp)
+                .set_properties(
+                    margin_top=16,
+                    margin_bottom=16,
+                    margin_start=16,
+                    margin_end=16,
+                )
+                .add_children(
+                    WidgetBuilder(Adw.PreferencesGroup).add_children(
                         self.__username_entry_row,
                         self.__password_entry_row,
-                    ],
-                ),
-            ),
-        )
+                    )
+                )
+            )
+        ).build()
+
         self.set_title(_("Credentials"))
         self.set_tag("credentials")
         self.set_child(
-            WidgetFactory(
-                klass=Adw.ToolbarView,
-                children=[
-                    WidgetFactory(
-                        klass=Adw.HeaderBar,
-                        properties={"decoration_layout": ""},
-                        children=[None, None, self.__log_in_button],
-                    ),
-                    self.__toast_overlay,
-                    None,
-                ],
+            WidgetBuilder(Adw.ToolbarView)
+            .add_children(
+                WidgetBuilder(Adw.HeaderBar)
+                .set_properties(decoration_layout="")
+                .add_children(None, None, self.__log_in_button)
             )
+            .build()
         )
 
     def __init__(self, *args, server: ServerInfo, username: str, **kwargs) -> None:
