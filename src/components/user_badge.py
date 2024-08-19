@@ -1,12 +1,13 @@
 import logging
 from http import HTTPStatus
+from operator import call
 from pathlib import Path
 
 from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.errors import UnexpectedStatus
 
 from src import shared
-from src.components.widget_builder import WidgetBuilder
+from src.components.widget_builder import Handlers, Properties, WidgetBuilder
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -41,39 +42,43 @@ class UserBadge(Adw.Bin):
     def __init_widget(self) -> None:
         """Create the widget structure"""
 
-        self.__avatar = (
-            WidgetBuilder(Adw.Avatar).set_properties(
+        self.__avatar = call(
+            WidgetBuilder(Adw.Avatar)
+            | Properties(
                 icon_name="avatar-default-symbolic",
                 valign=Gtk.Align.CENTER,
                 margin_bottom=8,
                 size=128,
             )
-        ).build()
+        )
 
-        self.__label = (
-            WidgetBuilder(Gtk.Label).set_properties(
+        self.__label = call(
+            WidgetBuilder(Gtk.Label)
+            | Properties(
                 css_classes=["dim-label", "heading"],
                 justify=Gtk.Justification.CENTER,
                 valign=Gtk.Align.CENTER,
                 wrap=True,
             )
-        ).build()
+        )
 
-        self.__button = (
+        self.__button = call(
             WidgetBuilder(Gtk.Button)
-            .set_properties(css_classes=["flat"])
-            .add_signal_handlers(clicked=self.__on_button_clicked)
-            .add_children(
+            | Properties(css_classes=["flat"])
+            | Handlers(clicked=self.__on_button_clicked)
+            | (
                 WidgetBuilder(Gtk.Box)
-                .set_properties(orientation=Gtk.Orientation.VERTICAL)
-                .add_children(self.__avatar, self.__label)
+                | Properties(orientation=Gtk.Orientation.VERTICAL)
+                | (self.__avatar, self.__label)
             )
-        ).build()
+        )
+
         self.set_child(self.__button)
 
     def __init__(self, *args, server: ServerInfo, user: UserInfo, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.__init_widget()
+
         self.__server = server
         self.__user = user
         self.__image_dir = (
@@ -88,6 +93,7 @@ class UserBadge(Adw.Bin):
         self.__image_size = self.__avatar.get_size()
         self.__label.set_label(user.name)
         self.__avatar.set_text(user.name)
+
         self.load_image()
 
     def __on_button_clicked(self, _button):
