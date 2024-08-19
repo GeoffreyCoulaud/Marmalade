@@ -61,7 +61,8 @@ class WidgetBuilder(Generic[BuiltWidgetType]):
         for child in children:
             if child is None:
                 raise ValueError(
-                    f"Widget type ${self.__widget_class_name} may not receive None children"
+                    "Widget type %s may not receive None children"
+                    % self.__widget_class_name
                 )
 
     def __check_n_children(self, n: int, children: Sequence[Widget | None]) -> None:
