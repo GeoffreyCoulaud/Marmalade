@@ -37,7 +37,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
     __code_label       = Gtk.Template.Child("code_label")
     # fmt: on
 
-    __dialog: Adw.Window
+    __dialog: Adw.ApplicationWindow
     __server: ServerInfo
     __secret: str
     __cancellable: Gio.Cancellable
@@ -46,7 +46,9 @@ class AuthQuickConnectView(Adw.NavigationPage):
     def authenticated(self, _user_id: str):
         """Signal emitted when the user is authenticated"""
 
-    def __init__(self, *args, dialog: Adw.Window, server: ServerInfo, **kwargs) -> None:
+    def __init__(
+        self, *args, dialog: Adw.ApplicationWindow, server: ServerInfo, **kwargs
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.__dialog = dialog
         self.__server = server

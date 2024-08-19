@@ -1,18 +1,18 @@
-from gi.repository import Adw, GObject, Gtk
+from gi.repository import Adw, GObject
 
-from src import build_constants, shared
+from src import shared
 from src.components.auth_credentials_view import AuthCredentialsView
 from src.components.auth_login_method_view import AuthLoginMethodView
 from src.components.auth_quick_connect_view import AuthQuickConnectView
 from src.components.auth_user_select_view import AuthUserSelectView
+from src.components.widget_factory import WidgetFactory
 from src.database.api import ServerInfo
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/auth_dialog.ui")
 class AuthDialog(Adw.ApplicationWindow):
     __gtype_name__ = "MarmaladeAuthDialog"
 
-    views = Gtk.Template.Child()
+    views: Adw.NavigationView
 
     server: ServerInfo
 
@@ -24,10 +24,16 @@ class AuthDialog(Adw.ApplicationWindow):
     def cancelled(self):
         """Signal emitted when the login process is cancelled"""
 
+    def __init_widget(self):
+        self.views = WidgetFactory(klass=Adw.NavigationView)
+        self.set_default_size(width=600, height=400)
+        self.set_content(self.views)
+
     def __init__(
         self, application: Adw.Application, server: ServerInfo, **kwargs
     ) -> None:
         super().__init__(application=application, **kwargs)
+        self.__init_widget()
 
         self.server = server
 
@@ -63,7 +69,7 @@ class AuthDialog(Adw.ApplicationWindow):
         # If not, display the credentials view
         user = shared.settings.get_user(address=self.server.address, user_id=user_id)
         username = "" if user is None else user.name
-        view = AuthCredentialsView(dialog=self, server=self.server, username=username)
+        view = AuthCredentialsView(server=self.server, username=username)
         view.connect("authenticated", self.on_authenticated)
         self.views.push(view)
 
