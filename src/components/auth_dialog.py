@@ -5,7 +5,7 @@ from src.components.auth_credentials_view import AuthCredentialsView
 from src.components.auth_login_method_view import AuthLoginMethodView
 from src.components.auth_quick_connect_view import AuthQuickConnectView
 from src.components.auth_user_select_view import AuthUserSelectView
-from src.components.widget_factory import WidgetFactory
+from src.components.widget_builder import WidgetBuilder
 from src.database.api import ServerInfo
 
 
@@ -25,7 +25,7 @@ class AuthDialog(Adw.ApplicationWindow):
         """Signal emitted when the login process is cancelled"""
 
     def __init_widget(self):
-        self.views = WidgetFactory(klass=Adw.NavigationView)
+        self.views = WidgetBuilder(Adw.NavigationView).build()
         self.set_default_size(width=600, height=400)
         self.set_content(self.views)
 

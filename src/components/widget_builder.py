@@ -13,15 +13,15 @@ class WidgetBuilder(Generic[WidgetType]):
     __widget: WidgetType
 
     def __init__(
-        self, widget_class: type[WidgetType], **arguments: dict[str, Any]
+        self, constructor: Callable[..., WidgetType], **arguments: dict[str, Any]
     ) -> None:
-        self.__widget = widget_class(**arguments)  # type: ignore
+        self.__widget = constructor(**arguments)  # type: ignore
 
     @property
     def __widget_class_name(self) -> str:
         return self.__widget.__class__.__name__
 
-    def set_properties(self, properties: dict[str, Any]) -> Self:
+    def set_properties(self, **properties: Any) -> Self:
         """Add properties to set on the widget"""
         for key, value in properties.items():
             clean_key = key.replace("-", "_")
@@ -51,9 +51,7 @@ class WidgetBuilder(Generic[WidgetType]):
             )
 
     def add_children(
-        self,
-        # TODO Remove type override
-        children: "Sequence[WidgetBuilder | Gtk.Widget | None]",  # type: ignore
+        self, *children: "None | WidgetBuilder | Gtk.Widget"  # type: ignore
     ) -> Self:
         """Add children to the widget"""
 
@@ -125,7 +123,7 @@ class WidgetBuilder(Generic[WidgetType]):
 
         return self
 
-    def add_signal_handlers(self, signal_handlers: dict[str, Callable]) -> Self:
+    def add_signal_handlers(self, **signal_handlers: Callable) -> Self:
         """Add signal handlers to the built widget"""
         for signal, handler in signal_handlers.items():
             self.__widget.connect(signal, handler)
