@@ -7,7 +7,7 @@ from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.errors import UnexpectedStatus
 
 from src import shared
-from src.components.widget_builder import Handlers, Properties, WidgetBuilder
+from src.components.widget_builder import Children, Handlers, Properties, WidgetBuilder
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -66,10 +66,13 @@ class UserBadge(Adw.Bin):
             WidgetBuilder(Gtk.Button)
             | Properties(css_classes=["flat"])
             | Handlers(clicked=self.__on_button_clicked)
-            | (
+            | Children(
                 WidgetBuilder(Gtk.Box)
                 | Properties(orientation=Gtk.Orientation.VERTICAL)
-                | (self.__avatar, self.__label)
+                | Children(
+                    self.__avatar,
+                    self.__label,
+                )
             )
         )
 

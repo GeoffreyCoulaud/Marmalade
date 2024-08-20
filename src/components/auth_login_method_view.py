@@ -6,7 +6,7 @@ from gi.repository import Adw, GObject, Gtk
 
 from src import shared
 from src.components.user_picker import UserPicker
-from src.components.widget_builder import Handlers, Properties, WidgetBuilder
+from src.components.widget_builder import Children, Handlers, Properties, WidgetBuilder
 from src.database.api import ServerInfo
 
 
@@ -72,7 +72,7 @@ class AuthLoginMethodView(Adw.NavigationPage):
             return call(
                 WidgetBuilder(Adw.ActionRow)
                 | Properties(title=title, activatable_widget=activatable)
-                | (
+                | Children(
                     WidgetBuilder(Gtk.Image)
                     | Properties(
                         margin_top=16,
@@ -91,11 +91,11 @@ class AuthLoginMethodView(Adw.NavigationPage):
         self.set_child(
             call(
                 WidgetBuilder(Adw.ToolbarView)
-                | (
+                | Children(
                     # Header bar
                     WidgetBuilder(Adw.HeaderBar)
                     | Properties(decoration_layout="")
-                    | (self.__cancel_button, None, None),
+                    | Children(self.__cancel_button, None, None),
                     # Content
                     WidgetBuilder(Adw.Clamp)
                     | Properties(
@@ -104,10 +104,10 @@ class AuthLoginMethodView(Adw.NavigationPage):
                         margin_start=16,
                         margin_end=16,
                     )
-                    | (
+                    | Children(
                         WidgetBuilder(Gtk.Box)
                         | Properties(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-                        | (
+                        | Children(
                             # User picker
                             self.__user_picker,
                             # Authentication methods
@@ -117,15 +117,17 @@ class AuthLoginMethodView(Adw.NavigationPage):
                                 margin_start=48,
                                 margin_end=48,
                             )
-                            | auth_method_row_factory(
-                                title=_("Username &amp; Password"),
-                                icon="dialog-password-symbolic",
-                                activatable=self.__username_password_button,
-                            )
-                            | auth_method_row_factory(
-                                title=_("Quick Connect"),
-                                icon="phonelink-symbolic",
-                                activatable=self.__quick_connect_button,
+                            | Children(
+                                auth_method_row_factory(
+                                    title=_("Username &amp; Password"),
+                                    icon="dialog-password-symbolic",
+                                    activatable=self.__username_password_button,
+                                ),
+                                auth_method_row_factory(
+                                    title=_("Quick Connect"),
+                                    icon="phonelink-symbolic",
+                                    activatable=self.__quick_connect_button,
+                                ),
                             ),
                         )
                     ),

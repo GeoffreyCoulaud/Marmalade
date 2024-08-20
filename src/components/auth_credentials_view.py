@@ -9,7 +9,7 @@ from jellyfin_api_client.models.authenticate_user_by_name import AuthenticateUse
 from jellyfin_api_client.models.authentication_result import AuthenticationResult
 
 from src import shared
-from src.components.widget_builder import Handlers, Properties, WidgetBuilder
+from src.components.widget_builder import Children, Handlers, Properties, WidgetBuilder
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
@@ -39,14 +39,16 @@ class AuthCredentialsView(Adw.NavigationPage):
             | Properties(css_class=["suggested-action"], label=_("Log In"))
             | Handlers(clicked=self.__on_log_in_request)
         )
-
-        self.__username_entry_row = call(
-            WidgetBuilder(Adw.EntryRow) | Properties(title=_("Username"))
+        # fmt: off
+        self.__username_entry_row = call(  
+            WidgetBuilder(Adw.EntryRow)
+            | Properties(title=_("Username"))  
         )
-
         self.__password_entry_row = call(
-            WidgetBuilder(Adw.EntryRow) | Properties(title=_("Password"))
+            WidgetBuilder(Adw.EntryRow)
+            | Properties(title=_("Password"))
         )
+        # fmt: on
 
         self.__toast_overlay = call(
             WidgetBuilder(Adw.ToastOverlay).add_children(
@@ -57,25 +59,29 @@ class AuthCredentialsView(Adw.NavigationPage):
                     margin_start=16,
                     margin_end=16,
                 )
-                | (
+                | Children(
                     WidgetBuilder(Adw.PreferencesGroup)
-                    | self.__username_entry_row
-                    | self.__password_entry_row
+                    | Children(
+                        self.__username_entry_row,
+                        self.__password_entry_row,
+                    )
                 )
             )
         )
 
         self.set_title(_("Credentials"))
         self.set_tag("credentials")
-        self.set_child(
-            WidgetBuilder(Adw.ToolbarView)
-            .add_children(
+        # fmt: off
+        child = call(
+            WidgetBuilder(Adw.ToolbarView) 
+            | Children(
                 WidgetBuilder(Adw.HeaderBar)
-                .set_properties(decoration_layout="")
-                .add_children(None, None, self.__log_in_button)
+                | Properties(decoration_layout="")
+                | Children(None, None, self.__log_in_button)
             )
-            .build()
         )
+        # fmt: on
+        self.set_child(child)
 
     def __init__(self, *args, server: ServerInfo, username: str, **kwargs) -> None:
         super().__init__(*args, **kwargs)
