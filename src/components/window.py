@@ -18,13 +18,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+from operator import call
 
 from gi.repository import Adw
 
 from src import shared
 from src.components.server_browser_view import ServerBrowserView
 from src.components.servers_list_view import ServersListView
-from src.components.widget_builder import WidgetBuilder
+from src.components.widget_builder import Properties, WidgetBuilder
 from src.jellyfin import JellyfinClient
 
 
@@ -42,10 +43,11 @@ class MarmaladeWindow(Adw.ApplicationWindow):
     navigation: Adw.NavigationView
 
     def __init_widget(self):
-        self.navigation = (
-            WidgetBuilder(Adw.NavigationView)
-            .set_properties(pop_on_escape=False)
-            .build()
+        self.navigation = call(
+            # fmt: off
+            WidgetBuilder(Adw.NavigationView) 
+            | Properties(pop_on_escape=False)
+            # fmt: on
         )
         self.set_default_size(800, 600)
         self.set_content(self.navigation)
