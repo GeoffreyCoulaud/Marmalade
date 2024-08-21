@@ -43,7 +43,7 @@ class ServerHomePage(ServerPage):
 
         def query_libraries() -> Sequence[BaseItemDto]:
             """Query user libraries"""
-            res = get_user_views.sync_detailed(user_id, client=client)
+            res = get_user_views.sync_detailed(client=client, user_id=user_id)
             if res.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(res.status_code, res.content)
             return res.parsed.items
@@ -82,14 +82,14 @@ class ServerHomePage(ServerPage):
 
         def query_library_items(library_id: str) -> Sequence[BaseItemDto]:
             res = get_latest_media.sync_detailed(
-                user_id, client=client, parent_id=library_id
+                client=client, user_id=user_id, parent_id=library_id
             )
             if res.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(res.status_code, res.content)
             return res.parsed
 
         def query_resume_items() -> Sequence[BaseItemDto]:
-            res = get_resume_items.sync_detailed(user_id, client=client)
+            res = get_resume_items.sync_detailed(client=client, user_id=user_id)
             if res.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(res.status_code, res.content)
             return res.parsed.items

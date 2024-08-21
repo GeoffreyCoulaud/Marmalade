@@ -150,7 +150,7 @@ class ServerBrowserView(ServerBrowser):
             self.__admin_dashboard_link.set_visible(is_admin)
 
         def query_libraries():
-            res = get_user_views.sync_detailed(self.user_id, client=self.client)
+            res = get_user_views.sync_detailed(client=self.client, user_id=self.user_id)
             if res.status_code == HTTPStatus.OK:
                 return res.parsed
             raise UnexpectedStatus(res.status_code, res.content)

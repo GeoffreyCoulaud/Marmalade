@@ -1,7 +1,7 @@
 import logging
 from collections.abc import Sequence
 from operator import call
-from typing import Any, Callable, Generic, Self, TypeVar, cast
+from typing import Any, Callable, Generic, Self, TypeVar
 
 from gi.repository import Adw, Gtk
 from gi.repository.Gtk import Widget
@@ -68,7 +68,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
 
     def __check_no_null_children(
         self, children: Sequence[_ResolvedWidgetBuilderChild]
-    ) -> None:
+    ) -> Sequence[Widget]:
         """Helper function to check that the passed children contains no None"""
         for child in children:
             if child is None:
@@ -76,6 +76,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
                     "Widget type %s may not receive None children"
                     % self.__widget_class_name
                 )
+        return children  # type: ignore
 
     def __check_n_children(
         self, n: int, children: Sequence[_ResolvedWidgetBuilderChild]
@@ -116,15 +117,15 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
 
         # Gtk.Box
         elif isinstance(self.__widget, Gtk.Box):
-            self.__check_no_null_children(resolved)
-            for child in (child for child in resolved if child is not None):
+            non_null = self.__check_no_null_children(resolved)
+            for child in non_null:
                 self.__widget.append(child)
 
         # Adw.PreferencesGroup
         elif isinstance(self.__widget, Adw.PreferencesGroup):
-            self.__check_no_null_children(resolved)
-            for child in resolved:
-                self.__widget.add(cast(Widget, child))
+            non_null = self.__check_no_null_children(resolved)
+            for child in non_null:
+                self.__widget.add(child)
 
         # Adw.ApplicationWindow
         elif isinstance(self.__widget, Adw.ApplicationWindow):
@@ -159,6 +160,12 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
                 self.__widget.add_prefix(prefix)
             if isinstance(suffix, Widget):
                 self.__widget.add_suffix(suffix)
+
+        # Adw.ViewStack
+        elif isinstance(self.__widget, Adw.ViewStack):
+            non_null = self.__check_no_null_children(resolved)
+            for child in non_null:
+                self.__widget.add(child)
 
         # Any widget with "set_child"
         elif getattr(self.__widget, "set_child", None) is not None:
@@ -221,11 +228,9 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
         elif isinstance(other, Widget) or callable(other):
             self.add_children(other)
         elif other is None:
-            logging.warning(
-                "While syntactically valid,"
-                + " adding a single None child to a WidgetBuilder is a no-op."
-                + " Please avoid doing so."
-            )
+            # fmt: off
+            logging.warning("While syntactically valid, adding a single None child to a WidgetBuilder is a no-op. Please avoid doing so.")
+            # fmt: on
             pass
 
         # Multiple children
