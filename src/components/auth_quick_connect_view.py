@@ -3,7 +3,7 @@ from http import HTTPStatus
 from operator import call
 from typing import cast, no_type_check
 
-from gi.repository import Adw, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
 from jellyfin_api_client.api.quick_connect import initiate_quick_connect
 from jellyfin_api_client.api.user import authenticate_with_quick_connect
 from jellyfin_api_client.errors import UnexpectedStatus
@@ -52,13 +52,13 @@ class AuthQuickConnectView(Adw.NavigationPage):
         self.__refresh_button = call(
             WidgetBuilder(Gtk.Button)
             | Handlers(clicked=self.on_refresh_requested)
-            | Properties(icon_name="view-refresh-icon")
+            | Properties(icon_name="view-refresh-symbolic")
         )
         self.__connect_button = call(
             WidgetBuilder(Gtk.Button)
             | Handlers(clicked=self.on_connect_requested)
             | Properties(
-                styles=["suggested-action"],
+                css_classes=["suggested-action"],
                 label=_("Connect"),
                 sensitive=False,
             )
@@ -66,7 +66,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
         self.__state_ok_view = call(
             WidgetBuilder(Gtk.Label)
             | Properties(
-                styles=["title-1"],
+                css_classes=["title-1"],
                 halign=Gtk.Align.CENTER,
                 use_markup=True,
                 selectable=True,
@@ -116,7 +116,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
                         # Code state box
                         WidgetBuilder(Adw.Bin)
                         | Properties(
-                            styles=["card", "view", "frame"],
+                            css_classes=["card", "view", "frame"],
                             margin_top=16,
                             margin_bottom=16,
                         )
@@ -124,7 +124,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
                         # Explaination title
                         WidgetBuilder(Gtk.Label)
                         | Properties(
-                            styles=["heading"],
+                            css_classes=["heading"],
                             margin_bottom=8,
                             halign=Gtk.Align.START,
                             label=_("How to use quick connect?"),
@@ -134,7 +134,7 @@ class AuthQuickConnectView(Adw.NavigationPage):
                         | Properties(
                             halign=Gtk.Align.START,
                             wrap=True,
-                            wrap_mode=Gtk.WrapMode.WORD_CHAR,
+                            wrap_mode=Pango.WrapMode.WORD_CHAR,
                             natural_wrap_mode=Gtk.WrapMode.WORD,
                             label=_(
                                 "Quick connect permits logging into a new device without entering a password.\nUsing an already logged-in Jellyfin client, navigate to the settings to enter the quick connect code displayed above."
