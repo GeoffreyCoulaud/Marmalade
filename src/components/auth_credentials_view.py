@@ -36,7 +36,7 @@ class AuthCredentialsView(Adw.NavigationPage):
     def __init_widget(self):
         self.__log_in_button = call(
             WidgetBuilder(Gtk.Button)
-            | Properties(css_class=["suggested-action"], label=_("Log In"))
+            | Properties(css_classes=["suggested-action"], label=_("Log In"))
             | Handlers(clicked=self.__on_log_in_request)
         )
         # fmt: off
@@ -51,7 +51,8 @@ class AuthCredentialsView(Adw.NavigationPage):
         # fmt: on
 
         self.__toast_overlay = call(
-            WidgetBuilder(Adw.ToastOverlay).add_children(
+            WidgetBuilder(Adw.ToastOverlay)
+            | Children(
                 WidgetBuilder(Adw.Clamp)
                 | Properties(
                     margin_top=16,
@@ -77,7 +78,9 @@ class AuthCredentialsView(Adw.NavigationPage):
             | Children(
                 WidgetBuilder(Adw.HeaderBar)
                 | Properties(decoration_layout="")
-                | Children(None, None, self.__log_in_button)
+                | Children(None, None, self.__log_in_button),
+                self.__toast_overlay,
+                None
             )
         )
         # fmt: on
