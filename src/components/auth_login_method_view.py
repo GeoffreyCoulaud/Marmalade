@@ -1,12 +1,10 @@
-from multiprocessing.dummy import active_children
-from operator import call
 from typing import Callable
 
 from gi.repository import Adw, GObject, Gtk
 
 from src import shared
 from src.components.user_picker import UserPicker
-from src.components.widget_builder import Children, Handlers, Properties, WidgetBuilder
+from src.components.widget_builder import Children, Handlers, Properties, build
 from src.database.api import ServerInfo
 
 
@@ -38,23 +36,23 @@ class AuthLoginMethodView(Adw.NavigationPage):
 
     def __init_widget(self):
 
-        self.__cancel_button = call(
-            WidgetBuilder(Gtk.Button)
-            | Properties(label=_("Cancel"))
-            | Handlers(clicked=self.__on_cancel_button_clicked)
+        self.__cancel_button = build(
+            Gtk.Button
+            + Properties(label=_("Cancel"))
+            + Handlers(clicked=self.__on_cancel_button_clicked)
         )
 
-        self.__user_picker = call(
-            WidgetBuilder(UserPicker)
-            | Properties(title=_("Resume Session"), columns=4, lines=1)
-            | Handlers(user_picked=self.__on_quick_resume_picked)
+        self.__user_picker = build(
+            UserPicker
+            + Properties(title=_("Resume Session"), columns=4, lines=1)
+            + Handlers(user_picked=self.__on_quick_resume_picked)
         )
 
         def next_button_factory(clicked_handler: Callable) -> Gtk.Button:
-            return call(
-                WidgetBuilder(Gtk.Button)
-                | Properties(valign=Gtk.Align.CENTER, icon_name="go-next-symbolic")
-                | Handlers(clicked=clicked_handler)
+            return build(
+                Gtk.Button
+                + Properties(valign=Gtk.Align.CENTER, icon_name="go-next-symbolic")
+                + Handlers(clicked=clicked_handler)
             )
 
         self.__username_password_button = next_button_factory(
@@ -69,12 +67,12 @@ class AuthLoginMethodView(Adw.NavigationPage):
             icon: str,
             activatable: Gtk.Widget,
         ) -> Adw.ActionRow:
-            return call(
-                WidgetBuilder(Adw.ActionRow)
-                | Properties(title=title, activatable_widget=activatable)
-                | Children(
-                    WidgetBuilder(Gtk.Image)
-                    | Properties(
+            return build(
+                Adw.ActionRow
+                + Properties(title=title, activatable_widget=activatable)
+                + Children(
+                    Gtk.Image
+                    + Properties(
                         margin_top=16,
                         margin_bottom=16,
                         margin_start=10,
@@ -89,35 +87,35 @@ class AuthLoginMethodView(Adw.NavigationPage):
         self.set_title(_("Login Method"))
         self.set_can_pop(False)
         self.set_child(
-            call(
-                WidgetBuilder(Adw.ToolbarView)
-                | Children(
+            build(
+                Adw.ToolbarView
+                + Children(
                     # Header bar
-                    WidgetBuilder(Adw.HeaderBar)
-                    | Properties(decoration_layout="")
-                    | Children(self.__cancel_button, None, None),
+                    Adw.HeaderBar
+                    + Properties(decoration_layout="")
+                    + Children(self.__cancel_button, None, None),
                     # Content
-                    WidgetBuilder(Adw.Clamp)
-                    | Properties(
+                    Adw.Clamp
+                    + Properties(
                         margin_top=16,
                         margin_bottom=16,
                         margin_start=16,
                         margin_end=16,
                     )
-                    | Children(
-                        WidgetBuilder(Gtk.Box)
-                        | Properties(orientation=Gtk.Orientation.VERTICAL, spacing=16)
-                        | Children(
+                    + Children(
+                        Gtk.Box
+                        + Properties(orientation=Gtk.Orientation.VERTICAL, spacing=16)
+                        + Children(
                             # User picker
                             self.__user_picker,
                             # Authentication methods
-                            WidgetBuilder(Adw.PreferencesGroup)
-                            | Properties(
+                            Adw.PreferencesGroup
+                            + Properties(
                                 title=_("Authenticate"),
                                 margin_start=48,
                                 margin_end=48,
                             )
-                            | Children(
+                            + Children(
                                 auth_method_row_factory(
                                     title=_("Username &amp; Password"),
                                     icon="dialog-password-symbolic",

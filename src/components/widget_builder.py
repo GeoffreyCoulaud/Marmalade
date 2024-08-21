@@ -1,17 +1,11 @@
 import logging
-from abc import ABC, abstractmethod
-from ast import Call
 from collections.abc import Sequence
-from operator import call
 from typing import Any, Callable, Generic, Self, TypeVar
 
 from gi.repository import Adw, Gtk
 from gi.repository.Gtk import Widget
 
 _BuiltWidgetType = TypeVar("_BuiltWidgetType", bound=Widget)
-_WidgetProducer = Callable[[], Widget]
-_ResolvedWidgetBuilderChild = Widget | None
-_WidgetBuilderChild = _WidgetProducer | _ResolvedWidgetBuilderChild
 
 
 class WidgetBuilder(Generic[_BuiltWidgetType]):
@@ -26,7 +20,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
     __arguments: dict[str, Any]
     __handlers: dict[str, Any]
     __properties: dict[str, Any]
-    __children: list[_WidgetBuilderChild]
+    __children: list["WidgetBuilder | Widget | None"]
 
     def __init__(
         self, widget_class: None | Callable[..., _BuiltWidgetType] = None
@@ -57,7 +51,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
         self.__handlers |= signal_handlers
         return self
 
-    def add_children(self, *children: _WidgetBuilderChild) -> Self:
+    def add_children(self, *children: "WidgetBuilder | Widget | None") -> Self:
         """
         Add children to the widget.
 
@@ -87,7 +81,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
     def get_handlers(self) -> dict[str, Any]:
         return self.__handlers
 
-    def get_children(self) -> list[_WidgetBuilderChild]:
+    def get_children(self) -> list["WidgetBuilder | Widget | None"]:
         return self.__children
 
     # Build helpers
@@ -111,7 +105,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
             widget.connect(signal, handler)
 
     def __check_no_null_children(
-        self, children: Sequence[_ResolvedWidgetBuilderChild]
+        self, children: Sequence[Widget | None]
     ) -> Sequence[Widget]:
         """Helper function to check that the passed children contains no None"""
         for child in children:
@@ -121,9 +115,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
                 )
         return children  # type: ignore
 
-    def __check_n_children(
-        self, n: int, children: Sequence[_ResolvedWidgetBuilderChild]
-    ) -> None:
+    def __check_n_children(self, n: int, children: Sequence[Widget | None]) -> None:
         """Helper function to check that the passed children are of length `n`"""
         if len(children) != n:
             raise ValueError(
@@ -132,10 +124,13 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
             )
 
     def __resolve_children(
-        self, children: Sequence[_WidgetBuilderChild]
-    ) -> Sequence[_ResolvedWidgetBuilderChild]:
+        self, children: Sequence["WidgetBuilder | Widget | None"]
+    ) -> Sequence[Widget | None]:
         """Resolve `WidgetProducer` children by calling them and producing their `Widget`"""
-        return [(call(child) if callable(child) else child) for child in children]
+        return [
+            (build(child) if isinstance(child, WidgetBuilder) else child)
+            for child in children
+        ]
 
     def __apply_children(self, widget: Widget) -> None:
 
@@ -220,16 +215,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
         self.__apply_children(widget)
         return widget
 
-    def __call__(self) -> _BuiltWidgetType:
-        """
-        Alias for `build()`
-
-        Needed to pass `WidgetBuilder` instances to `WidgetBuilder.add_children()`
-        """
-        return self.build()
-
-    def __or__(self, other: "WidgetBuilder") -> "WidgetBuilder":
-
+    def __add__(self, other: "WidgetBuilder") -> "WidgetBuilder":
         new_builder = (
             WidgetBuilder()
             .set_widget_class(self.get_widget_class())
@@ -247,7 +233,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
 
         return new_builder
 
-    def __ror__(self, other: Any) -> "WidgetBuilder":
+    def __radd__(self, other: type[Widget]) -> "WidgetBuilder":
         """
         Applies to a Widget class to return a new WidgetBuilder
         Enables the following syntax:
@@ -260,7 +246,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
         if issubclass(other, Widget):
             builder = WidgetBuilder()
             builder.set_widget_class(other)
-            return builder | self
+            return builder + self
 
         return NotImplemented
 
@@ -292,6 +278,15 @@ class Handlers(WidgetBuilder):
 class Children(WidgetBuilder):
     """A list of children to pass to a builder object"""
 
-    def __init__(self, *children: _WidgetBuilderChild) -> None:
+    def __init__(self, *children: "WidgetBuilder | Widget | None") -> None:
         super().__init__()
         self.add_children(*children)
+
+
+def build(builder: WidgetBuilder[_BuiltWidgetType]) -> _BuiltWidgetType:
+    """
+    Function that builds a `WidgetBuilder`.
+
+    This is just syntactic sugar around `WidgetBuilder.build()`
+    """
+    return builder.build()

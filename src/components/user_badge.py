@@ -1,13 +1,12 @@
 import logging
 from http import HTTPStatus
-from operator import call
 from pathlib import Path
 
 from gi.repository import Adw, GObject, Gtk
 from jellyfin_api_client.errors import UnexpectedStatus
 
 from src import shared
-from src.components.widget_builder import Children, Handlers, Properties, WidgetBuilder
+from src.components.widget_builder import Children, Handlers, Properties, build
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
 from src.task import Task
@@ -42,9 +41,9 @@ class UserBadge(Adw.Bin):
     def __init_widget(self) -> None:
         """Create the widget structure"""
 
-        self.__avatar = call(
-            WidgetBuilder(Adw.Avatar)
-            | Properties(
+        self.__avatar = build(
+            Adw.Avatar
+            + Properties(
                 icon_name="avatar-default-symbolic",
                 valign=Gtk.Align.CENTER,
                 margin_bottom=8,
@@ -52,9 +51,9 @@ class UserBadge(Adw.Bin):
             )
         )
 
-        self.__label = call(
-            WidgetBuilder(Gtk.Label)
-            | Properties(
+        self.__label = build(
+            Gtk.Label
+            + Properties(
                 css_classes=["dim-label", "heading"],
                 justify=Gtk.Justification.CENTER,
                 valign=Gtk.Align.CENTER,
@@ -62,14 +61,14 @@ class UserBadge(Adw.Bin):
             )
         )
 
-        self.__button = call(
-            WidgetBuilder(Gtk.Button)
-            | Properties(css_classes=["flat"])
-            | Handlers(clicked=self.__on_button_clicked)
-            | Children(
-                WidgetBuilder(Gtk.Box)
-                | Properties(orientation=Gtk.Orientation.VERTICAL)
-                | Children(
+        self.__button = build(
+            Gtk.Button
+            + Properties(css_classes=["flat"])
+            + Handlers(clicked=self.__on_button_clicked)
+            + Children(
+                Gtk.Box
+                + Properties(orientation=Gtk.Orientation.VERTICAL)
+                + Children(
                     self.__avatar,
                     self.__label,
                 )
