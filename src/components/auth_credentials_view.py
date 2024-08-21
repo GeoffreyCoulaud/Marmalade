@@ -1,6 +1,5 @@
 import logging
 from http import HTTPStatus
-from operator import call
 
 from gi.repository import Adw, GLib, GObject, Gtk
 from jellyfin_api_client.api.user import authenticate_user_by_name
@@ -9,7 +8,13 @@ from jellyfin_api_client.models.authenticate_user_by_name import AuthenticateUse
 from jellyfin_api_client.models.authentication_result import AuthenticationResult
 
 from src import shared
-from src.components.widget_builder import Children, Handlers, Properties, WidgetBuilder
+from src.components.widget_builder import (
+    Children,
+    Handlers,
+    Properties,
+    WidgetBuilder,
+    build,
+)
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
@@ -34,35 +39,31 @@ class AuthCredentialsView(Adw.NavigationPage):
         """Signal emitted when the user is authenticated"""
 
     def __init_widget(self):
-        self.__log_in_button = call(
-            WidgetBuilder(Gtk.Button)
-            | Properties(css_classes=["suggested-action"], label=_("Log In"))
-            | Handlers(clicked=self.__on_log_in_request)
+        self.__username_entry_row = build(
+            Adw.EntryRow + Properties(title=_("Username"))
         )
-        # fmt: off
-        self.__username_entry_row = call(  
-            WidgetBuilder(Adw.EntryRow)
-            | Properties(title=_("Username"))  
+        self.__password_entry_row = build(
+            Adw.EntryRow + Properties(title=_("Password"))
         )
-        self.__password_entry_row = call(
-            WidgetBuilder(Adw.EntryRow)
-            | Properties(title=_("Password"))
+        self.__log_in_button = build(
+            Gtk.Button
+            + Properties(css_classes=["suggested-action"], label=_("Log In"))
+            + Handlers(clicked=self.__on_log_in_request)
         )
-        # fmt: on
 
-        self.__toast_overlay = call(
-            WidgetBuilder(Adw.ToastOverlay)
-            | Children(
-                WidgetBuilder(Adw.Clamp)
-                | Properties(
+        self.__toast_overlay = build(
+            Adw.ToastOverlay
+            + Children(
+                Adw.Clamp
+                + Properties(
                     margin_top=16,
                     margin_bottom=16,
                     margin_start=16,
                     margin_end=16,
                 )
-                | Children(
-                    WidgetBuilder(Adw.PreferencesGroup)
-                    | Children(
+                + Children(
+                    Adw.PreferencesGroup
+                    + Children(
                         self.__username_entry_row,
                         self.__password_entry_row,
                     )
@@ -73,12 +74,12 @@ class AuthCredentialsView(Adw.NavigationPage):
         self.set_title(_("Credentials"))
         self.set_tag("credentials")
         # fmt: off
-        child = call(
-            WidgetBuilder(Adw.ToolbarView) 
-            | Children(
-                WidgetBuilder(Adw.HeaderBar)
-                | Properties(decoration_layout="")
-                | Children(None, None, self.__log_in_button),
+        child = build(
+            Adw.ToolbarView 
+            + Children(
+                Adw.HeaderBar
+                + Properties(decoration_layout="")
+                + Children(None, None, self.__log_in_button),
                 self.__toast_overlay,
                 None
             )

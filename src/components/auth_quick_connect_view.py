@@ -1,6 +1,5 @@
 import logging
 from http import HTTPStatus
-from operator import call
 from typing import cast, no_type_check
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
@@ -12,7 +11,7 @@ from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
 from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import shared
-from src.components.widget_builder import Children, Handlers, Properties, WidgetBuilder
+from src.components.widget_builder import Children, Handlers, Properties, build
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
@@ -49,89 +48,84 @@ class AuthQuickConnectView(Adw.NavigationPage):
         """Signal emitted when the user is authenticated"""
 
     def __init_widget(self):
-        self.__refresh_button = call(
-            WidgetBuilder(Gtk.Button)
-            | Handlers(clicked=self.on_refresh_requested)
-            | Properties(icon_name="view-refresh-symbolic")
+        self.__refresh_button = build(
+            Gtk.Button
+            + Handlers(clicked=self.on_refresh_requested)
+            + Properties(icon_name="view-refresh-symbolic")
         )
-        self.__connect_button = call(
-            WidgetBuilder(Gtk.Button)
-            | Handlers(clicked=self.on_connect_requested)
-            | Properties(
+        self.__connect_button = build(
+            Gtk.Button
+            + Handlers(clicked=self.on_connect_requested)
+            + Properties(
                 css_classes=["suggested-action"],
                 label=_("Connect"),
                 sensitive=False,
             )
         )
-        self.__state_ok_view = call(
-            WidgetBuilder(Gtk.Label)
-            | Properties(
+        self.__state_loading_view = build(Gtk.Spinner + Properties(spinning=True))
+        self.__state_ok_view = build(
+            Gtk.Label
+            + Properties(
                 css_classes=["title-1"],
                 halign=Gtk.Align.CENTER,
                 use_markup=True,
                 selectable=True,
             )
         )
-        self.__state_loading_view = call(
-            WidgetBuilder(Gtk.Spinner)
-            | Properties(
-                spinning=True,
-            )
-        )
-        self.__state_error_view = call(
-            WidgetBuilder(Gtk.Image)
-            | Properties(
+        self.__state_error_view = build(
+            Gtk.Image
+            + Properties(
                 from_icon_name="computer-fail-symbolic",
                 icon_size=Gtk.IconSize.LARGE,
             )
         )
-        self.__state_view_stack = call(
-            WidgetBuilder(Adw.ViewStack)
-            | Properties(
+        self.__state_view_stack = build(
+            Adw.ViewStack
+            + Properties(
                 margin_top=32,
                 margin_bottom=32,
                 margin_start=32,
                 margin_end=32,
             )
-            | Children(
+            + Children(
                 self.__state_loading_view,
                 self.__state_error_view,
                 self.__state_ok_view,
             )
         )
-        self.__toast_overlay = call(
-            WidgetBuilder(Adw.ToastOverlay)
-            | Children(
-                WidgetBuilder(Adw.Clamp)
-                | Properties(
+        self.__toast_overlay = build(
+            Adw.ToastOverlay
+            + Children(
+                Adw.Clamp
+                + Properties(
                     margin_top=16,
                     margin_bottom=16,
                     margin_start=16,
                     margin_end=16,
                 )
-                | Children(
-                    WidgetBuilder(Gtk.Box)
-                    | Properties(orientation=Gtk.Orientation.VERTICAL)
-                    | Children(
+                + Children(
+                    Gtk.Box
+                    + Properties(orientation=Gtk.Orientation.VERTICAL)
+                    + Children(
                         # Code state box
-                        WidgetBuilder(Adw.Bin)
-                        | Properties(
+                        Adw.Bin
+                        + Properties(
                             css_classes=["card", "view", "frame"],
                             margin_top=16,
                             margin_bottom=16,
                         )
-                        | Children(self.__state_view_stack),
+                        + Children(self.__state_view_stack),
                         # Explaination title
-                        WidgetBuilder(Gtk.Label)
-                        | Properties(
+                        Gtk.Label
+                        + Properties(
                             css_classes=["heading"],
                             margin_bottom=8,
                             halign=Gtk.Align.START,
                             label=_("How to use quick connect?"),
                         ),
                         # Explaination
-                        WidgetBuilder(Gtk.Label)
-                        | Properties(
+                        Gtk.Label
+                        + Properties(
                             halign=Gtk.Align.START,
                             wrap=True,
                             wrap_mode=Pango.WrapMode.WORD_CHAR,
@@ -147,13 +141,17 @@ class AuthQuickConnectView(Adw.NavigationPage):
         self.set_title(_("Quick Connect"))
         self.set_tag("quick-connect")
         self.set_child(
-            call(
-                WidgetBuilder(Adw.ToolbarView)
-                | Children(
+            build(
+                Adw.ToolbarView
+                + Children(
                     # Header bar
-                    WidgetBuilder(Adw.HeaderBar)
-                    | Properties(decoration_layout="")
-                    | Children(self.__refresh_button, None, self.__connect_button),
+                    Adw.HeaderBar
+                    + Properties(decoration_layout="")
+                    + Children(
+                        self.__refresh_button,
+                        None,
+                        self.__connect_button,
+                    ),
                     # Content
                     self.__toast_overlay,
                     # Bottom bar
