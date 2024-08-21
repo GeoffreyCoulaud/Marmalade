@@ -5,10 +5,10 @@ from typing import Any, Callable, Generic, Self, TypeVar
 from gi.repository import Adw, Gtk
 from gi.repository.Gtk import Widget
 
-_BuiltWidgetType = TypeVar("_BuiltWidgetType", bound=Widget)
+_BuiltWidget = TypeVar("_BuiltWidget", bound=Widget)
 
 
-class WidgetBuilder(Generic[_BuiltWidgetType]):
+class WidgetBuilder(Generic[_BuiltWidget]):
     """
     Builder pattern to sequentially create Gtk Widget subclasses
 
@@ -16,15 +16,13 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
     are callables that return `Widget`.
     """
 
-    __widget_class: Callable[..., _BuiltWidgetType]
+    __widget_class: type[_BuiltWidget]
     __arguments: dict[str, Any]
     __handlers: dict[str, Any]
     __properties: dict[str, Any]
     __children: list["WidgetBuilder | Widget | None"]
 
-    def __init__(
-        self, widget_class: None | Callable[..., _BuiltWidgetType] = None
-    ) -> None:
+    def __init__(self, widget_class: None | type[_BuiltWidget] = None) -> None:
         super().__init__()
         if widget_class is not None:
             self.set_widget_class(widget_class)
@@ -35,7 +33,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
 
     # Adders / Setters
 
-    def set_widget_class(self, widget_class: Callable[..., _BuiltWidgetType]) -> Self:
+    def set_widget_class(self, widget_class: type[_BuiltWidget]) -> Self:
         self.__widget_class = widget_class
         return self
 
@@ -69,7 +67,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
 
     # Getters
 
-    def get_widget_class(self) -> Callable[..., _BuiltWidgetType]:
+    def get_widget_class(self) -> type[_BuiltWidget]:
         return self.__widget_class
 
     def get_arguments(self) -> dict[str, Any]:
@@ -86,7 +84,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
 
     # Build helpers
 
-    def __apply_properties(self, widget: _BuiltWidgetType) -> None:
+    def __apply_properties(self, widget: _BuiltWidget) -> None:
         """Apply a set of properties to a widget"""
         for key, value in self.__properties.items():
             clean_key = key.replace("-", "_")
@@ -205,7 +203,7 @@ class WidgetBuilder(Generic[_BuiltWidgetType]):
                 % widget.__class__.__name__
             )
 
-    def build(self) -> _BuiltWidgetType:
+    def build(self) -> _BuiltWidget:
         """Build the widget"""
         if not callable(self.__widget_class):
             raise ValueError("Cannot build a widget without a widget class")
@@ -283,7 +281,7 @@ class Children(WidgetBuilder):
         self.add_children(*children)
 
 
-def build(builder: WidgetBuilder[_BuiltWidgetType]) -> _BuiltWidgetType:
+def build(builder: WidgetBuilder[_BuiltWidget]) -> _BuiltWidget:
     """
     Function that builds a `WidgetBuilder`.
 
