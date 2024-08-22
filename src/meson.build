@@ -1,7 +1,5 @@
 blueprints = custom_target('blueprints',
-  # TODO find a way to deduplicate this and the gresource
   input: files(
-    'templates/auth_user_select_view.blp',
     'templates/disconnect_dialog.blp',
     'templates/help-overlay.blp',
     'templates/item_card.blp',
