@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="@PREFIX@">
-    <file preprocess="xml-stripblanks">templates/disconnect_dialog.ui</file>
     <file preprocess="xml-stripblanks">templates/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">templates/item_card.ui</file>
     <file preprocess="xml-stripblanks">templates/loading_view.ui</file>

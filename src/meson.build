@@ -1,6 +1,5 @@
 blueprints = custom_target('blueprints',
   input: files(
-    'templates/disconnect_dialog.blp',
     'templates/help-overlay.blp',
     'templates/item_card.blp',
     'templates/list_box_row_content.blp',
