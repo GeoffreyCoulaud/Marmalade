@@ -17,6 +17,7 @@ from src.components.item_card import POSTER, WIDE_SCREENSHOT, ItemCard
 from src.components.loading_view import LoadingView
 from src.components.server_page import ServerPage
 from src.components.shelf import Shelf
+from src.components.widget_builder import Properties, build
 from src.task import Task
 
 
@@ -43,10 +44,11 @@ class ServerHomePage(ServerPage):
 
         def query_libraries() -> Sequence[BaseItemDto]:
             """Query user libraries"""
-            res = get_user_views.sync_detailed(client=client, user_id=user_id)
+            logging.debug("Querying libraries")
+            res = get_user_views.sync_detailed(client=client, user_id=user_id)  # type: ignore
             if res.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(res.status_code, res.content)
-            return res.parsed.items
+            return res.parsed.items  # type: ignore
 
         def on_libraries_error(error: Exception) -> None:
             logging.error("Error while loading user libraries", exc_info=error)
@@ -81,24 +83,35 @@ class ServerHomePage(ServerPage):
                 task.run()
 
         def query_library_items(library_id: str) -> Sequence[BaseItemDto]:
+            logging.debug("Querying items for library %s", library_id)
             res = get_latest_media.sync_detailed(
-                client=client, user_id=user_id, parent_id=library_id
+                client=client,  # type: ignore
+                user_id=user_id,
+                parent_id=library_id,
             )
             if res.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(res.status_code, res.content)
-            return res.parsed
+            return res.parsed  # type: ignore
 
         def query_resume_items() -> Sequence[BaseItemDto]:
-            res = get_resume_items.sync_detailed(client=client, user_id=user_id)
+            logging.debug("Querying resume items")
+            res = get_resume_items.sync_detailed(
+                client=client,  # type: ignore
+                user_id=user_id,
+            )
             if res.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(res.status_code, res.content)
-            return res.parsed.items
+            return res.parsed.items  # type: ignore
 
         def query_next_up_items() -> Sequence[BaseItemDto]:
-            res = get_next_up.sync_detailed(client=client, user_id=user_id)
+            logging.debug("Querying next up items")
+            res = get_next_up.sync_detailed(
+                client=client,  # type: ignore
+                user_id=user_id,
+            )
             if res.status_code != HTTPStatus.OK:
                 raise UnexpectedStatus(res.status_code, res.content)
-            return res.parsed.items
+            return res.parsed.items  # type: ignore
 
         def on_shelf_items_error(shelf: Shelf, error: Exception) -> None:
             logging.error("Couldn't get %s items", shelf.get_title(), exc_info=error)
@@ -115,11 +128,14 @@ class ServerHomePage(ServerPage):
             logging.debug('Shelf "%s": %d items', shelf.get_title(), len(result))
             client = self.get_browser().get_client()
             for item in result:
-                card = ItemCard(
-                    item_id=item.id,
-                    title=item.name,
-                    image_type=ImageType.PRIMARY,
-                    image_size=POSTER,
+                card = build(
+                    ItemCard
+                    + Properties(
+                        item_id=item.id,
+                        title=item.name,
+                        image_type=ImageType.PRIMARY,
+                        image_size=POSTER,
+                    )
                 )
                 shelf.append(card)
                 card.load_image(client)
@@ -129,6 +145,7 @@ class ServerHomePage(ServerPage):
         self.__view_stack.set_visible_child_name("content")
 
         # Spawn content query tasks
+        logging.debug("Spawning homepage loading tasks")
         for task in (
             Task(
                 main=query_libraries,
