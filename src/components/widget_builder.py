@@ -103,22 +103,25 @@ class WidgetBuilder(Generic[_BuiltWidget]):
             widget.connect(signal, handler)
 
     def __check_no_null_children(
-        self, children: Sequence[Widget | None]
+        self, widget: Widget, children: Sequence[Widget | None]
     ) -> Sequence[Widget]:
         """Helper function to check that the passed children contains no None"""
         for child in children:
             if child is None:
                 raise ValueError(
-                    "WidgetBuilder may not receive None children for this widget type"
+                    "WidgetBuilder may not receive None children for %s"
+                    % widget.__class__.__name__
                 )
         return children  # type: ignore
 
-    def __check_n_children(self, n: int, children: Sequence[Widget | None]) -> None:
+    def __check_n_children(
+        self, widget: Widget, n: int, children: Sequence[Widget | None]
+    ) -> None:
         """Helper function to check that the passed children are of length `n`"""
         if len(children) != n:
             raise ValueError(
-                "WidgetBuilder may only receive %d children, passed %d for this widget type"
-                % (n, len(children))
+                "Widget %s may only receive %d children, passed %d for this widget type"
+                % (widget.__class__.__name__, n, len(children))
             )
 
     def __resolve_children(
@@ -141,24 +144,24 @@ class WidgetBuilder(Generic[_BuiltWidget]):
 
         # Gtk.Box
         elif isinstance(widget, Gtk.Box):
-            non_null = self.__check_no_null_children(resolved)
+            non_null = self.__check_no_null_children(widget, resolved)
             for child in non_null:
                 widget.append(child)
 
         # Adw.PreferencesGroup
         elif isinstance(widget, Adw.PreferencesGroup):
-            non_null = self.__check_no_null_children(resolved)
+            non_null = self.__check_no_null_children(widget, resolved)
             for child in non_null:
                 widget.add(child)
 
         # Adw.ApplicationWindow
         elif isinstance(widget, Adw.ApplicationWindow):
-            self.__check_n_children(1, resolved)
+            self.__check_n_children(widget, 1, resolved)
             widget.set_content(resolved[0])
 
         # Adw.ToolbarView
         elif isinstance(widget, Adw.ToolbarView):
-            self.__check_n_children(3, resolved)
+            self.__check_n_children(widget, 3, resolved)
             start, title, end = resolved
             if isinstance(start, Widget):
                 widget.add_top_bar(start)
@@ -168,7 +171,7 @@ class WidgetBuilder(Generic[_BuiltWidget]):
 
         # Adw.HeaderBar
         elif isinstance(widget, Adw.HeaderBar):
-            self.__check_n_children(3, resolved)
+            self.__check_n_children(widget, 3, resolved)
             start, title, end = resolved
             if isinstance(start, Widget):
                 widget.pack_start(start)
@@ -178,7 +181,7 @@ class WidgetBuilder(Generic[_BuiltWidget]):
 
         # Adw.ActionRow
         elif isinstance(widget, Adw.ActionRow):
-            self.__check_n_children(2, resolved)
+            self.__check_n_children(widget, 2, resolved)
             prefix, suffix = resolved
             if isinstance(prefix, Widget):
                 widget.add_prefix(prefix)
@@ -187,13 +190,13 @@ class WidgetBuilder(Generic[_BuiltWidget]):
 
         # Adw.ViewStack
         elif isinstance(widget, Adw.ViewStack):
-            non_null = self.__check_no_null_children(resolved)
+            non_null = self.__check_no_null_children(widget, resolved)
             for child in non_null:
                 widget.add(child)
 
         # Any widget with "set_child"
         elif getattr(widget, "set_child", None) is not None:
-            self.__check_n_children(1, resolved)
+            self.__check_n_children(widget, 1, resolved)
             widget.set_child(resolved[0])  # type: ignore
 
         # Cannot set children
@@ -206,7 +209,7 @@ class WidgetBuilder(Generic[_BuiltWidget]):
     def build(self) -> _BuiltWidget:
         """Build the widget"""
         if not callable(self.__widget_class):
-            raise ValueError("Cannot build a widget without a widget class")
+            raise ValueError("Cannot build without a widget class")
         widget = self.__widget_class(**self.__arguments)
         self.__apply_handlers(widget)
         self.__apply_properties(widget)
