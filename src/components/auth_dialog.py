@@ -55,7 +55,7 @@ class AuthDialog(Adw.ApplicationWindow):
         self.views.push(view)
 
     def on_username_password_chosen(self, _widget) -> None:
-        view = AuthUserSelectView(dialog=self, server=self.server)
+        view = AuthUserSelectView(server=self.server)
         view.connect("user-picked", self.on_user_picked)
         view.connect("skipped", self.on_user_picked)
         self.views.push(view)
