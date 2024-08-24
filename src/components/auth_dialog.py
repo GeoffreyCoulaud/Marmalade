@@ -25,7 +25,7 @@ class AuthDialog(Adw.ApplicationWindow):
         """Signal emitted when the login process is cancelled"""
 
     def __init_widget(self):
-        self.views = build(WidgetBuilder(Adw.NavigationView))
+        self.views = build(Adw.NavigationView)
         self.set_default_size(width=600, height=400)
         self.set_content(self.views)
 

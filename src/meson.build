@@ -1,12 +1,10 @@
 blueprints = custom_target('blueprints',
   input: files(
     'templates/help-overlay.blp',
-    'templates/list_box_row_content.blp',
     'templates/loading_view.blp',
     'templates/scrollable_shelf.blp',
     'templates/server_add_dialog.blp',
     'templates/server_browser_headerbar.blp',
-    'templates/server_browser_view.blp',
     'templates/server_home_page.blp',
     'templates/servers_list_row.blp',
     'templates/servers_list_view.blp',
