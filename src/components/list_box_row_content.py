@@ -1,30 +1,42 @@
-from gi.repository import Adw, GObject, Gtk
+from gi.repository import GObject, Gtk, Pango
 
-from src import build_constants
+from src.components.widget_builder import Properties, WidgetBuilder, build
 
 
-@Gtk.Template(
-    resource_path=build_constants.PREFIX + "/templates/list_box_row_content.ui"
-)
 class ListBoxRowContent(Gtk.Box):
     __gtype_name__ = "MarmaladeListBoxRowContent"
 
-    # fmt: off
-    __image: Gtk.Image = Gtk.Template.Child("image")
-    __label: Gtk.Label = Gtk.Template.Child("label")
-    # fmt: on
+    __image: Gtk.Image
+    __label: Gtk.Label
+
+    def __init_widget(self):
+        self.__image = build(Gtk.Image)
+        self.__label = build(
+            Gtk.Label
+            + Properties(
+                wrap=True,
+                wrap_mode=Pango.WrapMode.WORD,
+            )
+        )
+        self.set_spacing(10)
+        self.append(self.__image)
+        self.append(self.__label)
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.__init_widget()
 
     # icon_name property
 
     @GObject.Property(type=str, default="")
-    def icon_name(self) -> str:
+    def icon_name(self) -> str | None:
         return self.__image.get_icon_name()
 
     def get_icon_name(self) -> str:
         return self.get_property("icon_name")
 
     @icon_name.setter
-    def icon_name(self, value: str) -> None:
+    def icon_name_setter(self, value: str) -> None:
         self.__image.set_from_icon_name(value)
 
     def set_icon_name(self, value: str):
@@ -40,7 +52,7 @@ class ListBoxRowContent(Gtk.Box):
         return self.get_property("label")
 
     @label.setter
-    def label(self, value: str) -> None:
+    def label_setter(self, value: str) -> None:
         self.__label.set_label(value)
 
     def set_label(self, value: str):

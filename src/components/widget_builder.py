@@ -142,8 +142,9 @@ class WidgetBuilder(Generic[_BuiltWidget]):
         if not resolved:
             pass
 
-        # Gtk.Box
-        elif isinstance(widget, Gtk.Box):
+        # Gtk.Box, Gtk.ListBox
+        # Containers that use the append method to add N children
+        elif isinstance(widget, Gtk.Box) or isinstance(widget, Gtk.ListBox):
             non_null = self.__check_no_null_children(widget, resolved)
             for child in non_null:
                 widget.append(child)
@@ -194,6 +195,15 @@ class WidgetBuilder(Generic[_BuiltWidget]):
             for child in non_null:
                 widget.add(child)
 
+        # Adw.OverlaySplitView
+        elif isinstance(widget, Adw.OverlaySplitView):
+            self.__check_n_children(widget, 2, resolved)
+            sidebar, content = resolved
+            if isinstance(sidebar, Widget):
+                widget.set_sidebar(sidebar)
+            if isinstance(content, Widget):
+                widget.set_content(content)
+
         # Any widget with "set_child"
         elif getattr(widget, "set_child", None) is not None:
             self.__check_n_children(widget, 1, resolved)
@@ -216,7 +226,7 @@ class WidgetBuilder(Generic[_BuiltWidget]):
         self.__apply_children(widget)
         return widget
 
-    def __add__(self, other: "WidgetBuilder") -> "WidgetBuilder":
+    def __add__(self, other: "WidgetBuilder") -> "WidgetBuilder[_BuiltWidget]":
         new_builder = (
             WidgetBuilder()
             .set_widget_class(self.get_widget_class())
@@ -284,10 +294,16 @@ class Children(WidgetBuilder):
         self.add_children(*children)
 
 
-def build(builder: WidgetBuilder[_BuiltWidget]) -> _BuiltWidget:
+def build(builder: type[_BuiltWidget] | WidgetBuilder[_BuiltWidget]) -> _BuiltWidget:
     """
     Function that builds a `WidgetBuilder`.
 
-    This is just syntactic sugar around `WidgetBuilder.build()`
+    This is just syntactic sugar around `WidgetBuilder.build()`.
+    If passed a `Widget` subclass directly, will wrap it in a `WidgetBuilder`
+    and build it.
     """
-    return builder.build()
+    if isinstance(builder, WidgetBuilder):
+        return builder.build()
+    if issubclass(builder, Widget):
+        return WidgetBuilder(builder).build()
+    raise TypeError("Cannot build type %s" % builder.__class__.__name__)

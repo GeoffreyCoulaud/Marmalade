@@ -72,7 +72,7 @@ class AuthUserSelectView(Adw.NavigationPage):
                 ),
             )
         )
-        self.__user_picker_loading_status = build(WidgetBuilder(LoadingView))
+        self.__user_picker_loading_status = build(LoadingView)
         self.__user_picker_view_stack = build(
             Adw.ViewStack
             + Children(
