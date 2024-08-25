@@ -21,6 +21,7 @@ class WidgetBuilder(Generic[_BuiltWidget]):
     __handlers: dict[str, Any]
     __properties: dict[str, Any]
     __children: list["WidgetBuilder | Widget | None"]
+    __typed_children: list[tuple[str, "WidgetBuilder | Widget"]]
 
     def __init__(self, widget_class: None | type[_BuiltWidget] = None) -> None:
         super().__init__()
@@ -30,6 +31,7 @@ class WidgetBuilder(Generic[_BuiltWidget]):
         self.__handlers = {}
         self.__properties = {}
         self.__children = []
+        self.__typed_children = []
 
     # Adders / Setters
 
@@ -65,6 +67,18 @@ class WidgetBuilder(Generic[_BuiltWidget]):
         self.__children.extend(children)
         return self
 
+    def add_typed_children(
+        self, *typed_children: tuple[str, "WidgetBuilder | Widget"]
+    ) -> Self:
+        """
+        Add a child, with a given type.
+
+        Useful for cases where a `Widget` may receive children in multiple places,
+        with a default.
+        """
+        self.__typed_children.extend(typed_children)
+        return self
+
     # Getters
 
     def get_widget_class(self) -> type[_BuiltWidget]:
@@ -81,6 +95,9 @@ class WidgetBuilder(Generic[_BuiltWidget]):
 
     def get_children(self) -> list["WidgetBuilder | Widget | None"]:
         return self.__children
+
+    def get_typed_children(self) -> list[tuple[str, "WidgetBuilder | Widget"]]:
+        return self.__typed_children
 
     # Build helpers
 
@@ -140,11 +157,11 @@ class WidgetBuilder(Generic[_BuiltWidget]):
 
         # Short circuit
         if not resolved:
-            pass
+            return
 
         # Gtk.Box, Gtk.ListBox
         # Containers that use the append method to add N children
-        elif isinstance(widget, Gtk.Box) or isinstance(widget, Gtk.ListBox):
+        if isinstance(widget, Gtk.Box) or isinstance(widget, Gtk.ListBox):
             non_null = self.__check_no_null_children(widget, resolved)
             for child in non_null:
                 widget.append(child)
@@ -161,33 +178,11 @@ class WidgetBuilder(Generic[_BuiltWidget]):
             widget.set_content(resolved[0])
 
         # Adw.ToolbarView
+        # Note: to set top and bottom toolbars, use the TypedChild method
         elif isinstance(widget, Adw.ToolbarView):
-            self.__check_n_children(widget, 3, resolved)
-            start, title, end = resolved
-            if isinstance(start, Widget):
-                widget.add_top_bar(start)
-            if isinstance(end, Widget):
-                widget.add_bottom_bar(end)
-            widget.set_content(title)
-
-        # Adw.HeaderBar
-        elif isinstance(widget, Adw.HeaderBar):
-            self.__check_n_children(widget, 3, resolved)
-            start, title, end = resolved
-            if isinstance(start, Widget):
-                widget.pack_start(start)
-            if isinstance(end, Widget):
-                widget.pack_end(end)
-            widget.set_title_widget(title)
-
-        # Adw.ActionRow
-        elif isinstance(widget, Adw.ActionRow):
-            self.__check_n_children(widget, 2, resolved)
-            prefix, suffix = resolved
-            if isinstance(prefix, Widget):
-                widget.add_prefix(prefix)
-            if isinstance(suffix, Widget):
-                widget.add_suffix(suffix)
+            if len(resolved) == 1:
+                self.__check_n_children(widget, 1, resolved)
+                widget.set_content(resolved[0])
 
         # Adw.ViewStack
         elif isinstance(widget, Adw.ViewStack):
@@ -216,6 +211,65 @@ class WidgetBuilder(Generic[_BuiltWidget]):
                 % widget.__class__.__name__
             )
 
+    def __resolve_typed_children(
+        self, typed_children: Sequence[tuple[str, "WidgetBuilder | Widget"]]
+    ) -> Sequence[tuple[str, Widget]]:
+        return [
+            (type_, build(child) if isinstance(child, WidgetBuilder) else child)
+            for type_, child in typed_children
+        ]
+
+    def __apply_typed_children(self, widget: _BuiltWidget) -> None:
+
+        resolved = self.__resolve_typed_children(self.__typed_children)
+
+        # Shortcut, there is no typed child
+        if not resolved:
+            return
+
+        # Adw.ToolbarView
+        if isinstance(widget, Adw.ToolbarView):
+            for t, child in resolved:
+                if t == "top":
+                    widget.add_top_bar(child)
+                if t == "bottom":
+                    widget.add_bottom_bar(child)
+                if t == "content":
+                    widget.set_content(child)
+
+        # Adw.HeaderBar
+        elif isinstance(widget, Adw.HeaderBar):
+            for t, child in resolved:
+                if t == "start":
+                    widget.pack_start(child)
+                if t == "end":
+                    widget.pack_end(child)
+                if t == "title":
+                    widget.set_title_widget(child)
+
+        # Adw.ActionRow
+        # Adw.EntryRow
+        elif isinstance(widget, Adw.ActionRow) or isinstance(widget, Adw.EntryRow):
+            for t, child in resolved:
+                if t == "prefix":
+                    widget.add_prefix(child)
+                if t == "suffix":
+                    widget.add_suffix(child)
+
+        # Adw.OverlaySplitView
+        elif isinstance(widget, Adw.OverlaySplitView):
+            for t, child in resolved:
+                if t == "sidebar":
+                    widget.set_sidebar(child)
+                if t == "content":
+                    widget.set_content(child)
+
+        # Adw.PreferencesGroup
+        elif isinstance(widget, Adw.PreferencesGroup):
+            for t, child in resolved:
+                if t == "header-suffix":
+                    widget.set_header_suffix(child)
+
     def build(self) -> _BuiltWidget:
         """Build the widget"""
         if not callable(self.__widget_class):
@@ -224,9 +278,12 @@ class WidgetBuilder(Generic[_BuiltWidget]):
         self.__apply_handlers(widget)
         self.__apply_properties(widget)
         self.__apply_children(widget)
+        self.__apply_typed_children(widget)
         return widget
 
-    def __add__(self, other: "WidgetBuilder") -> "WidgetBuilder[_BuiltWidget]":
+    def __add__(
+        self, other: "WidgetBuilder[_BuiltWidget]"
+    ) -> "WidgetBuilder[_BuiltWidget]":
         new_builder = (
             WidgetBuilder()
             .set_widget_class(self.get_widget_class())
@@ -235,31 +292,30 @@ class WidgetBuilder(Generic[_BuiltWidget]):
             .add_handlers(**self.get_handlers())
             .add_properties(**self.get_properties())
             .add_children(*self.get_children())
+            .add_typed_children(*self.get_typed_children())
             # Add data from other
             .add_arguments(**other.get_arguments())
             .add_handlers(**other.get_handlers())
             .add_properties(**other.get_properties())
             .add_children(*other.get_children())
+            .add_typed_children(*other.get_typed_children())
         )
-
         return new_builder
 
     def __radd__(self, other: type[Widget]) -> "WidgetBuilder":
+        # fmt: off
         """
-        Applies to a Widget class to return a new WidgetBuilder
-        Enables the following syntax:
+        Applies to a Widget class to return a new WidgetBuilder.
 
-        Gtk.Button | Properties(css_classes=["suggested-action"])
+        Will wrap the `Widget` class into a `WidgetBuilder` and recurse the "add" operation.  
+        Enables the following syntax:  
+        Gtk.Button + Properties(css_classes=["suggested-action"])
         """
-
-        # Other is a widget class,
-        # Makes it into a WidgetBuilder and recurse
+        # fmt: on
         if issubclass(other, Widget):
             builder = WidgetBuilder()
             builder.set_widget_class(other)
             return builder + self
-
-        return NotImplemented
 
 
 class Arguments(WidgetBuilder):
@@ -292,6 +348,14 @@ class Children(WidgetBuilder):
     def __init__(self, *children: "WidgetBuilder | Widget | None") -> None:
         super().__init__()
         self.add_children(*children)
+
+
+class TypedChild(WidgetBuilder):
+    """A single typed child to pass to a builder object"""
+
+    def __init__(self, t: str, child: "WidgetBuilder | Widget") -> None:
+        super().__init__()
+        self.add_typed_children((t, child))
 
 
 def build(builder: type[_BuiltWidget] | WidgetBuilder[_BuiltWidget]) -> _BuiltWidget:

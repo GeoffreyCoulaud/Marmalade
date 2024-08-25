@@ -19,7 +19,7 @@
 
 import logging
 from http import HTTPStatus
-from typing import Callable, cast
+from typing import Callable, Type, cast
 from urllib.parse import parse_qsl, urlparse
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
@@ -42,6 +42,7 @@ from src.components.widget_builder import (
     Children,
     Handlers,
     Properties,
+    TypedChild,
     build,
 )
 from src.jellyfin import JellyfinClient
@@ -186,19 +187,24 @@ class ServerBrowserView(ServerBrowser):
                 )
             )
         )
+
         sidebar_header = (
             Adw.HeaderBar
             + Properties(show_back_button=False)
-            + Children(
+            + TypedChild(
+                "start",
                 self.__sidebar_hide_button_revealer,
+            )
+            + TypedChild(
+                "title",
                 Gtk.Label
                 + Properties(
                     css_classes=["heading"],
                     label=_("Navigation"),
                 ),
-                None,
             )
         )
+
         sidebar_content = (
             Gtk.ScrolledWindow
             + Properties(propagate_natural_width=True)
@@ -221,31 +227,27 @@ class ServerBrowserView(ServerBrowser):
                 )
             )
         )
+        content_header = (
+            Gtk.Box
+            + Properties(orientation=Gtk.Orientation.VERTICAL)
+            + Children(self.__content_header_bar, self.__search_bar)
+        )
 
         self.__overlay_split_view = build(
             Adw.OverlaySplitView
             + Handlers(**{"notify::show-sidebar": self.__on_sidebar_toggled})
             + Properties(show_sidebar=False, pin_sidebar=True)
-            + Children(
-                # Sidebar
+            + TypedChild(
+                "sidebar",
                 Adw.ToolbarView
-                + Children(
-                    sidebar_header,
-                    sidebar_content,
-                    None,
-                ),
-                # Content
+                + TypedChild("top", sidebar_header)
+                + TypedChild("content", sidebar_content),
+            )
+            + TypedChild(
+                "content",
                 Adw.ToolbarView
-                + Children(
-                    Gtk.Box
-                    + Properties(orientation=Gtk.Orientation.VERTICAL)
-                    + Children(
-                        self.__content_header_bar,
-                        self.__search_bar,
-                    ),
-                    self.__navigation_view,
-                    None,
-                ),
+                + TypedChild("top", content_header)
+                + TypedChild("content", self.__navigation_view),
             )
         )
 

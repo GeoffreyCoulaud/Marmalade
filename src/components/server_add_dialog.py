@@ -21,7 +21,13 @@ from jellyfin_api_client.client import Client as JfClient
 from jellyfin_api_client.models.public_system_info import PublicSystemInfo
 
 from src.components.servers_list_row import ServersListRow
-from src.components.widget_builder import Children, Handlers, Properties, build
+from src.components.widget_builder import (
+    Children,
+    Handlers,
+    Properties,
+    TypedChild,
+    build,
+)
 from src.database.api import ServerInfo
 from src.task import Task
 
@@ -72,31 +78,25 @@ class ServerAddDialog(Adw.ApplicationWindow):
                 )
             )
         )
-        self.__detected_server_rows_group = build(
-            Adw.PreferencesGroup
-            + Properties(
-                title=_("Discovered servers"),
-                # TODO add support for Gtk.Buildable and children types in WidgetBuilder
-                # Setting a spceific child like that isn't great.
-                header_suffix=self.__spinner_revealer,
-            )
-        )
+
         self.__manual_add_editable = build(
             Adw.EntryRow
-            + Properties(
-                title=_("Server address"),
-            )
-        )
-        # TODO same here, support Gtk.Buildable
-        self.__manual_add_editable.add_suffix(
-            build(
+            + Properties(title=_("Server address"))
+            + TypedChild(
+                "suffix",
                 Gtk.Button
                 + Handlers(clicked=self.__on_manual_button_clicked)
                 + Properties(
                     valign=Gtk.Align.CENTER,
                     icon_name="list-add-symbolic",
-                )
+                ),
             )
+        )
+
+        self.__detected_server_rows_group = build(
+            Adw.PreferencesGroup
+            + Properties(title=_("Discovered servers"))
+            + TypedChild("header-suffix", self.__spinner_revealer)
         )
 
         self.__toast_overlay = build(
@@ -115,7 +115,9 @@ class ServerAddDialog(Adw.ApplicationWindow):
                         Gtk.Box
                         + Properties(orientation=Gtk.Orientation.VERTICAL)
                         + Children(
-                            # TODO is the preferences group necessary ?
+                            # Wrapping the manual add editable in a preferences group
+                            # is necessary, else its corners will be sharp instead of
+                            # rounded like the other rows.
                             Adw.PreferencesGroup
                             + Properties(margin_bottom=16)
                             + Children(self.__manual_add_editable),
@@ -126,27 +128,24 @@ class ServerAddDialog(Adw.ApplicationWindow):
             )
         )
 
+        header_bar = (
+            Adw.HeaderBar
+            + Properties(decoration_layout="")
+            + TypedChild(
+                "start",
+                Gtk.Button
+                + Handlers(clicked=self.__on_cancel_button_clicked)
+                + Properties(label=_("Cancel")),
+            )
+        )
+
         self.set_default_size(width=600, height=300)
         self.set_modal(True)
         self.set_content(
             build(
                 Adw.ToolbarView
-                + Children(
-                    Adw.HeaderBar
-                    + Properties(decoration_layout="")
-                    + Children(
-                        build(
-                            Gtk.Button
-                            + Handlers(clicked=self.__on_cancel_button_clicked)
-                            + Properties(label=_("Cancel"))
-                        ),
-                        None,
-                        None,
-                    ),
-                    self.__toast_overlay,
-                    # No bottom bar
-                    None,
-                )
+                + TypedChild("top", header_bar)
+                + TypedChild("content", self.__toast_overlay)
             )
         )
 
