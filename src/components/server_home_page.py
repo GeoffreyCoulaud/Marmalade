@@ -20,6 +20,9 @@ from src.components.shelf import Shelf
 from src.components.widget_builder import Properties, build
 from src.task import Task
 
+# TODO make sure that the loading view stays up until
+# all the startup requests are done.
+
 
 @Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_page.ui")
 class ServerHomePage(ServerPage):
