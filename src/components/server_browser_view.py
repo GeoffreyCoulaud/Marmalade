@@ -22,7 +22,7 @@ from http import HTTPStatus
 from typing import Callable, cast
 from urllib.parse import parse_qsl, urlparse
 
-from gi.repository import Adw, Gio, GLib, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
 from jellyfin_api_client.api.user import get_current_user
 from jellyfin_api_client.api.user_views import get_user_views
 from jellyfin_api_client.errors import UnexpectedStatus
@@ -33,7 +33,6 @@ from jellyfin_api_client.types import UNSET
 from src import shared
 from src.components.disconnect_dialog import DisconnectDialog
 from src.components.list_box_row import ListBoxRow
-from src.components.list_box_row_content import ListBoxRowContent
 from src.components.server_browser import ServerBrowser
 from src.components.server_browser_headerbar import ServerBrowserHeaderbar
 from src.components.server_home_page import ServerHomePage
@@ -47,6 +46,41 @@ from src.components.widget_builder import (
 )
 from src.jellyfin import JellyfinClient
 from src.task import Task
+
+
+def _server_link_factory(
+    icon_name: str,
+    label: str,
+    action_name: str,
+    action_target_string: str | None = None,
+    visible: bool = True,
+) -> ListBoxRow:
+    builder = (
+        ListBoxRow
+        + Properties(
+            action_name=action_name,
+            visible=visible,
+        )
+        + Children(
+            Gtk.Box
+            + Properties(spacing=10)
+            + Children(
+                Gtk.Image
+                + Properties(
+                    from_icon_name=icon_name,
+                ),
+                Gtk.Label
+                + Properties(
+                    label=label,
+                    wrap=True,
+                    wrap_mode=Pango.WrapMode.WORD,
+                ),
+            )
+        )
+    )
+    if action_target_string is not None:
+        builder += Properties(action_target_string=action_target_string)
+    return build(builder)
 
 
 class ServerBrowserView(ServerBrowser):
@@ -87,35 +121,15 @@ class ServerBrowserView(ServerBrowser):
 
     def __init_widget(self):
         self.__content_header_bar = build(ServerBrowserHeaderbar)
-
         self.__navigation_view = build(
             Adw.NavigationView
             + Handlers(**{"notify::visible-page": self.__on_page_changed})
         )
-
         search_entry = build(Gtk.SearchEntry + Properties(placeholder_text=_("Search")))
-
         self.__search_bar = build(
             Gtk.SearchBar + Children(Adw.Clamp + Children(search_entry))
         )
         self.__search_bar.connect_entry(search_entry)
-
-        self.__admin_dashboard_link = build(
-            ListBoxRow
-            + Properties(
-                action_name="browser.navigate",
-                action_target_string="admin-dashboard",
-                visible=False,
-            )
-            + Children(
-                ListBoxRowContent
-                + Properties(
-                    icon_name="emblem-system-symbolic",
-                    label=_("Administration dashboard"),
-                )
-            )
-        )
-
         self.__libraries_list_box = build(
             Gtk.ListBox
             + Properties(
@@ -123,28 +137,13 @@ class ServerBrowserView(ServerBrowser):
                 selection_mode=Gtk.SelectionMode.NONE,
             )
         )
-
-        def server_link_factory(
-            icon_name: str,
-            label: str,
-            action_name: str,
-            action_target_string: str | None = None,
-        ) -> ListBoxRow:
-            builder = (
-                ListBoxRow
-                + Properties(action_name=action_name)
-                + Children(
-                    ListBoxRowContent
-                    + Properties(
-                        icon_name=icon_name,
-                        label=label,
-                    )
-                )
-            )
-            if action_target_string is not None:
-                builder += Properties(action_target_string=action_target_string)
-            return build(builder)
-
+        self.__admin_dashboard_link = _server_link_factory(
+            icon_name="emblem-system-symbolic",
+            label=_("Administration dashboard"),
+            action_name="browser.navigate",
+            action_target_string="admin-dashboard",
+            visible=False,
+        )
         self.__server_links = build(
             Gtk.ListBox
             + Properties(
@@ -152,20 +151,20 @@ class ServerBrowserView(ServerBrowser):
                 selection_mode=Gtk.SelectionMode.NONE,
             )
             + Children(
-                server_link_factory(
+                _server_link_factory(
                     icon_name="go-home-symbolic",
                     label=_("Home"),
                     action_name="browser.navigate",
                     action_target_string="home",
                 ),
-                server_link_factory(
+                _server_link_factory(
                     icon_name="avatar-default-symbolic",
                     label=_("User settings"),
                     action_name="browser.navigate",
                     action_target_string="user-settings",
                 ),
                 self.__admin_dashboard_link,
-                server_link_factory(
+                _server_link_factory(
                     icon_name="system-log-out-symbolic",
                     label=_("Exit server"),
                     action_name="browser.disconnect",
@@ -187,7 +186,6 @@ class ServerBrowserView(ServerBrowser):
                 )
             )
         )
-
         sidebar_header = (
             Adw.HeaderBar
             + Properties(show_back_button=False)
@@ -209,22 +207,15 @@ class ServerBrowserView(ServerBrowser):
                 + Properties(orientation=Gtk.Orientation.VERTICAL)
                 + Children(
                     self.__server_links,
-                    Gtk.ListBox
+                    # Libraries label
+                    Gtk.Label
                     + Properties(
-                        css_classes=["navigation-sidebar"],
-                        selection_mode=Gtk.SelectionMode.NONE,
-                    )
-                    + Children(
-                        ListBoxRow
-                        + Properties(activatable=False)
-                        + Children(
-                            Gtk.Label
-                            + Properties(
-                                css_classes=["heading"],
-                                label=_("Libraries"),
-                                halign=Gtk.Align.START,
-                            )
-                        )
+                        css_classes=["heading"],
+                        label=_("Libraries"),
+                        halign=Gtk.Align.START,
+                        margin_start=14,
+                        margin_bottom=8,
+                        margin_top=8,
                     ),
                     self.__libraries_list_box,
                 )
@@ -261,8 +252,6 @@ class ServerBrowserView(ServerBrowser):
         self.__breakpoint_bin = build(
             Adw.BreakpointBin
             + Arguments(width_request=360, height_request=400)
-            # TODO set_size_request seems to be broken
-            # + Properties(size_request=(360, 400))
             + Children(self.__overlay_split_view)
         )
 
@@ -361,19 +350,11 @@ class ServerBrowserView(ServerBrowser):
                     item.name,
                     item.collection_type,
                 )
-                library_link = build(
-                    ListBoxRow
-                    + Properties(
-                        action_name="browser.navigate",
-                        action_target_string=f"library?id={item.id}",
-                    )
-                    + Children(
-                        ListBoxRowContent
-                        + Properties(
-                            icon_name=icon_map.get(item.collection_type, default_icon),
-                            label=item.name,
-                        )
-                    )
+                library_link = _server_link_factory(
+                    icon_name=icon_map.get(item.collection_type, default_icon),
+                    action_name="browser.navigate",
+                    action_target_string=f"library?id={item.id}",
+                    label=item.name,  # type: ignore
                 )
                 self.__libraries_list_box.append(library_link)
             pass
