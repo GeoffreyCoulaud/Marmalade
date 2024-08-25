@@ -11,6 +11,7 @@ from socket import (
     SOCK_DGRAM,
     SOL_SOCKET,
 )
+from typing import Set
 
 import psutil
 from gi.repository import Adw, Gio, GLib, GObject, Gtk
@@ -19,8 +20,8 @@ from jellyfin_api_client.api.system import get_public_system_info
 from jellyfin_api_client.client import Client as JfClient
 from jellyfin_api_client.models.public_system_info import PublicSystemInfo
 
-from src import build_constants
 from src.components.servers_list_row import ServersListRow
+from src.components.widget_builder import Children, Handlers, Properties, build
 from src.database.api import ServerInfo
 from src.task import Task
 
@@ -29,7 +30,6 @@ class KnownAddressError(Exception):
     """Error raised when trying to add a duplicate server address"""
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_add_dialog.ui")
 class ServerAddDialog(Adw.ApplicationWindow):
     __gtype_name__ = "MarmaladeServerAddDialog"
 
@@ -39,13 +39,10 @@ class ServerAddDialog(Adw.ApplicationWindow):
     DISCOVERY_RECEIVE_TIMEOUT_SECONDS: float = 30.0
     DISCOVERY_BUFSIZE: int = 4096
 
-    cancel_button = Gtk.Template.Child()
-    manual_add_button = Gtk.Template.Child()
-    manual_add_editable = Gtk.Template.Child()
-    detected_server_rows_group = Gtk.Template.Child()
-    spinner = Gtk.Template.Child()
-    spinner_revealer = Gtk.Template.Child()
-    toast_overlay = Gtk.Template.Child()
+    __manual_add_editable: Adw.EntryRow
+    __detected_server_rows_group: Adw.PreferencesGroup
+    __spinner_revealer: Gtk.Revealer
+    __toast_overlay: Adw.ToastOverlay
 
     __tasks_cancellable: Gio.Cancellable
     __discover_subtasks_count: int
@@ -61,17 +58,110 @@ class ServerAddDialog(Adw.ApplicationWindow):
     def server_picked(self, _server: ServerInfo):
         """Signal emitted when a server is picked"""
 
+    def __init_widget(self):
+        self.__spinner_revealer = build(
+            Gtk.Revealer
+            + Properties(
+                reveal_child=True,
+                transition_type=Gtk.RevealerTransitionType.CROSSFADE,
+            )
+            + Children(
+                Gtk.Spinner
+                + Properties(
+                    spinning=True,
+                )
+            )
+        )
+        self.__detected_server_rows_group = build(
+            Adw.PreferencesGroup
+            + Properties(
+                title=_("Discovered servers"),
+                # TODO add support for Gtk.Buildable and children types in WidgetBuilder
+                # Setting a spceific child like that isn't great.
+                header_suffix=self.__spinner_revealer,
+            )
+        )
+        self.__manual_add_editable = build(
+            Adw.EntryRow
+            + Properties(
+                title=_("Server address"),
+            )
+        )
+        # TODO same here, support Gtk.Buildable
+        self.__manual_add_editable.add_suffix(
+            build(
+                Gtk.Button
+                + Handlers(clicked=self.__on_manual_button_clicked)
+                + Properties(
+                    valign=Gtk.Align.CENTER,
+                    icon_name="list-add-symbolic",
+                )
+            )
+        )
+
+        self.__toast_overlay = build(
+            Adw.ToastOverlay
+            + Children(
+                Gtk.ScrolledWindow
+                + Children(
+                    Adw.Clamp
+                    + Properties(
+                        margin_top=16,
+                        margin_start=16,
+                        margin_end=16,
+                        margin_bottom=16,
+                    )
+                    + Children(
+                        Gtk.Box
+                        + Properties(orientation=Gtk.Orientation.VERTICAL)
+                        + Children(
+                            # TODO is the preferences group necessary ?
+                            Adw.PreferencesGroup
+                            + Properties(margin_bottom=16)
+                            + Children(self.__manual_add_editable),
+                            self.__detected_server_rows_group,
+                        )
+                    )
+                )
+            )
+        )
+
+        self.set_default_size(width=600, height=300)
+        self.set_modal(True)
+        self.set_content(
+            build(
+                Adw.ToolbarView
+                + Children(
+                    Adw.HeaderBar
+                    + Properties(decoration_layout="")
+                    + Children(
+                        build(
+                            Gtk.Button
+                            + Handlers(clicked=self.__on_cancel_button_clicked)
+                            + Properties(label=_("Cancel"))
+                        ),
+                        None,
+                        None,
+                    ),
+                    self.__toast_overlay,
+                    # No bottom bar
+                    None,
+                )
+            )
+        )
+
+        pass
+
     def __init__(
-        self, application: Adw.Application, addresses=set[str], **kwargs
+        self, application: Adw.Application, addresses: Set[str], **kwargs
     ) -> None:
         super().__init__(application=application, **kwargs)
-        self.cancel_button.connect("clicked", self.on_cancel_button_clicked)
-        self.manual_add_button.connect("clicked", self.on_manual_button_clicked)
+        self.__init_widget()
+
         self.__tasks_cancellable = Gio.Cancellable.new()
         self.__discover_subtasks_count = 0
         self.__discover_subtasks_done_count = 0
-        # Prevent from adding servers of known addresses
-        self.__addresses = addresses
+        self.__addresses = set(addresses)
         self.__discovered_addresses = set(addresses)
         discover_task = Task(
             main=self.discover,
@@ -180,14 +270,14 @@ class ServerAddDialog(Adw.ApplicationWindow):
         # Add the server row
         row = ServersListRow(server, "list-add-symbolic")
         row.connect("button-clicked", self.on_detected_row_button_clicked)
-        self.detected_server_rows_group.add(row)
+        self.__detected_server_rows_group.add(row)
 
     def on_discover_subtask_finished(self, _result):
         self.__discover_subtasks_done_count += 1
         if self.__discover_subtasks_count == self.__discover_subtasks_done_count:
-            self.spinner_revealer.set_reveal_child(False)
+            self.__spinner_revealer.set_reveal_child(False)
 
-    def on_cancel_button_clicked(self, _button) -> None:
+    def __on_cancel_button_clicked(self, _button) -> None:
         self.emit("cancelled")
         self.close()
 
@@ -199,14 +289,14 @@ class ServerAddDialog(Adw.ApplicationWindow):
         """Query a server address to check its validity and get its name"""
         try:
             client = JfClient(address)
-            info: PublicSystemInfo = get_public_system_info.sync(client=client)
+            info = get_public_system_info.sync(client=client)
         except (RequestError, InvalidURL) as error:
             raise ValueError(_("Invalid server address")) from error
         if info is None:
             raise ValueError(_("Server has no public info"))
         return info
 
-    def on_manual_button_clicked(self, _button: Gtk.Widget) -> None:
+    def __on_manual_button_clicked(self, _button: Gtk.Widget) -> None:
         """Check server address then react to it"""
 
         def main(address: str):
@@ -222,18 +312,18 @@ class ServerAddDialog(Adw.ApplicationWindow):
             else:
                 toast.set_title(error.args[0])
                 logging.error('Invalid server address "%s"', address, exc_info=error)
-            self.toast_overlay.add_toast(toast)
+            self.__toast_overlay.add_toast(toast)
 
         def on_success(address: str, result: PublicSystemInfo):
             server = ServerInfo(
-                name=result.server_name,
+                name=result.server_name,  # type: ignore
+                server_id=result.id,  # type: ignore
                 address=address,
-                server_id=result.id,
             )
             self.emit("server-picked", server)
             self.close()
 
-        address = self.manual_add_editable.get_text()
+        address = self.__manual_add_editable.get_text()
         task = Task(
             main=main,
             main_args=(address,),
