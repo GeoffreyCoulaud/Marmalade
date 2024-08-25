@@ -1,6 +1,6 @@
 import logging
 from http import HTTPStatus
-from typing import cast, no_type_check
+from typing import Type, cast, no_type_check
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
 from jellyfin_api_client.api.quick_connect import initiate_quick_connect
@@ -11,7 +11,13 @@ from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
 from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import shared
-from src.components.widget_builder import Children, Handlers, Properties, build
+from src.components.widget_builder import (
+    Children,
+    Handlers,
+    Properties,
+    TypedChild,
+    build,
+)
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
 from src.task import Task
@@ -138,25 +144,21 @@ class AuthQuickConnectView(Adw.NavigationPage):
                 ),
             )
         )
+
+        header_bar = (
+            Adw.HeaderBar
+            + Properties(decoration_layout="")
+            + TypedChild("start", self.__refresh_button)
+            + TypedChild("end", self.__connect_button)
+        )
+
         self.set_title(_("Quick Connect"))
         self.set_tag("quick-connect")
         self.set_child(
             build(
                 Adw.ToolbarView
-                + Children(
-                    # Header bar
-                    Adw.HeaderBar
-                    + Properties(decoration_layout="")
-                    + Children(
-                        self.__refresh_button,
-                        None,
-                        self.__connect_button,
-                    ),
-                    # Content
-                    self.__toast_overlay,
-                    # Bottom bar
-                    None,
-                )
+                + TypedChild("top", header_bar)
+                + TypedChild("content", self.__toast_overlay)
             )
         )
 

@@ -12,6 +12,7 @@ from src.components.widget_builder import (
     Children,
     Handlers,
     Properties,
+    TypedChild,
     WidgetBuilder,
     build,
 )
@@ -71,21 +72,21 @@ class AuthCredentialsView(Adw.NavigationPage):
             )
         )
 
+        header_bar = (
+            Adw.HeaderBar
+            + Properties(decoration_layout="")
+            + TypedChild("end", self.__log_in_button)
+        )
+
         self.set_title(_("Credentials"))
         self.set_tag("credentials")
-        # fmt: off
-        child = build(
-            Adw.ToolbarView 
-            + Children(
-                Adw.HeaderBar
-                + Properties(decoration_layout="")
-                + Children(None, None, self.__log_in_button),
-                self.__toast_overlay,
-                None
+        self.set_child(
+            build(
+                Adw.ToolbarView
+                + TypedChild("top", header_bar)
+                + TypedChild("content", self.__toast_overlay)
             )
         )
-        # fmt: on
-        self.set_child(child)
 
     def __init__(self, *args, server: ServerInfo, username: str, **kwargs) -> None:
         super().__init__(*args, **kwargs)

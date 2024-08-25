@@ -15,6 +15,7 @@ from src.components.widget_builder import (
     Children,
     Handlers,
     Properties,
+    TypedChild,
     WidgetBuilder,
     build,
 )
@@ -81,36 +82,37 @@ class AuthUserSelectView(Adw.NavigationPage):
                 self.__user_picker,
             )
         )
+
+        header_bar = Adw.HeaderBar + Properties(decoration_layout="")
+
+        content = (
+            Adw.Clamp
+            + Properties(
+                margin_top=16,
+                margin_bottom=16,
+                margin_start=16,
+                margin_end=16,
+            )
+            + Children(
+                Gtk.Box
+                + Properties(
+                    orientation=Gtk.Orientation.VERTICAL,
+                    spacing=24,
+                )
+                + Children(
+                    self.__user_picker_view_stack,
+                    self.__other_user_button,
+                )
+            )
+        )
+
         self.set_title(_("User Selection"))
         self.set_tag("user-selection")
         self.set_child(
             build(
                 Adw.ToolbarView
-                + Children(
-                    # Header bar
-                    Adw.HeaderBar + Properties(decoration_layout=""),
-                    # Content
-                    Adw.Clamp
-                    + Properties(
-                        margin_top=16,
-                        margin_bottom=16,
-                        margin_start=16,
-                        margin_end=16,
-                    )
-                    + Children(
-                        Gtk.Box
-                        + Properties(
-                            orientation=Gtk.Orientation.VERTICAL,
-                            spacing=24,
-                        )
-                        + Children(
-                            self.__user_picker_view_stack,
-                            self.__other_user_button,
-                        )
-                    ),
-                    # No bottom bar
-                    None,
-                )
+                + TypedChild("top", header_bar)
+                + TypedChild("content", content)
             )
         )
 
