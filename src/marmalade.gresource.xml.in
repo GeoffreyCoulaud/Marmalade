@@ -3,7 +3,6 @@
   <gresource prefix="@PREFIX@">
     <file preprocess="xml-stripblanks">templates/help-overlay.ui</file>
     <file preprocess="xml-stripblanks">templates/scrollable_shelf.ui</file>
-    <file preprocess="xml-stripblanks">templates/server_add_dialog.ui</file>
     <file preprocess="xml-stripblanks">templates/server_browser_headerbar.ui</file>
     <file preprocess="xml-stripblanks">templates/server_home_page.ui</file>
     <file preprocess="xml-stripblanks">templates/servers_list_row.ui</file>
