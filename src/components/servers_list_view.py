@@ -53,15 +53,11 @@ class ServersListView(Adw.NavigationPage):
     __gtype_name__ = "MarmaladeServersListView"
 
     __edit_button: Gtk.Button
-    __add_button: Gtk.Button
     __add_button_revealer: Gtk.Revealer
-    __delete_button: Gtk.Button
     __delete_button_revealer: Gtk.Revealer
     __server_rows_group: Adw.PreferencesGroup
-    __servers_view_stack: Adw.ViewStack
-    __status_add_button: Gtk.Button
     __toast_overlay: Adw.ToastOverlay
-
+    __servers_view_stack: Adw.ViewStack
     __no_server_view: Gtk.Widget
     __servers_view: Gtk.Widget
 
@@ -120,25 +116,17 @@ class ServersListView(Adw.NavigationPage):
             )
         )
 
-        self.__add_button = build(
-            Gtk.Button
-            + Handlers(clicked=self.__on_add_button_clicked)
-            + Properties(icon_name="list-add-symbolic")
-        )
-
         self.__add_button_revealer = build(
             Gtk.Revealer
             + Properties(
                 reveal_child=True,
                 transition_type=Gtk.RevealerTransitionType.SLIDE_RIGHT,
             )
-            + Children(self.__add_button)
-        )
-
-        self.__delete_button = build(
-            Gtk.Button
-            + Handlers(clicked=self.__on_delete_button_clicked)
-            + Properties(icon_name="user-trash-symbolic")
+            + Children(
+                Gtk.Button
+                + Handlers(clicked=self.__on_add_button_clicked)
+                + Properties(icon_name="list-add-symbolic")
+            )
         )
 
         self.__delete_button_revealer = build(
@@ -147,7 +135,11 @@ class ServersListView(Adw.NavigationPage):
                 reveal_child=False,
                 transition_type=Gtk.RevealerTransitionType.SLIDE_RIGHT,
             )
-            + Children(self.__delete_button)
+            + Children(
+                Gtk.Button
+                + Handlers(clicked=self.__on_delete_button_clicked)
+                + Properties(icon_name="user-trash-symbolic")
+            )
         )
 
         header_bar = (
