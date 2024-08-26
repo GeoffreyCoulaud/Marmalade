@@ -212,22 +212,22 @@ class ServersListView(Adw.NavigationPage):
             shared.settings.add_server(server)
         # Create visible row
         row = ServersListRow(server)
-        row.connect("button-clicked", self.on_server_connect_request)
+        row.connect("button-clicked", self.__on_server_connect_request)
         self.__rows.add(row)
         self.__server_rows_group.add(row)
         self.__servers_view_stack.set_visible_child(self.__servers_view)
 
     def __on_add_button_clicked(self, _button) -> None:
-        addresses = {row.server.address for row in self.__rows}
+        addresses = {row.get_server().address for row in self.__rows}
         window = cast(Adw.ApplicationWindow, self.get_root())
         application = cast(Adw.Application, window.get_application())
         dialog = ServerAddDialog(application=application, addresses=addresses)
-        dialog.connect("server-picked", self.on_add_dialog_picked)
+        dialog.connect("server-picked", self.__on_add_dialog_picked)
         dialog.set_transient_for(window)
         dialog.set_modal(True)
         dialog.present()
 
-    def on_add_dialog_picked(self, _dialog, server: ServerInfo) -> None:
+    def __on_add_dialog_picked(self, _dialog, server: ServerInfo) -> None:
         self.add_server(server)
 
     def toggle_edit_mode(self) -> None:
@@ -235,19 +235,20 @@ class ServersListView(Adw.NavigationPage):
         self.__add_button_revealer.set_reveal_child(not self.__edit_mode)
         self.__delete_button_revealer.set_reveal_child(self.__edit_mode)
         for server_row in self.__rows:
-            server_row.edit_mode = self.__edit_mode
+            server_row.set_selectable(self.__edit_mode)
 
     def __on_edit_button_toggled(self, _button) -> None:
         self.toggle_edit_mode()
 
     def __on_delete_button_clicked(self, _button) -> None:
-        selected = [row for row in self.__rows if row.is_selected]
+        selected = [row for row in self.__rows if row.get_selected()]
         self.__servers_trash.clear()
         for row in selected:
             self.__server_rows_group.remove(row)
             self.__rows.remove(row)
-            self.__servers_trash.add(row.server)
-            shared.settings.remove_server(row.server.address)
+            server = row.get_server()
+            self.__servers_trash.add(server)
+            shared.settings.remove_server(server.address)
         if len(self.__rows) == 0:
             self.__servers_view_stack.set_visible_child(self.__no_server_view)
         with self.__edit_button.freeze_notify():
@@ -267,24 +268,24 @@ class ServersListView(Adw.NavigationPage):
                 # Multiple servers removed
                 toast.set_title(_("%d servers removed") % n)
         toast.set_button_label(_("Undo"))
-        toast.connect("button-clicked", self.on_removed_toast_undo)
+        toast.connect("button-clicked", self.__on_removed_toast_undo)
         self.__toast_overlay.add_toast(toast)
 
-    def on_removed_toast_undo(self, _toast) -> None:
+    def __on_removed_toast_undo(self, _toast) -> None:
         for server in self.__servers_trash:
             self.add_server(server)
         self.__servers_trash.clear()
 
-    def on_server_connect_request(self, row: ServersListRow) -> None:
+    def __on_server_connect_request(self, row: ServersListRow) -> None:
         window = cast(Adw.ApplicationWindow, self.get_root())
         application = cast(Adw.Application, window.get_application())
-        dialog = AuthDialog(application=application, server=row.server)
-        dialog.connect("authenticated", self.on_authenticated)
+        dialog = AuthDialog(application=application, server=row.get_server())
+        dialog.connect("authenticated", self.__on_authenticated)
         dialog.set_transient_for(window)
         dialog.set_modal(True)
         dialog.present()
 
-    def on_authenticated(self, _widget, address: str, user_id: str) -> None:
+    def __on_authenticated(self, _widget, address: str, user_id: str) -> None:
         shared.settings.set_active_token(address=address, user_id=user_id)
         info = shared.settings.get_token(address=address, user_id=user_id)
         client = JellyfinClient(address, device_id=info.device_id, token=info.token)  # type: ignore
