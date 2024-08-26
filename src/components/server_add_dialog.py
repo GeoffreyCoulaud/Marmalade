@@ -267,9 +267,13 @@ class ServerAddDialog(Adw.ApplicationWindow):
         logging.debug("Discovered %s", str(server))
         self.__discovered_addresses.add(server.address)
         # Add the server row
-        row = ServersListRow(server, "list-add-symbolic")
-        row.connect("button-clicked", self.on_detected_row_button_clicked)
-        self.__detected_server_rows_group.add(row)
+        self.__detected_server_rows_group.add(
+            build(
+                ServersListRow
+                + Properties(server=server, icon_name="list-add-symbolic")
+                + Handlers(button_clicked=self.on_detected_row_button_clicked)
+            )
+        )
 
     def on_discover_subtask_finished(self, _result):
         self.__discover_subtasks_done_count += 1
@@ -281,7 +285,7 @@ class ServerAddDialog(Adw.ApplicationWindow):
         self.close()
 
     def on_detected_row_button_clicked(self, server_row: ServersListRow) -> None:
-        self.emit("server-picked", server_row.server)
+        self.emit("server-picked", server_row.get_server())
         self.close()
 
     def query_public_server_info(self, address: str) -> PublicSystemInfo:
