@@ -56,10 +56,7 @@ class Task:
         return_on_cancel: bool = True,
     ) -> None:
         # Create or pass the cancellable
-        if cancellable is None:
-            self.__cancellable = Gio.Cancellable()
-        else:
-            self.__cancellable = cancellable
+        self.__cancellable = Gio.Cancellable() if cancellable is None else cancellable
         # Bind the functions
         self.__main = partial(main, *main_args, **main_kwargs)
         self.__callback = partial(callback, *callback_args, **callback_kwargs)
