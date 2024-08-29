@@ -2,7 +2,6 @@
 <gresources>
   <gresource prefix="@PREFIX@">
     <file preprocess="xml-stripblanks">templates/scrollable_shelf.ui</file>
-    <file preprocess="xml-stripblanks">templates/server_browser_headerbar.ui</file>
     <file preprocess="xml-stripblanks">templates/server_home_page.ui</file>
     <file preprocess="xml-stripblanks">templates/shelf.ui</file>
     <file preprocess="xml-stripblanks">templates/shelf_page.ui</file>

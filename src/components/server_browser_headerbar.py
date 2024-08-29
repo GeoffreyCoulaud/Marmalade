@@ -1,37 +1,159 @@
 from typing import Optional, Sequence
 
-from gi.repository import GLib, GObject, Gtk
+from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
 
-from src import build_constants
+from src.components.widget_builder import Children, Handlers, Properties, build
 
 
-@Gtk.Template(
-    resource_path=build_constants.PREFIX + "/templates/server_browser_headerbar.ui"
-)
 class ServerBrowserHeaderbar(Gtk.HeaderBar):
     __gtype_name__ = "MarmaladeServerBrowserHeaderbar"
 
-    # fmt: off
-    __back_button                  = Gtk.Template.Child("back_button")
-    __disconnect_button            = Gtk.Template.Child("disconnect_button")
-    __filter_button                = Gtk.Template.Child("filter_button")
-    __filter_button_revealer       = Gtk.Template.Child("filter_button_revealer")
-    __header_center_stack          = Gtk.Template.Child("header_center_stack")
-    __header_left_stack            = Gtk.Template.Child("header_left_stack")
-    __path_bar                     = Gtk.Template.Child("path_bar")
-    __search_button_revealer       = Gtk.Template.Child("search_button_revealer")
-    __sidebar_show_button          = Gtk.Template.Child("sidebar_show_button")
-    __sidebar_show_button_revealer = Gtk.Template.Child("sidebar_show_button_revealer")
-    __title                        = Gtk.Template.Child("title")
-    # fmt: on
+    __back_button: Gtk.Button
+    __disconnect_button: Gtk.Button
+    __filter_button: Gtk.Button
+    __filter_button_revealer: Gtk.Revealer
+    __sidebar_show_button: Gtk.Button
+    __sidebar_show_button_revealer: Gtk.Revealer
+    __search_button_revealer: Gtk.Revealer
+    __header_center_stack: Adw.ViewStack
+    __header_left_stack: Adw.ViewStack
+    __title: Adw.WindowTitle
+    __path_bar: Gtk.Label
 
-    # TODO Implement filter button
+    # TODO instead of having everything inside and having to toggle visibility
+    # expose the properties and let the parent decide how to use them
+
+    def __init_widget(self):
+        self.__sidebar_show_button = build(
+            Gtk.Button
+            + Handlers(clicked=self.__on_sidebar_show_clicked)
+            + Properties(
+                icon_name="sidebar-show-symbolic",
+                action_name="browser.show-sidebar",
+                margin_end=8,
+            )
+        )
+        self.__sidebar_show_button_revealer = build(
+            Gtk.Revealer
+            + Children(self.__sidebar_show_button)
+            + Properties(
+                reveal_child=True,
+                transition_type=Gtk.RevealerTransitionType.SLIDE_RIGHT,
+            )
+        )
+        self.__back_button = build(
+            Gtk.Button
+            + Handlers(clicked=self.__on_back_clicked)
+            + Properties(icon_name="go-previous")
+        )
+        self.__disconnect_button = build(
+            Gtk.Button
+            + Handlers(clicked=self.__on_disconnect_clicked)
+            + Properties(icon_name="system-log-out-symbolic")
+        )
+        self.__header_left_stack = build(
+            Adw.ViewStack
+            + Children(
+                self.__back_button,
+                self.__disconnect_button,
+            )
+        )
+        packed_start = build(
+            Gtk.Box
+            + Children(
+                self.__sidebar_show_button_revealer,
+                self.__header_left_stack,
+            )
+        )
+
+        self.__title = build(
+            Adw.WindowTitle
+            + Properties(
+                title=_("Browsing Server"),
+            )
+        )
+        # TODO replace with pathbar widget
+        self.__path_bar = build(
+            Gtk.Label
+            + Properties(
+                ellipsize=Pango.EllipsizeMode.MIDDLE,
+            )
+        )
+        self.__header_center_stack = build(
+            Adw.ViewStack
+            + Children(
+                self.__title,
+                self.__path_bar,
+            )
+        )
+
+        self.__search_button_revealer = build(
+            Gtk.Revealer
+            + Properties(reveal_child=False)
+            + Children(
+                Gtk.ToggleButton
+                + Properties(
+                    icon_name="system-search-symbolic",
+                    action_name="browser.search",
+                )
+            )
+        )
+
+        filter_menu = Gio.Menu()
+        filter_menu_section1 = Gio.Menu()
+        filter_menu_section1.append(_("Sort by"), None)
+        filter_menu.append_section(None, filter_menu_section1)
+        filter_menu_section2 = Gio.Menu()
+        filter_menu_section2.append(_("Filters"), None)
+        filter_menu_section2.append(_("Genres"), None)
+        filter_menu_section2.append(_("Age rating"), None)
+        filter_menu_section2.append(_("Tags"), None)
+        filter_menu_section2.append(_("Year"), None)
+        filter_menu.append_section(None, filter_menu_section2)
+
+        self.__filter_button = build(
+            Gtk.MenuButton
+            + Properties(
+                icon_name="view-sort-descending-symbolic",
+                menu_model=filter_menu,
+            )
+        )
+
+        self.__filter_button_revealer = build(
+            Gtk.Revealer
+            + Properties(reveal_child=False)
+            + Children(self.__filter_button)
+        )
+
+        preferences_menu = Gio.Menu()
+        preferences_menu.append(_("Preferences"), "app.preferences")
+        preferences_menu.append(_("Keyboard Shortcuts"), "win.show-help-overlay")
+        preferences_menu.append(_("About Marmalade"), "app.about")
+
+        preferences_button = build(
+            Gtk.MenuButton
+            + Properties(
+                icon_name="open-menu-symbolic",
+                menu_model=preferences_menu,
+            )
+        )
+
+        packed_end = build(
+            Gtk.Box
+            + Children(
+                self.__search_button_revealer,
+                self.__filter_button_revealer,
+                preferences_button,
+            )
+        )
+
+        self.pack_start(packed_start)
+        self.pack_end(packed_end)
+        self.set_title_widget(self.__header_center_stack)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__back_button.connect("clicked", self.__on_back_clicked)
-        self.__disconnect_button.connect("clicked", self.__on_disconnect_clicked)
-        self.__sidebar_show_button.connect("clicked", self.__on_sidebar_show_clicked)
+        self.__init_widget()
 
     def __on_sidebar_show_clicked(self, *_args) -> None:
         self.activate_action("browser.hide-sidebar")
@@ -43,8 +165,9 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
         self.activate_action("browser.navigate", GLib.Variant.new_string("back"))
 
     def toggle_back_button(self, back_button_shown: bool = True) -> None:
-        name = "back" if back_button_shown else "disconnect"
-        self.__header_left_stack.set_visible_child_name(name)
+        self.__header_left_stack.set_visible_child(
+            self.__back_button if back_button_shown else self.__disconnect_button
+        )
 
     # title property
 
@@ -56,7 +179,7 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
         return self.get_property("title")
 
     @title.setter
-    def title(self, value: str) -> None:
+    def title_setter(self, value: str) -> None:
         self.__title.set_title(value)
 
     def set_title(self, value: str):
@@ -72,7 +195,7 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
         return self.get_property("show_sidebar_button_visible")
 
     @show_sidebar_button_visible.setter
-    def show_sidebar_button_visible(self, value: bool) -> None:
+    def show_sidebar_button_visible_setter(self, value: bool) -> None:
         self.__sidebar_show_button_revealer.set_reveal_child(value)
 
     def set_show_sidebar_button_visible(self, value: bool):
@@ -88,7 +211,7 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
         return self.get_property("filter_button_visible")
 
     @filter_button_visible.setter
-    def filter_button_visible(self, value: bool) -> None:
+    def filter_button_visible_setter(self, value: bool) -> None:
         self.__filter_button_revealer.set_reveal_child(value)
 
     def set_filter_button_visible(self, value: bool):
@@ -104,7 +227,7 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
         return self.get_property("search_button_visible")
 
     @search_button_visible.setter
-    def search_button_visible(self, value: bool) -> None:
+    def search_button_visible_setter(self, value: bool) -> None:
         self.__search_button_revealer.set_reveal_child(value)
 
     def set_search_button_visible(self, value: bool):
@@ -112,7 +235,7 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
 
     # ancestors property
 
-    __ancestors: Optional[Sequence[tuple[str, str]]] = None
+    __ancestors: Optional[Sequence[tuple[str, str]]]
 
     @GObject.Property(type=object, default=None)
     def ancestors(self) -> Optional[Sequence[tuple[str, str]]]:
@@ -123,7 +246,7 @@ class ServerBrowserHeaderbar(Gtk.HeaderBar):
         return self.get_property("ancestors")
 
     @ancestors.setter
-    def ancestors(self, value: Optional[Sequence[tuple[str, str]]]) -> None:
+    def ancestors_setter(self, value: Sequence[tuple[str, str]]) -> None:
         # TODO implement pathbar widget (currently just a label)
         # TODO pass the ancestors to the pathbar
         self.__ancestors = value
