@@ -12,31 +12,102 @@ from jellyfin_api_client.models.base_item_dto import BaseItemDto
 from jellyfin_api_client.models.image_type import ImageType
 from jellyfin_api_client.types import UNSET
 
-from src import build_constants
 from src.components.item_card import POSTER, WIDE_SCREENSHOT, ItemCard
 from src.components.loading_view import LoadingView
 from src.components.server_page import ServerPage
 from src.components.shelf import Shelf
-from src.components.widget_builder import Properties, build
+from src.components.widget_builder import Children, Properties, build
 from src.task import Task
 
 # TODO make sure that the loading view stays up until
 # all the startup requests are done.
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/server_home_page.ui")
 class ServerHomePage(ServerPage):
     __gtype_name__ = "MarmaladeServerHomePage"
 
-    # fmt: off
-    __toast_overlay: Adw.ToastOverlay = Gtk.Template.Child("toast_overlay")
-    __view_stack: Adw.ViewStack       = Gtk.Template.Child("view_stack")
-    __loading_view: LoadingView       = Gtk.Template.Child("loading_view")
-    __error_view: Adw.StatusPage      = Gtk.Template.Child("error_view")
-    __content_view: Gtk.Box           = Gtk.Template.Child("content_view")
-    __resume_shelf: Shelf             = Gtk.Template.Child("resume_shelf")
-    __next_up_shelf: Shelf            = Gtk.Template.Child("next_up_shelf")
-    # fmt: on
+    __toast_overlay: Adw.ToastOverlay
+    __view_stack: Adw.ViewStack
+    __loading_view: LoadingView
+    __error_view: Adw.StatusPage
+    __content_view: Gtk.ScrolledWindow
+    __content_box: Gtk.Box
+    __resume_shelf: Shelf
+    __next_up_shelf: Shelf
+
+    def __init_widget(self) -> None:
+        self.__next_up_shelf = build(
+            Shelf
+            + Properties(
+                title=_("Next Up"),
+                columns=3,
+                lines=1,
+            )
+        )
+        self.__resume_shelf = build(
+            Shelf
+            + Properties(
+                title=_("Resume Watching"),
+                columns=3,
+                lines=1,
+            )
+        )
+        self.__content_box = build(
+            Gtk.Box
+            + Properties(
+                orientation=Gtk.Orientation.VERTICAL,
+                margin_start=25,
+                margin_end=25,
+                margin_bottom=25,
+                margin_top=25,
+                spacing=24,
+            )
+            + Children(
+                self.__resume_shelf,
+                self.__next_up_shelf,
+            )
+        )
+        self.__content_view = build(
+            Gtk.ScrolledWindow
+            + Children(
+                Adw.Clamp
+                + Properties(maximum_size=1240)
+                + Children(
+                    self.__content_box,
+                )
+            )
+        )
+        self.__loading_view = build(LoadingView)
+        self.__error_view = build(
+            Adw.StatusPage
+            + Properties(
+                title=_("Error"),
+                description=_("An error occurred while getting the server's home"),
+                icon_name="dialog-error-symbolic",
+            )
+        )
+        self.__view_stack = build(
+            Adw.ViewStack
+            + Children(
+                self.__loading_view,
+                self.__error_view,
+                self.__content_view,
+            )
+        )
+        self.__toast_overlay = build(
+            Adw.ToastOverlay
+            + Children(
+                self.__view_stack,
+            )
+        )
+        self.set_is_root(True)
+        self.set_is_filterable(True)
+        self.set_title(_("Home"))
+        self.set_child(self.__toast_overlay)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.__init_widget()
 
     def load(self) -> None:
         """Load the home page content"""
@@ -72,7 +143,7 @@ class ServerHomePage(ServerPage):
                 # Create the shelf
                 title = _("Latest in {library}").format(library=item.name)
                 shelf = Shelf(title=title, columns=6, lines=1)
-                self.__content_view.append(shelf)
+                self.__content_box.append(shelf)
 
                 # Query shelf content in a task
                 task = Task(
@@ -125,7 +196,7 @@ class ServerHomePage(ServerPage):
                 GLib.Variant.new_strv([_("Shelf Items Error"), str(error)])
             )
             self.__toast_overlay.add_toast(toast)
-            self.__content_view.remove(shelf)
+            self.__content_box.remove(shelf)
 
         def on_shelf_items_success(shelf: Shelf, result: Sequence[BaseItemDto]) -> None:
             logging.debug('Shelf "%s": %d items', shelf.get_title(), len(result))
@@ -145,7 +216,7 @@ class ServerHomePage(ServerPage):
                 # TODO Properly handle the subtitle
                 # TODO Set the card action
 
-        self.__view_stack.set_visible_child_name("content")
+        self.__view_stack.set_visible_child(self.__content_view)
 
         # Spawn content query tasks
         logging.debug("Spawning homepage loading tasks")

@@ -1,7 +1,6 @@
 blueprints = custom_target('blueprints',
   input: files(
     'templates/scrollable_shelf.blp',
-    'templates/server_home_page.blp',
     'templates/shelf.blp',
     'templates/shelf_page.blp',
   ),
