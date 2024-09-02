@@ -2,7 +2,6 @@ blueprints = custom_target('blueprints',
   input: files(
     'templates/scrollable_shelf.blp',
     'templates/shelf.blp',
-    'templates/shelf_page.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
