@@ -19,7 +19,7 @@
 
 import logging
 from http import HTTPStatus
-from typing import Callable, Type, cast
+from typing import Callable, cast
 from urllib.parse import parse_qsl, urlparse
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
@@ -235,8 +235,8 @@ class ServerBrowserView(ServerBrowser):
 
         self.__overlay_split_view = build(
             Adw.OverlaySplitView
+            + Arguments(show_sidebar=False, pin_sidebar=True)
             + Handlers(**{"notify::show-sidebar": self.__on_sidebar_toggled})
-            + Properties(show_sidebar=False, pin_sidebar=True)
             + TypedChild(
                 "sidebar",
                 Adw.ToolbarView
