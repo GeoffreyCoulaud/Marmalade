@@ -1,16 +1,25 @@
-from typing import Optional
+from typing import cast
 
 from gi.repository import Gio, GObject, Gtk
 
-from src import build_constants
 from src.components.list_store_item import ListStoreItem
 
 
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/shelf_page.ui")
 class ShelfPage(Gtk.FlowBox):
     __gtype_name__ = "MarmaladeShelfPage"
 
-    __model: Gio.ListModel
+    __model: Gio.ListStore
+
+    def __init_widget(self):
+        self.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.set_column_spacing(8)
+        self.set_row_spacing(8)
+        self.set_margin_bottom(16)
+        self.set_margin_top(16)
+        self.set_margin_start(16)
+        self.set_margin_end(16)
+        self.set_homogeneous(True)
+        self.set_halign(Gtk.Align.START)
 
     # lines property
 
@@ -24,7 +33,7 @@ class ShelfPage(Gtk.FlowBox):
         return self.get_property("lines")
 
     @lines.setter
-    def lines(self, value: int) -> None:
+    def lines_setter(self, value: int) -> None:
         self.__lines = value
 
     def set_lines(self, value: int):
@@ -42,7 +51,7 @@ class ShelfPage(Gtk.FlowBox):
         return self.get_property("columns")
 
     @columns.setter
-    def columns(self, value: int) -> None:
+    def columns_setter(self, value: int) -> None:
         self.__columns = value
 
     def set_columns(self, value: int):
@@ -60,6 +69,8 @@ class ShelfPage(Gtk.FlowBox):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.__init_widget()
+
         # Create the inner list model
         self.__model = Gio.ListStore.new(ListStoreItem)
         self.__model.connect("items-changed", self.__on_model_items_changed)
@@ -77,7 +88,7 @@ class ShelfPage(Gtk.FlowBox):
         """Pop the last widget of the page"""
         if (n_items := len(self)) == 0:
             raise IndexError()
-        item: ListStoreItem = self.__model.get_item(index := n_items - 1)
+        item = cast(ListStoreItem, self.__model.get_item(index := n_items - 1))
         self.__model.remove(index)
         return item.value
 
