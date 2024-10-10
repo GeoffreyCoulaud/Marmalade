@@ -1,35 +1,121 @@
-from typing import Optional
+from typing import cast
 
-from gi.repository import Adw, Gio, GObject, Gtk
+from gi.repository import Adw, GObject, Gtk
 
-from src import build_constants
-from src.components.list_store_item import ListStoreItem
 from src.components.shelf_page import ShelfPage
+from src.components.widget_builder import Children, Handlers, Properties, build
 
 
 class TypeOverrideError(Exception):
     """Error raised when overriding a shelf's item type"""
 
-
-@Gtk.Template(resource_path=build_constants.PREFIX + "/templates/shelf.ui")
 class Shelf(Gtk.Box):
     """A paginated item shelf with items of the same type"""
 
     __gtype_name__ = "MarmaladeShelf"
 
-    # fmt: off
-    __carousel: Adw.Carousel = Gtk.Template.Child("carousel")
-    __dots: Adw.CarouselIndicatorDots = Gtk.Template.Child("dots")
-    __next_button: Gtk.Button = Gtk.Template.Child("next_button")
-    __previous_button: Gtk.Button = Gtk.Template.Child("previous_button")
-    __title_label: Gtk.Label = Gtk.Template.Child("title_label")
-    __view_stack: Adw.ViewStack = Gtk.Template.Child("view_stack")
-    __empty_shelf_page: Adw.Bin = Gtk.Template.Child("empty_shelf_page")
-    # fmt: on
+    __title_label: Gtk.Label
+    __previous_button: Gtk.Button
+    __view_stack: Adw.ViewStack
+    __carousel_view: Adw.Carousel
+    __empty_view: Adw.Bin
+    __next_button: Gtk.Button
+    __dots: Adw.CarouselIndicatorDots
+
+    def __init_widget(self):
+        self.__title_label = build(
+            Gtk.Label
+            + Properties(
+                css_classes=["title"],
+                halign=Gtk.Align.START,
+            )
+        )
+        self.__previous_button = build(
+            Gtk.Button
+            + Handlers(clicked=self.__on_previous_button_clicked)
+            + Properties(
+                css_classes=["flat"],
+                icon_name="go-previous-symbolic",
+                valign=Gtk.Align.CENTER,
+                margin_start=8,
+            )
+        )
+        self.__next_button = build(
+            Gtk.Button
+            + Handlers(clicked=self.__on_next_button_clicked)
+            + Properties(
+                css_classes=["flat"],
+                icon_name="go-next-symbolic",
+                valign=Gtk.Align.CENTER,
+                margin_end=8,
+            )
+        )
+        self.__carousel_view = build(
+            Adw.Carousel
+            + Handlers(
+                **{
+                    "page-changed": self.__update_navigation_controls,
+                    "notify::n-pages": self.__on_n_pages_changed,
+                }
+            )
+            + Properties(
+                hexpand=True,
+                halign=Gtk.Align.START,
+            )
+        )
+        self.__dots = build(
+            Adw.CarouselIndicatorDots
+            + Properties(
+                halign=Gtk.Align.CENTER,
+                carousel=self.__carousel_view,
+            )
+        )
+        self.__empty_view = build(
+            Adw.Bin
+            + Properties(
+                name="shelf-placeholder-bin",
+            )
+        )
+        self.__view_stack = build(
+            Adw.ViewStack
+            + Children(
+                self.__empty_view,
+                self.__carousel_view,
+            )
+        )
+
+        center_box = (
+            Gtk.Box
+            + Properties(
+                orientation=Gtk.Orientation.VERTICAL,
+                spacing=14,
+            )
+            + Children(self.__title_label, self.__view_stack)
+        )
+
+        controls_and_content_box = build(
+            Gtk.Box
+            + Properties(
+                orientation=Gtk.Orientation.HORIZONTAL,
+                spacing=8,
+            )
+            + Children(
+                self.__previous_button,
+                center_box,
+                self.__next_button,
+            )
+        )
+
+        self.set_orientation(Gtk.Orientation.VERTICAL)
+        self.set_valign(Gtk.Align.START)
+        self.set_hexpand(True)
+        self.set_spacing(8)
+        self.append(controls_and_content_box)
+        self.append(self.__dots)
 
     # lines property
 
-    __lines: int
+    __lines: int = 1
 
     @GObject.Property(type=int, default=1)
     def lines(self) -> int:
@@ -39,7 +125,7 @@ class Shelf(Gtk.Box):
         return self.get_property("lines")
 
     @lines.setter
-    def lines(self, value: int) -> None:
+    def lines_setter(self, value: int) -> None:
         self.__lines = value
         self._reflow_items()
 
@@ -48,7 +134,7 @@ class Shelf(Gtk.Box):
 
     # columns property
 
-    __columns: int
+    __columns: int = 4
 
     @GObject.Property(type=int, default=4)
     def columns(self) -> int:
@@ -58,7 +144,7 @@ class Shelf(Gtk.Box):
         return self.get_property("columns")
 
     @columns.setter
-    def columns(self, value: int) -> None:
+    def columns_setter(self, value: int) -> None:
         self.__columns = value
         self._reflow_items()
 
@@ -75,7 +161,7 @@ class Shelf(Gtk.Box):
         return self.get_property("title")
 
     @title.setter
-    def title(self, value: str) -> None:
+    def title_setter(self, value: str) -> None:
         self.__title_label.set_label(value)
         self.__title_label.set_visible(len(value) > 0)
 
@@ -85,15 +171,15 @@ class Shelf(Gtk.Box):
     # empty_child property
 
     @GObject.Property(type=Gtk.Widget)
-    def empty_child(self) -> Gtk.Widget:
-        return self.__empty_shelf_page.get_child()
+    def empty_child(self) -> Gtk.Widget | None:
+        return self.__empty_view.get_child()
 
     def get_empty_child(self) -> Gtk.Widget:
         return self.get_property("empty_child")
 
     @empty_child.setter
-    def empty_child(self, value: Gtk.Widget) -> None:
-        self.__empty_shelf_page.set_child(value)
+    def empty_child_setter(self, value: Gtk.Widget) -> None:
+        self.__empty_view.set_child(value)
 
     def set_empty_child(self, value: Gtk.Widget):
         self.set_property("empty_child", value)
@@ -112,10 +198,8 @@ class Shelf(Gtk.Box):
     def __init__(self, *args, **kwargs) -> None:
         """Create a new Shelf widget"""
         super().__init__(*args, **kwargs)
-        self.__next_button.connect("clicked", self.__on_next_button_clicked)
-        self.__previous_button.connect("clicked", self.__on_previous_button_clicked)
-        self.__carousel.connect("page-changed", self.__update_navigation_controls)
-        self.__carousel.connect("notify::n-pages", self.__on_n_pages_changed)
+        self.__init_widget()
+
         self.__update_navigation_controls()
         self.__update_visible_stack_page()
 
@@ -132,42 +216,42 @@ class Shelf(Gtk.Box):
         self.__update_visible_stack_page()
 
     def __update_navigation_controls(self, *_args) -> None:
-        has_multiple_pages = self.__carousel.get_n_pages() > 1
+        has_multiple_pages = self.__carousel_view.get_n_pages() > 1
         self.__dots.set_visible(has_multiple_pages)
-        index = self.__carousel.get_position()
-        self.__next_button.set_sensitive(index < self.__carousel.get_n_pages() - 1)
+        index = self.__carousel_view.get_position()
+        self.__next_button.set_sensitive(index < self.__carousel_view.get_n_pages() - 1)
         self.__previous_button.set_sensitive(index > 0)
 
     def __update_visible_stack_page(self) -> None:
-        self.__view_stack.set_visible_child_name(
-            "empty-shelf-page" if self._get_n_pages() == 0 else "carousel"
+        self.__view_stack.set_visible_child(
+            self.__empty_view if self._get_n_pages() == 0 else self.__carousel_view
         )
 
     def _shift_carousel(self, offset: int = 1, animate: bool = True) -> None:
         """Navigate the carousel relatively"""
-        position = self.__carousel.get_position()
-        destination = max(0, min(self._get_n_pages() - 1, position + offset))
-        destination_page = self.__carousel.get_nth_page(destination)
-        self.__carousel.scroll_to(destination_page, animate=animate)
+        position = self.__carousel_view.get_position()
+        destination = round(max(0, min(self._get_n_pages() - 1, position + offset)))
+        destination_page = self.__carousel_view.get_nth_page(destination)
+        self.__carousel_view.scroll_to(destination_page, animate=animate)
 
     # Content pagination methods
 
     def _get_n_pages(self) -> int:
-        return self.__carousel.get_n_pages()
+        return self.__carousel_view.get_n_pages()
 
     def _get_nth_page(self, index: int) -> ShelfPage:
         n_pages = self._get_n_pages()
         index = index if index >= 0 else n_pages + index
         if index not in range(0, n_pages):
             raise IndexError()
-        return self.__carousel.get_nth_page(index)
+        return cast(ShelfPage, self.__carousel_view.get_nth_page(index))
 
     def __create_page(self) -> None:
         page = ShelfPage()
         flags = GObject.BindingFlags.SYNC_CREATE
         for prop in ("columns", "lines"):
             self.bind_property(prop, page, prop, flags)
-        self.__carousel.append(page)
+        self.__carousel_view.append(page)
 
     def append(self, widget: Gtk.Widget) -> None:
         """
@@ -188,7 +272,7 @@ class Shelf(Gtk.Box):
             raise IndexError()
         widget = (page := self._get_nth_page(-1)).pop()
         if len(page) == 0:
-            self.__carousel.remove(page)
+            self.__carousel_view.remove(page)
         return widget
 
     def _reflow_items(self) -> None:
@@ -203,11 +287,5 @@ class Shelf(Gtk.Box):
         for widget in widgets:
             self.append(widget)
 
-    # GTK.Buildable methods
 
-    def add_child(self, builder=None, child=None, type=None) -> None:
-        # TODO Check that this does work
-        self.append(child)
-
-
-Shelf.set_css_name("shelf")
+Shelf.set_css_name("shelf")  # type: ignore

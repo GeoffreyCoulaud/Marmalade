@@ -20,10 +20,9 @@
 import sys
 from typing import Callable, Optional
 
-from gi.repository import Adw, Gio, GLib
+from gi.repository import Adw, Gio, GLib, Gtk
 
-# pylint: disable=no-name-in-module
-from src import build_constants, shared
+from src import build_constants, shared  # type: ignore
 from src.components.window import MarmaladeWindow
 from src.database.api import DataHandler
 from src.logging.setup import log_system_info, setup_logging
@@ -102,6 +101,8 @@ class MarmaladeApplication(Adw.Application):
     def do_activate(self):
         window = self.get_active_window()
         if not window:
+            # FIXME This no longer displays a window after getting rid of Gtk.Template
+            # WHY ???????
             window = MarmaladeWindow(application=self)
         window.present()
 
