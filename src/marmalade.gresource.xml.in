@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="@PREFIX@">
-    <file preprocess="xml-stripblanks">templates/shelf.ui</file>
     <file alias="style.css">css/style.css</file>
   </gresource>
   <gresource prefix="@PREFIX@/icons/scalable/actions/">

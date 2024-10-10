@@ -37,6 +37,7 @@ class UserNotFound(Exception):
 
 
 class MarmaladeWindow(Adw.ApplicationWindow):
+
     __gtype_name__ = "MarmaladeWindow"
 
     navigation: Adw.NavigationView

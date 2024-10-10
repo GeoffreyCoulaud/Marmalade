@@ -1,11 +1,3 @@
-blueprints = custom_target('blueprints',
-  input: files(
-    'templates/shelf.blp',
-  ),
-  output: '.',
-  command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
-)
-
 gnome.compile_resources('marmalade',
   configure_file(
     input: 'marmalade.gresource.xml.in',
@@ -15,7 +7,6 @@ gnome.compile_resources('marmalade',
   gresource_bundle: true,
   install: true,
   install_dir: pkgdatadir,
-  dependencies: blueprints,
 )
 
 configure_file(
