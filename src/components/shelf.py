@@ -197,9 +197,9 @@ class Shelf(Gtk.Box):
 
     # Init
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self) -> None:
         """Create a new Shelf widget"""
-        super().__init__(*args, **kwargs)
+        super().__init__()
         self.__init_widget()
 
         self.__update_navigation_controls()
@@ -290,4 +290,6 @@ class Shelf(Gtk.Box):
             self.append(widget)
 
 
+# This line is necessary to register as the css element "shelf"
+# and be able to style it in the CSS files
 Shelf.set_css_name("shelf")  # type: ignore
