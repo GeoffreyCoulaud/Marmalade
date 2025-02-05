@@ -1,4 +1,7 @@
 /.flatpak
 /.flatpak-builder
 /_build
+/builddir
+/build
 /.venv
+/src/jellyfin_openapi_client

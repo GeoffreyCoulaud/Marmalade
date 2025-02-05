@@ -1,4 +1,4 @@
-jellyfin-api-client
 hishel
 psutil
 PyGObject
+openapi-python-client
