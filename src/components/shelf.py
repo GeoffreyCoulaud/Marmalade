@@ -110,8 +110,10 @@ class Shelf(Gtk.Box):
         self.set_valign(Gtk.Align.START)
         self.set_hexpand(True)
         self.set_spacing(8)
-        self.append(controls_and_content_box)
-        self.append(self.__dots)
+        # We're calling the parent's append method directly,
+        # Because we just want to lay internal elements out, not add children to the shelf
+        super().append(controls_and_content_box)
+        super().append(self.__dots)
 
     # lines property
 
