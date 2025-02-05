@@ -142,7 +142,7 @@ class ServerHomePage(ServerPage):
 
                 # Create the shelf
                 title = _("Latest in {library}").format(library=item.name)
-                shelf = Shelf(title=title, columns=6, lines=1)
+                shelf = build(Shelf + Properties(title=title, columns=6, lines=1))
                 self.__content_box.append(shelf)
 
                 # Query shelf content in a task
