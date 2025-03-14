@@ -1,7 +1,7 @@
 # Marmalade
 
-A GTK client for Jellyfin
+An experimental GTK client for Jellyfin
 
-# Contributing
+# Contributing to Marmalade
 
-See [CONTRIBUTING.md](./CONTRIBUTING.MD)
+To start with Marmalade development, please look at [the wiki](https://github.com/GeoffreyCoulaud/Marmalade/wiki)
