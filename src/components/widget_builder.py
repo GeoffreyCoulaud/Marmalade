@@ -162,14 +162,12 @@ class WidgetBuilder(Generic[_BuiltWidget]):
         # Gtk.Box, Gtk.ListBox
         # Containers that use the append method to add N children
         if isinstance(widget, Gtk.Box) or isinstance(widget, Gtk.ListBox):
-            non_null = self.__check_no_null_children(widget, resolved)
-            for child in non_null:
+            for child in self.__check_no_null_children(widget, resolved):
                 widget.append(child)
 
         # Adw.PreferencesGroup
         elif isinstance(widget, Adw.PreferencesGroup):
-            non_null = self.__check_no_null_children(widget, resolved)
-            for child in non_null:
+            for child in self.__check_no_null_children(widget, resolved):
                 widget.add(child)
 
         # Adw.ApplicationWindow
@@ -180,14 +178,17 @@ class WidgetBuilder(Generic[_BuiltWidget]):
         # Adw.ToolbarView
         # Note: to set top and bottom toolbars, use the TypedChild method
         elif isinstance(widget, Adw.ToolbarView):
-            if len(resolved) == 1:
+            try:
                 self.__check_n_children(widget, 1, resolved)
-                widget.set_content(resolved[0])
+            except ValueError as e:
+                logging.info("Adw.ToolbarView can only receive one untyped child.")
+                logging.info("To set top and bottom bars, use TypedChild")
+                raise e
+            widget.set_content(resolved[0])
 
         # Adw.ViewStack
         elif isinstance(widget, Adw.ViewStack):
-            non_null = self.__check_no_null_children(widget, resolved)
-            for child in non_null:
+            for child in self.__check_no_null_children(widget, resolved):
                 widget.add(child)
 
         # Adw.OverlaySplitView
@@ -284,7 +285,7 @@ class WidgetBuilder(Generic[_BuiltWidget]):
     def __add__(
         self, other: "WidgetBuilder[_BuiltWidget]"
     ) -> "WidgetBuilder[_BuiltWidget]":
-        new_builder = (
+        return (
             WidgetBuilder()
             .set_widget_class(self.get_widget_class())
             # Add data from self
@@ -300,7 +301,6 @@ class WidgetBuilder(Generic[_BuiltWidget]):
             .add_children(*other.get_children())
             .add_typed_children(*other.get_typed_children())
         )
-        return new_builder
 
     def __radd__(self, other: type[Widget]) -> "WidgetBuilder":
         # fmt: off
