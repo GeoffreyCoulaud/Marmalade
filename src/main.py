@@ -45,6 +45,13 @@ class MarmaladeApplication(Adw.Application):
         setup_logging(log_file)
         log_system_info()
 
+    def __init_database(self) -> None:
+        """Set the database up"""
+        database_file = shared.app_data_dir / "marmalade.db"
+        shared.database.init(str(database_file))
+        # TODO remove the settings initialization, should be handled by models.
+        shared.settings = DataHandler(file=database_file)
+
     def __create_action(
         self,
         name: str,
@@ -92,8 +99,7 @@ class MarmaladeApplication(Adw.Application):
         )
         self.__init_app_dirs()
         self.__init_logging()
-        database_file = shared.app_data_dir / "marmalade.db"
-        shared.settings = DataHandler(file=database_file)
+        self.__init_database()
         self.__create_action("quit", lambda *_: self.quit(), shortcuts=["<primary>q"])
         self.__create_action("about", self.__on_about)
         self.__create_action("error-details", self.__on_error_details, param_type="as")
@@ -101,8 +107,6 @@ class MarmaladeApplication(Adw.Application):
     def do_activate(self):
         window = self.get_active_window()
         if not window:
-            # FIXME This no longer displays a window after getting rid of Gtk.Template
-            # WHY ???????
             window = MarmaladeWindow(application=self)
         window.present()
 

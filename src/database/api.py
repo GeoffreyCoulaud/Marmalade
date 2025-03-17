@@ -1,3 +1,30 @@
+"""
+TODO: Migrate all that to SQLAlchemy + Alembic
+
+Tables are : Servers, Users, Tokens, Meta
+
+Meta is just a key-value store for the database version
+Meta's known keys should be stored in an enum here.
+Known keys are:
+- version: the database version string
+
+Servers table is for storing server info
+The address column is unique
+
+Users table is for storing user info on a server
+The user_id column is unique for a server
+
+Tokens table is for storing access tokens belonging to a user on a server, plus a device id
+Tokens table also has an 'active' column to store the currently active token.
+A user should have only one token on a server.
+
+The database should use UUIDs for all table primary keys.
+
+With an ORM, to avoid N+1 we should get user and server when getting tokens.
+However since we're using SQLite, efficiency is not really a concern.
+We can use autoconnet instead of manual database connection management too.
+"""
+
 import logging
 from contextlib import closing
 from pathlib import Path

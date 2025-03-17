@@ -2,3 +2,4 @@ hishel
 psutil
 PyGObject
 openapi-python-client
+peewee
