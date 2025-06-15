@@ -3,10 +3,6 @@
 
 pylint
 pygobject-stubs
-openapi-python-client
-
-# Needed for flatpak-pip-generator
-# https://github.com/flatpak/flatpak-builder-tools/tree/master/pip
-requirements-parser
+openapi-python-client==0.25.0
 
 -r requirements.txt
