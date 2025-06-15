@@ -3,12 +3,12 @@ from http import HTTPStatus
 from pathlib import Path
 
 from gi.repository import Adw, GObject, Gtk
-from jellyfin_api_client.errors import UnexpectedStatus
 
 from src import shared
 from src.components.widget_builder import Children, Handlers, Properties, build
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
+from src.jellyfin_api_client.errors import UnexpectedStatus
 from src.task import Task
 
 

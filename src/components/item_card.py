@@ -4,11 +4,11 @@ from http import HTTPStatus
 from typing import Optional
 
 from gi.repository import Adw, Gdk, GLib, GObject, Gtk, Pango
-from jellyfin_api_client.errors import UnexpectedStatus
-from jellyfin_api_client.models.image_type import ImageType
 
 from src.components.widget_builder import Children, Properties, build
 from src.jellyfin import JellyfinClient
+from src.jellyfin_api_client.errors import UnexpectedStatus
+from src.jellyfin_api_client.models.image_type import ImageType
 from src.task import Task
 
 

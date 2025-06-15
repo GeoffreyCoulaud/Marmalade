@@ -3,12 +3,6 @@ from http import HTTPStatus
 from typing import Type, cast, no_type_check
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
-from jellyfin_api_client.api.quick_connect import initiate_quick_connect
-from jellyfin_api_client.api.user import authenticate_with_quick_connect
-from jellyfin_api_client.errors import UnexpectedStatus
-from jellyfin_api_client.models.authentication_result import AuthenticationResult
-from jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
-from jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 
 from src import shared
 from src.components.widget_builder import (
@@ -20,6 +14,12 @@ from src.components.widget_builder import (
 )
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
+from src.jellyfin_api_client.api.quick_connect import initiate_quick_connect
+from src.jellyfin_api_client.api.user import authenticate_with_quick_connect
+from src.jellyfin_api_client.errors import UnexpectedStatus
+from src.jellyfin_api_client.models.authentication_result import AuthenticationResult
+from src.jellyfin_api_client.models.quick_connect_dto import QuickConnectDto
+from src.jellyfin_api_client.models.quick_connect_result import QuickConnectResult
 from src.task import Task
 
 

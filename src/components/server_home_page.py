@@ -3,20 +3,20 @@ from http import HTTPStatus
 from typing import Sequence
 
 from gi.repository import Adw, GLib, Gtk
-from jellyfin_api_client.api.items import get_resume_items
-from jellyfin_api_client.api.tv_shows import get_next_up
-from jellyfin_api_client.api.user_library import get_latest_media
-from jellyfin_api_client.api.user_views import get_user_views
-from jellyfin_api_client.errors import UnexpectedStatus
-from jellyfin_api_client.models.base_item_dto import BaseItemDto
-from jellyfin_api_client.models.image_type import ImageType
-from jellyfin_api_client.types import UNSET
 
 from src.components.item_card import POSTER, WIDE_SCREENSHOT, ItemCard
 from src.components.loading_view import LoadingView
 from src.components.server_page import ServerPage
 from src.components.shelf import Shelf
 from src.components.widget_builder import Children, Properties, build
+from src.jellyfin_api_client.api.items import get_resume_items
+from src.jellyfin_api_client.api.tv_shows import get_next_up
+from src.jellyfin_api_client.api.user_library import get_latest_media
+from src.jellyfin_api_client.api.user_views import get_user_views
+from src.jellyfin_api_client.errors import UnexpectedStatus
+from src.jellyfin_api_client.models.base_item_dto import BaseItemDto
+from src.jellyfin_api_client.models.image_type import ImageType
+from src.jellyfin_api_client.types import UNSET
 from src.task import Task
 
 # TODO make sure that the loading view stays up until

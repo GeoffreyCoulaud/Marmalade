@@ -4,9 +4,9 @@ from typing import Optional
 
 from hishel import CacheTransport, FileStorage
 from httpx import HTTPTransport
-from jellyfin_api_client.client import Client
 
 from src import shared
+from src.jellyfin_api_client.client import Client
 
 
 def make_device_id() -> str:

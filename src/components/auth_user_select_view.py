@@ -4,9 +4,6 @@ from typing import cast
 
 from gi.repository import Adw, GObject, Gtk
 from httpx import TimeoutException
-from jellyfin_api_client.api.user import get_public_users
-from jellyfin_api_client.errors import UnexpectedStatus
-from jellyfin_api_client.models import UserDto
 
 from src import shared
 from src.components.loading_view import LoadingView
@@ -21,6 +18,9 @@ from src.components.widget_builder import (
 )
 from src.database.api import ServerInfo, UserInfo
 from src.jellyfin import JellyfinClient
+from src.jellyfin_api_client.api.user import get_public_users
+from src.jellyfin_api_client.errors import UnexpectedStatus
+from src.jellyfin_api_client.models import UserDto
 from src.task import Task
 
 

@@ -4,4 +4,4 @@
 /builddir
 /build
 /.venv
-/src/jellyfin_openapi_client
+/src/jellyfin_api_client

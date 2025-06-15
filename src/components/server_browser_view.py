@@ -23,12 +23,6 @@ from typing import Callable, cast
 from urllib.parse import parse_qsl, urlparse
 
 from gi.repository import Adw, Gio, GLib, GObject, Gtk, Pango
-from jellyfin_api_client.api.user import get_current_user
-from jellyfin_api_client.api.user_views import get_user_views
-from jellyfin_api_client.errors import UnexpectedStatus
-from jellyfin_api_client.models.base_item_dto import BaseItemDto
-from jellyfin_api_client.models.base_item_dto_query_result import BaseItemDtoQueryResult
-from jellyfin_api_client.types import UNSET
 
 from src import shared
 from src.components.disconnect_dialog import DisconnectDialog
@@ -46,6 +40,14 @@ from src.components.widget_builder import (
     build,
 )
 from src.jellyfin import JellyfinClient
+from src.jellyfin_api_client.api.user import get_current_user
+from src.jellyfin_api_client.api.user_views import get_user_views
+from src.jellyfin_api_client.errors import UnexpectedStatus
+from src.jellyfin_api_client.models.base_item_dto import BaseItemDto
+from src.jellyfin_api_client.models.base_item_dto_query_result import (
+    BaseItemDtoQueryResult,
+)
+from src.jellyfin_api_client.types import UNSET
 from src.task import Task
 
 

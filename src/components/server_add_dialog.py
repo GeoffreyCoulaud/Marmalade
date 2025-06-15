@@ -16,9 +16,6 @@ from typing import Set
 import psutil
 from gi.repository import Adw, Gio, GLib, GObject, Gtk
 from httpx import InvalidURL, RequestError
-from jellyfin_api_client.api.system import get_public_system_info
-from jellyfin_api_client.client import Client as JfClient
-from jellyfin_api_client.models.public_system_info import PublicSystemInfo
 
 from src.components.servers_list_row import ServersListRow
 from src.components.widget_builder import (
@@ -29,6 +26,9 @@ from src.components.widget_builder import (
     build,
 )
 from src.database.api import ServerInfo
+from src.jellyfin_api_client.api.system import get_public_system_info
+from src.jellyfin_api_client.client import Client as JfClient
+from src.jellyfin_api_client.models.public_system_info import PublicSystemInfo
 from src.task import Task
 
 
