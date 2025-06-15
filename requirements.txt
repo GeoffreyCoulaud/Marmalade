@@ -1,6 +1,5 @@
-hishel
-psutil
-PyGObject
-openapi-python-client
-peewee
-sqlalchemy
+hishel>=0.1.2
+psutil>=7.0.0
+PyGObject>=3.52.3
+peewee>=3.18.1
+sqlalchemy>=2.0.41
