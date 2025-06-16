@@ -34,7 +34,7 @@ from src.components.widget_builder import (
     TypedChild,
     build,
 )
-from src.database.api import ServerInfo
+from src.database.homemade.models.ServerInfo import ServerInfo
 from src.jellyfin import JellyfinClient
 
 

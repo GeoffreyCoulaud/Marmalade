@@ -25,7 +25,7 @@ from src.components.widget_builder import (
     TypedChild,
     build,
 )
-from src.database.api import ServerInfo
+from src.database.homemade.models.ServerInfo import ServerInfo
 from src.jellyfin_api_client.api.system import get_public_system_info
 from src.jellyfin_api_client.client import Client as JfClient
 from src.jellyfin_api_client.models.public_system_info import PublicSystemInfo

@@ -12,7 +12,8 @@ from src.components.widget_builder import (
     TypedChild,
     build,
 )
-from src.database.api import ServerInfo, UserInfo
+from src.database.homemade.models.ServerInfo import ServerInfo
+from src.database.homemade.models.UserInfo import UserInfo
 from src.jellyfin import JellyfinClient, make_device_id
 from src.jellyfin_api_client.api.quick_connect import initiate_quick_connect
 from src.jellyfin_api_client.api.user import authenticate_with_quick_connect

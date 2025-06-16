@@ -5,8 +5,8 @@ from src.components.auth_credentials_view import AuthCredentialsView
 from src.components.auth_login_method_view import AuthLoginMethodView
 from src.components.auth_quick_connect_view import AuthQuickConnectView
 from src.components.auth_user_select_view import AuthUserSelectView
-from src.components.widget_builder import WidgetBuilder, build
-from src.database.api import ServerInfo
+from src.components.widget_builder import build
+from src.database.homemade.models.ServerInfo import ServerInfo
 
 
 class AuthDialog(Adw.ApplicationWindow):

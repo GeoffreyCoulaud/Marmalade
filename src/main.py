@@ -24,14 +24,18 @@ from gi.repository import Adw, Gio, GLib, Gtk
 
 from src import build_constants, shared  # type: ignore
 from src.components.window import MarmaladeWindow
-from src.database.api import DataHandler
+from src.database.homemade.CustomDatabase import CustomDatabase
+from src.database.homemade.repositories.EverythingRepository import EverythingRepository
+from src.database.homemade.repositories.ServerRepository import ServerRepository
+from src.database.homemade.repositories.TokenRepository import TokenRepository
+from src.database.homemade.repositories.UserRepository import UserRepository
 from src.logging.setup import log_system_info, setup_logging
 
 
 class MarmaladeApplication(Adw.Application):
     """The main application singleton class."""
 
-    settings: DataHandler
+    settings: EverythingRepository
     window: MarmaladeWindow
 
     def __init_app_dirs(self) -> None:
@@ -49,8 +53,17 @@ class MarmaladeApplication(Adw.Application):
         """Set the database up"""
         database_file = shared.app_data_dir / "marmalade.db"
         shared.database.init(str(database_file))
-        # TODO remove the settings initialization, should be handled by models.
-        shared.settings = DataHandler(file=database_file)
+
+        # Setup the custom database with migrations
+        database = CustomDatabase(database_file=database_file)
+        database.apply_migrations()
+
+        # Initialize the repositories
+        shared.settings = EverythingRepository(
+            server_repository=ServerRepository(database=database),
+            user_repository=UserRepository(database=database),
+            token_repository=TokenRepository(database=database),
+        )
 
     def __create_action(
         self,

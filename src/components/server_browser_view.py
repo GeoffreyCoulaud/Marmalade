@@ -310,7 +310,7 @@ class ServerBrowserView(ServerBrowser):
 
     def __on_mapped(self, *_args) -> None:
         """Callback executed when this view is about to be shown"""
-        shared.settings.update_connected_timestamp(address=self.client._base_url)
+        shared.settings.update_server_connected_timestamp(address=self.client._base_url)
         self.__on_sidebar_toggled()
         self.__on_page_changed()
         self.__init_navigation_sidebar()

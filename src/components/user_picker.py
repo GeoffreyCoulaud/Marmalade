@@ -4,7 +4,8 @@ from gi.repository import Adw, GObject
 
 from src.components.shelf import Shelf
 from src.components.user_badge import UserBadge
-from src.database.api import ServerInfo, UserInfo
+from src.database.homemade.models.ServerInfo import ServerInfo
+from src.database.homemade.models.UserInfo import UserInfo
 
 
 class UserPicker(Adw.Bin):

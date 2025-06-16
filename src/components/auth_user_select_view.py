@@ -16,7 +16,8 @@ from src.components.widget_builder import (
     WidgetBuilder,
     build,
 )
-from src.database.api import ServerInfo, UserInfo
+from src.database.homemade.models.ServerInfo import ServerInfo
+from src.database.homemade.models.UserInfo import UserInfo
 from src.jellyfin import JellyfinClient
 from src.jellyfin_api_client.api.user import get_public_users
 from src.jellyfin_api_client.errors import UnexpectedStatus

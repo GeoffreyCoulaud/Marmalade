@@ -6,7 +6,8 @@ from gi.repository import Adw, GObject, Gtk
 
 from src import shared
 from src.components.widget_builder import Children, Handlers, Properties, build
-from src.database.api import ServerInfo, UserInfo
+from src.database.homemade.models.ServerInfo import ServerInfo
+from src.database.homemade.models.UserInfo import UserInfo
 from src.jellyfin import JellyfinClient
 from src.jellyfin_api_client.errors import UnexpectedStatus
 from src.task import Task

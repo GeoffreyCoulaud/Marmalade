@@ -1,7 +1,7 @@
 from gi.repository import Adw, GObject, Gtk
 
 from src.components.widget_builder import Children, Handlers, Properties, build
-from src.database.api import ServerInfo
+from src.database.homemade.models.ServerInfo import ServerInfo
 
 
 class ServersListRow(Adw.ActionRow):
