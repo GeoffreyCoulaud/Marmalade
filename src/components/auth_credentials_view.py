@@ -126,14 +126,14 @@ class AuthCredentialsView(Adw.NavigationPage):
                 self.__server.address,
             )
             self.__log_in_button.set_sensitive(True)
-            shared.settings.add_users(
+            shared.repository.add_users(
                 self.__server.address,
                 UserInfo(
                     user_id=result.user.id,  # type: ignore
                     name=result.user.name,  # type: ignore
                 ),
             )
-            shared.settings.add_token(
+            shared.repository.add_token(
                 address=self.__server.address,
                 user_id=result.user.id,  # type: ignore
                 token=result.access_token,  # type: ignore

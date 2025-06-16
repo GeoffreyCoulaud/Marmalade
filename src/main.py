@@ -51,15 +51,14 @@ class MarmaladeApplication(Adw.Application):
 
     def __init_database(self) -> None:
         """Set the database up"""
-        database_file = shared.app_data_dir / "marmalade.db"
-        shared.database.init(str(database_file))
 
         # Setup the custom database with migrations
+        database_file = shared.app_data_dir / "marmalade.db"
         database = CustomDatabase(database_file=database_file)
         database.apply_migrations()
 
         # Initialize the repositories
-        shared.settings = EverythingRepository(
+        shared.repository = EverythingRepository(
             server_repository=ServerRepository(database=database),
             user_repository=UserRepository(database=database),
             token_repository=TokenRepository(database=database),

@@ -55,7 +55,7 @@ class MarmaladeWindow(Adw.ApplicationWindow):
         self.navigation.add(ServersListView())
 
         # Try to get the active token to resume navigation on the server
-        info = shared.settings.get_active_token()
+        info = shared.repository.get_active_token()
         if info is not None:
             logging.debug("Resuming where we left off")
             address, user_id, (device_id, token) = info

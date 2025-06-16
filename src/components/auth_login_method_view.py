@@ -160,7 +160,7 @@ class AuthLoginMethodView(Adw.NavigationPage):
 
     def discover_authenticated_users(self) -> None:
         """Discover the authenticated users and display them"""
-        users = shared.settings.get_authenticated_users(self.__server.address)
+        users = shared.repository.get_authenticated_users(self.__server.address)
         has_users = len(users) > 0
         self.__user_picker.set_visible(has_users)
         if not has_users:

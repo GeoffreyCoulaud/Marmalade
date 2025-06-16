@@ -62,12 +62,14 @@ class AuthDialog(Adw.ApplicationWindow):
 
     def on_user_picked(self, _widget, user_id: str = ""):
         # Check if we have a token for that user
-        token = shared.settings.get_token(address=self.server.address, user_id=user_id)
+        token = shared.repository.get_token(
+            address=self.server.address, user_id=user_id
+        )
         if token is not None:
             self.on_authenticated(None, user_id)
             return
         # If not, display the credentials view
-        user = shared.settings.get_user(address=self.server.address, user_id=user_id)
+        user = shared.repository.get_user(address=self.server.address, user_id=user_id)
         username = "" if user is None else user.name
         view = AuthCredentialsView(server=self.server, username=username)
         view.connect("authenticated", self.on_authenticated)

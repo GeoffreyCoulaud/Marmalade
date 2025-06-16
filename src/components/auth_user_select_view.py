@@ -147,11 +147,13 @@ class AuthUserSelectView(Adw.NavigationPage):
             ]
 
             # Add public users to the database
-            shared.settings.add_users(self.server.address, *public)
+            shared.repository.add_users(self.server.address, *public)
 
             # Order the authenticated users first
             others = []
-            authenticated = shared.settings.get_authenticated_users(self.server.address)
+            authenticated = shared.repository.get_authenticated_users(
+                self.server.address
+            )
             authenticated_set = set(authenticated)
             for user in public:
                 if user in authenticated_set:

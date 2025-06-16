@@ -202,14 +202,14 @@ class ServersListView(Adw.NavigationPage):
             self.__rows.remove(row)
             self.__server_rows_group.remove(row)
         # Refill it
-        servers = shared.settings.get_servers()
+        servers = shared.repository.get_servers()
         for server in servers:
             self.add_server(server, False)
 
     def add_server(self, server: ServerInfo, add_to_settings: bool = True) -> None:
         # Add to the settings database
         if add_to_settings:
-            shared.settings.add_server(server)
+            shared.repository.add_server(server)
         # Create visible row
         row = ServersListRow(server)
         row.connect("button-clicked", self.__on_server_connect_request)
@@ -248,7 +248,7 @@ class ServersListView(Adw.NavigationPage):
             self.__rows.remove(row)
             server = row.get_server()
             self.__servers_trash.add(server)
-            shared.settings.remove_server(server.address)
+            shared.repository.remove_server(server.address)
         if len(self.__rows) == 0:
             self.__servers_view_stack.set_visible_child(self.__no_server_view)
         with self.__edit_button.freeze_notify():
@@ -286,8 +286,8 @@ class ServersListView(Adw.NavigationPage):
         dialog.present()
 
     def __on_authenticated(self, _widget, address: str, user_id: str) -> None:
-        shared.settings.set_active_token(address=address, user_id=user_id)
-        info = shared.settings.get_token(address=address, user_id=user_id)
+        shared.repository.set_active_token(address=address, user_id=user_id)
+        info = shared.repository.get_token(address=address, user_id=user_id)
         client = JellyfinClient(address, device_id=info.device_id, token=info.token)  # type: ignore
         server_home_view = ServerBrowserView(client=client, user_id=user_id)
         navigation = cast(Adw.NavigationView, self.get_parent())

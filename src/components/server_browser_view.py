@@ -310,7 +310,9 @@ class ServerBrowserView(ServerBrowser):
 
     def __on_mapped(self, *_args) -> None:
         """Callback executed when this view is about to be shown"""
-        shared.settings.update_server_connected_timestamp(address=self.client._base_url)
+        shared.repository.update_server_connected_timestamp(
+            address=self.client._base_url
+        )
         self.__on_sidebar_toggled()
         self.__on_page_changed()
         self.__init_navigation_sidebar()
@@ -474,7 +476,7 @@ class ServerBrowserView(ServerBrowser):
     def log_off(self) -> None:
         """Disconnect from the server"""
         logging.debug("Logging off %s", self.client._base_url)
-        shared.settings.unset_active_token()
+        shared.repository.unset_active_token()
         navigation = cast(Adw.NavigationView, self.get_parent())
         navigation.pop_to_tag("servers-view")
 
@@ -485,7 +487,7 @@ class ServerBrowserView(ServerBrowser):
             self.user_id,
             self.client._base_url,
         )
-        shared.settings.remove_token(
+        shared.repository.remove_token(
             address=self.client._base_url,
             user_id=self.user_id,
         )

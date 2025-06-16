@@ -244,8 +244,8 @@ class AuthQuickConnectView(Adw.NavigationPage):
         def on_success(result: AuthenticationResult) -> None:
             logging.debug("Authenticated via quick connect")
             user_info = UserInfo(user_id=result.user.id, name=result.user.name)
-            shared.settings.add_users(self.__server.address, user_info)
-            shared.settings.add_token(
+            shared.repository.add_users(self.__server.address, user_info)
+            shared.repository.add_token(
                 address=self.__server.address,
                 user_id=result.user.id,
                 token=result.access_token,
