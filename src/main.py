@@ -18,6 +18,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import sys
+from pathlib import Path
 from typing import Callable, Optional
 
 from gi.repository import Adw, Gio, GLib, Gtk
@@ -54,7 +55,14 @@ class MarmaladeApplication(Adw.Application):
 
         # Setup the custom database with migrations
         database_file = shared.app_data_dir / "marmalade.db"
-        database = CustomDatabase(database_file=database_file)
+        database = CustomDatabase(
+            database_file=database_file,
+            # TODO remove this runtime path and reference the real path set at build time
+            # This is a workaround to avoid having to do more meson shenanigans
+            migrations_dir=(
+                Path(__file__).parent / "database" / "homemade" / "migrations"
+            ),
+        )
         database.apply_migrations()
 
         # Initialize the repositories

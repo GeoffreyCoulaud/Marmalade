@@ -12,11 +12,11 @@ class CorruptedDatabase(Exception):
 class CustomDatabase(object):
 
     __database_file: Path
+    __migrations_dir: Path
 
-    def __init__(self, *args, database_file: Path, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, database_file: Path, migrations_dir: Path) -> None:
         self.__database_file = database_file
-        self.apply_migrations()
+        self.__migrations_dir = migrations_dir
 
     def get_connection(self) -> closing[Connection]:
         """
@@ -56,10 +56,12 @@ class CustomDatabase(object):
 
         # Get migration scripts
         scripts = {}
-        migrations_dir = Path(__file__).parent / "migrations"
-        for path in migrations_dir.glob("v*.sql"):
+        for path in self.__migrations_dir.glob("v*.sql"):
             source_version, _rest = path.name.split("_", 1)
             scripts[source_version] = path
+        if not scripts:
+            logging.critical("No migration scripts found in %s", self.__migrations_dir)
+            raise RuntimeError("No migration scripts found")
 
         # Apply migrations
         with self.get_connection() as db:
