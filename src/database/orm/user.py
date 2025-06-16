@@ -1,9 +1,9 @@
 from sqlalchemy import UUID, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.models_sqlalchemy.base_model import Base
-from src.database.models_sqlalchemy.server import Server
-from src.database.models_sqlalchemy.token import AuthenticationToken
+from src.database.orm.base_model import Base
+from src.database.orm.server import Server
+from src.database.orm.token import AuthenticationToken
 
 
 class User(Base):

@@ -3,8 +3,8 @@ from typing import List
 from sqlalchemy import TIMESTAMP, UUID, Column, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.models_sqlalchemy.base_model import Base
-from src.database.models_sqlalchemy.user import User
+from src.database.orm.base_model import Base
+from src.database.orm.user import User
 
 
 class Server(Base):

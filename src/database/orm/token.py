@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.database.models_sqlalchemy.base_model import Base
+from src.database.orm.base_model import Base
 
 
 class AuthenticationToken(Base):
